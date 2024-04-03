@@ -1,0 +1,73 @@
+package ru.merkii.rduels.core.duel.event;
+
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
+import org.bukkit.event.HandlerList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import ru.merkii.rduels.RDuels;
+import ru.merkii.rduels.core.duel.model.DuelFightModel;
+import ru.merkii.rduels.core.party.model.PartyModel;
+
+public class DuelStartFightEvent extends Event {
+
+    private static final HandlerList handlers = new HandlerList();
+
+    private final Player sender;
+    private final Player receiver;
+    private final DuelFightModel duelFightModel;
+    private final PartyModel senderParty;
+    private final PartyModel receiverParty;
+
+    public DuelStartFightEvent(Player sender, Player receiver, DuelFightModel duelFightModel, PartyModel senderParty, PartyModel receiverParty) {
+        this.sender = sender;
+        this.receiver = receiver;
+        this.duelFightModel = duelFightModel;
+        this.senderParty = senderParty;
+        this.receiverParty = receiverParty;
+    }
+
+    public static DuelStartFightEvent create(Player sender, Player receiver, DuelFightModel duelFightModel) {
+        return new DuelStartFightEvent(sender, receiver, duelFightModel, null, null);
+    }
+
+    public static DuelStartFightEvent create(PartyModel senderParty, PartyModel receiverParty, DuelFightModel duelFightModel) {
+        return new DuelStartFightEvent(Bukkit.getPlayer(senderParty.getOwner()), Bukkit.getPlayer(receiverParty.getOwner()), duelFightModel, senderParty, receiverParty);
+    }
+
+    public void call() {
+        RDuels.getInstance().getServer().getPluginManager().callEvent(this);
+    }
+
+    public static HandlerList getHandlerList() {
+        return handlers;
+    }
+
+    @Override
+    public @NotNull HandlerList getHandlers() {
+        return handlers;
+    }
+
+    public Player getSender() {
+        return sender;
+    }
+
+    public Player getReceiver() {
+        return receiver;
+    }
+
+    public DuelFightModel getDuelFightModel() {
+        return duelFightModel;
+    }
+
+    @Nullable
+    public PartyModel getSenderParty() {
+        return senderParty;
+    }
+
+    @Nullable
+    public PartyModel getReceiverParty() {
+        return receiverParty;
+    }
+}

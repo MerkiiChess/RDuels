@@ -1,0 +1,33 @@
+package ru.merkii.rduels.core.duel.command;
+
+import co.aikar.commands.BaseCommand;
+import co.aikar.commands.annotation.CommandAlias;
+import co.aikar.commands.annotation.Default;
+import co.aikar.commands.annotation.Description;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import ru.merkii.rduels.RDuels;
+import ru.merkii.rduels.config.messages.MessageConfiguration;
+import ru.merkii.rduels.core.duel.DuelCore;
+import ru.merkii.rduels.core.duel.api.DuelAPI;
+import ru.merkii.rduels.core.duel.model.DuelFightModel;
+
+@CommandAlias("leave")
+public class LeaveCommand extends BaseCommand {
+
+    private final DuelAPI duelAPI = DuelCore.INSTANCE.getDuelAPI();
+    private final MessageConfiguration messageConfiguration = RDuels.getInstance().getPluginMessage();
+
+    @Default
+    @Description("Выйти с дуэли")
+    public void onLeave(Player player) {
+        DuelFightModel fightModel = this.duelAPI.getFightModelFromPlayer(player);
+        if (!this.duelAPI.isFightPlayer(player) || fightModel == null) {
+            player.sendMessage(this.messageConfiguration.getMessage("duelNoFighting"));
+            return;
+        }
+        Player winner = this.duelAPI.getWinnerFromFight(fightModel, player);
+        this.duelAPI.stopFight(fightModel, winner, this.duelAPI.getLoserFromFight(fightModel, winner));
+    }
+
+}
