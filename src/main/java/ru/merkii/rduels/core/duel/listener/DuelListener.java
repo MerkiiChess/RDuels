@@ -132,7 +132,6 @@ public class DuelListener implements Listener {
             }
             if ((fightModel.getReceiverParty().getOwner().equals(playerUUID) || (fightModel.getReceiverParty().getPlayers().contains(playerUUID))) && (fightModel.getReceiverParty().getOwner().equals(damagerUUID) || fightModel.getReceiverParty().getPlayers().contains(damagerUUID))) {
                 event.setCancelled(true);
-                return;
             }
         }
     }
@@ -307,7 +306,7 @@ public class DuelListener implements Listener {
         // Если достигаем количества игр, то заканчиваем дуэль, в ином случае мы начинаем следующий раунд
 
         if (fightModel.getCountNumGames() == fightModel.getNumGames()) {
-            this.duelAPI.stopFight(fightModel, winnerOwner, loseOwner);
+            Bukkit.getScheduler().runTaskLater(this.plugin, () -> this.duelAPI.stopFight(fightModel, winnerOwner, loseOwner), this.plugin.getSettings().getStopFightTime() * 20L);
             return;
         }
 
@@ -344,7 +343,7 @@ public class DuelListener implements Listener {
         }
 
         if (fightModel.getCountNumGames() == fightModel.getNumGames()) {
-            this.duelAPI.stopFight(fightModel, winner, loser);
+            Bukkit.getScheduler().runTaskLater(this.plugin, () -> this.duelAPI.stopFight(fightModel, winner, loser), this.plugin.getSettings().getStopFightTime() * 20L);
             return;
         }
         String message = this.messageConfiguration.getMessage("duelNextRound").replace("(player)", winner.getName()).replace("(round)", String.valueOf(fightModel.getCountNumGames())).replace("(rounds)", String.valueOf(fightModel.getNumGames()));
