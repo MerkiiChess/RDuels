@@ -63,8 +63,11 @@ public class DuelAPIProvider implements DuelAPI {
     public boolean isFightPlayer(Player player) {
         for (DuelFightModel fightModel : this.fightBucket.getDuelFights()) {
             if (fightModel.getArenaModel().isFfa()) {
-                assert fightModel.getReceiverParty() != null;
-                if (fightModel.getReceiverParty().getPlayers().contains(player.getUniqueId()) || Objects.requireNonNull(fightModel.getSenderParty()).getPlayers().contains(player.getUniqueId())) return true;
+                if (fightModel.getReceiverParty() != null && fightModel.getSenderParty() != null) {
+                    if (fightModel.getReceiverParty().getPlayers().contains(player.getUniqueId()) || Objects.requireNonNull(fightModel.getSenderParty()).getPlayers().contains(player.getUniqueId())) return true;
+                } else {
+                    if (fightModel.getPlayer2().equals(player) || fightModel.getPlayer4().equals(player)) return true;
+                }
             }
             if (fightModel.getReceiver().equals(player) || fightModel.getSender().equals(player)) return true;
         }
@@ -81,8 +84,11 @@ public class DuelAPIProvider implements DuelAPI {
     public @Nullable DuelFightModel getFightModelFromPlayer(Player player) {
         for (DuelFightModel fightModel : this.fightBucket.getDuelFights()) {
             if (fightModel.getArenaModel().isFfa()) {
-                assert fightModel.getSenderParty() != null;
-                if (fightModel.getSenderParty().getPlayers().contains(player.getUniqueId()) || Objects.requireNonNull(fightModel.getReceiverParty()).getPlayers().contains(player.getUniqueId())) return fightModel;
+                if (fightModel.getReceiverParty() != null && fightModel.getSenderParty() != null) {
+                    if (fightModel.getReceiverParty().getPlayers().contains(player.getUniqueId()) || Objects.requireNonNull(fightModel.getSenderParty()).getPlayers().contains(player.getUniqueId())) return fightModel;
+                } else {
+                    if (fightModel.getPlayer2().equals(player) || fightModel.getPlayer4().equals(player)) return fightModel;
+                }
             }
             if (fightModel.getReceiver().getUniqueId().equals(player.getUniqueId()) || fightModel.getSender().getUniqueId().equals(player.getUniqueId())) return fightModel;
         }

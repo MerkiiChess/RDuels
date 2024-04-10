@@ -13,6 +13,7 @@ import ru.merkii.rduels.core.duel.command.RDuelCommand;
 import ru.merkii.rduels.core.duel.command.SpectatorCommand;
 import ru.merkii.rduels.core.duel.config.DuelConfig;
 import ru.merkii.rduels.core.duel.listener.DuelListener;
+import ru.merkii.rduels.core.duel.schedualer.DuelSpectatorScheduler;
 
 @Getter
 public class DuelCore implements Core {
@@ -22,6 +23,7 @@ public class DuelCore implements Core {
     private DuelRequestsBucket duelRequestsBucket;
     private DuelFightBucket duelFightBucket;
     private DuelConfig duelConfig;
+    private DuelSpectatorScheduler duelSpectatorScheduler;
 
     @Override
     public void enable(RDuels plugin) {
@@ -32,11 +34,13 @@ public class DuelCore implements Core {
         this.duelAPI = new DuelAPIProvider();
         plugin.registerListeners(new DuelListener());
         plugin.registerCommands(new DuelCommand(), new SpectatorCommand(), new RDuelCommand(), new LeaveCommand());
+        this.duelSpectatorScheduler = DuelSpectatorScheduler.start();
     }
 
     @Override
     public void disable(RDuels plugin) {
         plugin.getServer().getOnlinePlayers().stream().filter(player -> this.duelAPI.isFightPlayer(player)).forEach(player -> this.duelAPI.stopFight(this.duelAPI.getFightModelFromPlayer(player), null, null));
+        this.duelSpectatorScheduler.stop();
     }
 
     @Override

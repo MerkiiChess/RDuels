@@ -45,6 +45,7 @@ messages:
 
   startSpectate: "Игрок (player) следит за вашим боем"
   stopSpectate: "Игрок (player) прекратил следить за вашим боем"
+  spectateLeave: "Чтобы выйти с дуэли напишите /spec"
 
   partyHelp:
     - "/party create - создать пати"
