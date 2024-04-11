@@ -17,6 +17,7 @@ import ru.merkii.rduels.core.sign.util.SignUtil;
 import ru.merkii.rduels.model.BlockPosition;
 import ru.merkii.rduels.util.ColorUtil;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -142,6 +143,33 @@ public class SignAPIProvider implements SignAPI {
                 .map(str -> str.replace("(type)", duelKitType == DuelKitType.CUSTOM ? this.messageConfiguration.getMessage("signCustomReplacer") : this.messageConfiguration.getMessage("signServerReplacer")))
                 .collect(Collectors.toList())
         );
+    }
+
+    @Override
+    public void removePlayerQueueSign(Player player) {
+        this.getQueueFromPlayer(player).ifPresent(queue -> {
+            if (queue.getSender() != null && queue.getSender().equals(player)) {
+                queue.setSender(null);
+            } else if (queue.getReceiver() != null && queue.getReceiver().equals(player)) {
+                queue.setReceiver(null);
+            } else if (queue.getReceiverHelper() != null && queue.getReceiverHelper().equals(player)) {
+                queue.setReceiverHelper(null);
+            } else if (queue.getSenderHelper() != null && queue.getSenderHelper().equals(player)) {
+                queue.setSenderHelper(null);
+            }
+            int size = 0;
+            if (queue.getSender() != null) size++;
+            if (queue.getSenderHelper() != null) size++;
+            if (queue.getReceiver() != null) size++;
+            if (queue.getReceiverHelper() != null) size++;
+            Sign sign = (Sign) queue.getSignModel().getBlockPosition().getBlock().getState();
+            this.setSignWait(sign, queue.getSignModel().getDuelType().getSize(), size, queue.getSignModel().getDuelKit(), queue.getSignModel().getKitModel().getDisplayName());
+        });
+    }
+
+    @Override
+    public void removePlayerQueueSign(Player... players) {
+        Arrays.asList(players).forEach(this::removePlayerQueueSign);
     }
 
 }

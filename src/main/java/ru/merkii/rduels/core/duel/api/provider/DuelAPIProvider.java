@@ -2,9 +2,11 @@ package ru.merkii.rduels.core.duel.api.provider;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.title.Title;
 import org.bukkit.*;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.*;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.Nullable;
 import ru.merkii.rduels.RDuels;
 import ru.merkii.rduels.builder.ItemBuilder;
@@ -15,6 +17,7 @@ import ru.merkii.rduels.core.arena.model.ArenaModel;
 import ru.merkii.rduels.core.duel.DuelCore;
 import ru.merkii.rduels.core.duel.api.DuelAPI;
 import ru.merkii.rduels.core.duel.bucket.*;
+import ru.merkii.rduels.core.duel.config.DuelConfig;
 import ru.merkii.rduels.core.duel.event.*;
 import ru.merkii.rduels.core.duel.model.*;
 import ru.merkii.rduels.core.duel.schedualer.*;
@@ -22,6 +25,7 @@ import ru.merkii.rduels.core.party.PartyCore;
 import ru.merkii.rduels.core.party.api.PartyAPI;
 import ru.merkii.rduels.core.party.model.PartyModel;
 import ru.merkii.rduels.core.sign.SignCore;
+import ru.merkii.rduels.core.sign.api.SignAPI;
 import ru.merkii.rduels.model.EntityPosition;
 import ru.merkii.rduels.model.KitModel;
 import ru.merkii.rduels.util.*;
@@ -201,6 +205,7 @@ public class DuelAPIProvider implements DuelAPI {
         PlayerUtil.setGameModeAndFly(sender, receiver);
         this.fightBucket.addFight(duelFightModel);
         this.arenaCore.getArenaAPI().addBusyArena(duelFightModel.getArenaModel());
+        SignAPI signAPI = SignCore.INSTANCE.getSignAPI();
         // Телепортируем игроков на арену
         if (duelRequest.getArena().isFfa()) {
             PartyModel receiverParty = duelRequest.getReceiverParty();
@@ -217,6 +222,8 @@ public class DuelAPIProvider implements DuelAPI {
             duelFightModel.getKitModel().giveItemPlayers(receiverPlayers);
             duelFightModel.getKitModel().giveItemPlayers(senderPlayers);
             partyAPI.addFightParty(senderParty, receiverParty);
+            senderPlayers.forEach(signAPI::removePlayerQueueSign);
+            receiverPlayers.forEach(signAPI::removePlayerQueueSign);
             DuelStartFightEvent.create(senderParty, receiverParty, duelFightModel).call();
         } else {
             sender.teleport(duelRequest.getArena().getOnePosition().toLocation());
@@ -225,6 +232,7 @@ public class DuelAPIProvider implements DuelAPI {
             duelFightModel.getKitModel().giveItemPlayers(sender, receiver);
             DuelStartFightEvent.create(sender, receiver, duelFightModel).call();
         }
+        signAPI.removePlayerQueueSign(sender, receiver);
         duelFightModel.setBukkitTask(new DuelScheduler(TimeUtil.parseTime(this.settings.getDurationFight(), TimeUnit.MINUTES), duelFightModel));
         this.duelTeleportBucket.add(new DuelTeleportScheduler(duelFightModel));
         sender.getNearbyEntities(100, 100, 100).stream().filter(entity -> !(entity instanceof Player)).forEach(Entity::remove);
@@ -282,6 +290,8 @@ public class DuelAPIProvider implements DuelAPI {
         if (duelRequest.getSignModel() != null) {
             duelFightModel.setSignModel(duelRequest.getSignModel());
         }
+        SignAPI signAPI = SignCore.INSTANCE.getSignAPI();
+        signAPI.removePlayerQueueSign(player, player2, player3, player4);
         duelFightModel.setPlayer2(player2);
         duelFightModel.setPlayer4(player4);
         PlayerUtil.healPlayers(player, player2, player3, player4);
@@ -397,6 +407,7 @@ public class DuelAPIProvider implements DuelAPI {
         if (loser != null) {
             losers.append(loser.getName());
         }
+        DuelConfig.TitleSettings titleSettings = this.duelCore.getDuelConfig().getTitleSettings();
         if (arenaModel.isFfa()) {
             if (duelFightModel.getReceiverParty() != null && duelFightModel.getSenderParty() != null) {
                 PartyAPI partyAPI = PartyCore.INSTANCE.getPartyAPI();
@@ -417,15 +428,19 @@ public class DuelAPIProvider implements DuelAPI {
                 if (winner != null) {
                     if (winner.equals(duelFightModel.getSender())) {
                         winners.append(" ").append(duelFightModel.getPlayer2().getName());
+                        duelFightModel.getPlayer2().sendTitle(ColorUtil.color(titleSettings.getWin().getText()), "", titleSettings.getWin().getFadeIn(), titleSettings.getWin().getStay(), titleSettings.getWin().getFadeOut());
                     } else {
                         winners.append(" ").append(duelFightModel.getPlayer4().getName());
+                        duelFightModel.getPlayer4().sendTitle(ColorUtil.color(titleSettings.getWin().getText()), "", titleSettings.getWin().getFadeIn(), titleSettings.getWin().getStay(), titleSettings.getWin().getFadeOut());
                     }
                 }
                 if (loser != null) {
                     if (loser.equals(duelFightModel.getSender())) {
                         losers.append(" ").append(duelFightModel.getPlayer2().getName());
+                        duelFightModel.getPlayer2().sendTitle(ColorUtil.color(titleSettings.getLose().getText()), "", titleSettings.getLose().getFadeIn(), titleSettings.getLose().getStay(), titleSettings.getLose().getFadeOut());
                     } else {
-                        winners.append(" ").append(duelFightModel.getPlayer4().getName());
+                        losers.append(" ").append(duelFightModel.getPlayer4().getName());
+                        duelFightModel.getPlayer4().sendTitle(ColorUtil.color(titleSettings.getLose().getText()), "", titleSettings.getLose().getFadeIn(), titleSettings.getLose().getStay(), titleSettings.getLose().getFadeOut());
                     }
                 }
             }
@@ -463,6 +478,7 @@ public class DuelAPIProvider implements DuelAPI {
                     if (player.getGameMode() != GameMode.SURVIVAL) {
                         player.setGameMode(GameMode.SURVIVAL);
                     }
+                    player.sendTitle(ColorUtil.color(titleSettings.getWin().getText()), "", titleSettings.getWin().getFadeIn(), titleSettings.getWin().getStay(), titleSettings.getWin().getFadeOut());
                     PartyCore.INSTANCE.getPartyAPI().giveStartItems(player);
                 });
                 loserParty.forEach(player -> {
@@ -472,6 +488,7 @@ public class DuelAPIProvider implements DuelAPI {
                     if (player.getGameMode() != GameMode.SURVIVAL) {
                         player.setGameMode(GameMode.SURVIVAL);
                     }
+                    player.sendTitle(ColorUtil.color(titleSettings.getLose().getText()), "", titleSettings.getLose().getFadeIn(), titleSettings.getLose().getStay(), titleSettings.getLose().getFadeOut());
                     PartyCore.INSTANCE.getPartyAPI().giveStartItems(player);
                 });
             } else {

@@ -137,4 +137,8 @@ public interface SignAPI {
      */
     void setSignActive(Sign sign, Player sender, Player receiver, DuelKitType duelKitType);
 
+    void removePlayerQueueSign(Player player);
+
+    void removePlayerQueueSign(Player... players);
+
 }

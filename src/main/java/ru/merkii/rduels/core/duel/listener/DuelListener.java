@@ -354,17 +354,11 @@ public class DuelListener implements Listener {
     private boolean isAlive(Player player, DuelFightModel fightModel) {
         boolean alive = true;
         if (player.equals(fightModel.getSender()) || player.equals(fightModel.getPlayer2())) {
-            if (fightModel.getSender().isDead() || fightModel.getSender().getGameMode() == GameMode.SPECTATOR){
-                alive = false;
-            }
-            if (fightModel.getPlayer2().isDead() || fightModel.getPlayer2().getGameMode() == GameMode.SURVIVAL) {
+            if ((fightModel.getSender().isDead() || fightModel.getSender().getGameMode() == GameMode.SPECTATOR) && (fightModel.getPlayer2().isDead() || fightModel.getPlayer2().getGameMode() == GameMode.SPECTATOR)) {
                 alive = false;
             }
         } else {
-            if (fightModel.getReceiver().isDead() || fightModel.getReceiver().getGameMode() == GameMode.SURVIVAL) {
-                alive = false;
-            }
-            if (fightModel.getPlayer4().isDead() || fightModel.getPlayer4().getGameMode() == GameMode.SPECTATOR){
+            if ((fightModel.getReceiver().isDead() || fightModel.getReceiver().getGameMode() == GameMode.SURVIVAL) && (fightModel.getPlayer4().isDead() || fightModel.getPlayer4().getGameMode() == GameMode.SPECTATOR)) {
                 alive = false;
             }
         }

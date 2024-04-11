@@ -26,6 +26,8 @@ public class DuelConfig extends Config {
 
         private ToFight toFight = new ToFight();
         private Fight fight = new Fight();
+        private Lose lose = new Lose();
+        private Win win = new Win();
 
         @Getter
         public static class ToFight {
@@ -44,6 +46,28 @@ public class DuelConfig extends Config {
             private int fadeOut = 1;
             private int stay = 1;
             private String text = "В бой";
+            private String soundName = "ENTITY_PLAYER_ATTACK_CRIT";
+            private float v1 = 2.0F;
+            private float v2 = 2.0F;
+        }
+
+        @Getter
+        public static class Lose {
+            private int fadeIn = 1;
+            private int fadeOut = 1;
+            private int stay = 1;
+            private String text = "Поражение";
+            private String soundName = "ENTITY_PLAYER_ATTACK_CRIT";
+            private float v1 = 2.0F;
+            private float v2 = 2.0F;
+        }
+
+        @Getter
+        public static class Win {
+            private int fadeIn = 1;
+            private int fadeOut = 1;
+            private int stay = 1;
+            private String text = "Победа";
             private String soundName = "ENTITY_PLAYER_ATTACK_CRIT";
             private float v1 = 2.0F;
             private float v2 = 2.0F;

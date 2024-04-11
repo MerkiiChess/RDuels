@@ -20,7 +20,7 @@ public class SpectatorCommand extends BaseCommand {
     private final MessageConfiguration messageConfiguration = plugin.getPluginMessage();
 
     @Default
-    @Syntax("[player]")
+    @CommandCompletion("@allplayers")
     @Description("Присоединиться к наблюдению за дуэлью между игроками.")
     public void onSpec(CommandSender sender, @Optional String targetName) {
         if (!(sender instanceof Player)) {
@@ -45,11 +45,6 @@ public class SpectatorCommand extends BaseCommand {
 
         if (target == null) {
             player.sendMessage(this.messageConfiguration.getMessage("duelOffline").replace("(player)", targetName));
-            return;
-        }
-
-        if (!duelAPI.isFightPlayer(target)) {
-            player.sendMessage(messageConfiguration.getMessage("duelSpectateNoFight").replace("(player)", target.getName()));
             return;
         }
 
