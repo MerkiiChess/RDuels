@@ -4,6 +4,7 @@ import co.aikar.commands.BaseCommand;
 import co.aikar.commands.annotation.CommandAlias;
 import co.aikar.commands.annotation.Default;
 import co.aikar.commands.annotation.Description;
+import org.bukkit.GameMode;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import ru.merkii.rduels.RDuels;
@@ -24,6 +25,10 @@ public class LeaveCommand extends BaseCommand {
         DuelFightModel fightModel = this.duelAPI.getFightModelFromPlayer(player);
         if (!this.duelAPI.isFightPlayer(player) || fightModel == null) {
             player.sendMessage(this.messageConfiguration.getMessage("duelNoFighting"));
+            return;
+        }
+        if (player.getGameMode() == GameMode.SPECTATOR) {
+            player.sendMessage(this.messageConfiguration.getMessage("noStopFight"));
             return;
         }
         Player winner = this.duelAPI.getWinnerFromFight(fightModel, player);

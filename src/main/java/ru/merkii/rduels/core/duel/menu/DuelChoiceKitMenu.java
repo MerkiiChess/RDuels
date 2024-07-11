@@ -2,6 +2,7 @@ package ru.merkii.rduels.core.duel.menu;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 import ru.merkii.rduels.RDuels;
 import ru.merkii.rduels.builder.ItemBuilder;
 import ru.merkii.rduels.core.arena.ArenaCore;
@@ -17,15 +18,16 @@ import ru.merkii.rduels.util.ColorUtil;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class DuelChoiceKitMenu extends VMenu {
 
     private final DuelCore duelCore = DuelCore.INSTANCE;
     private final ArenaAPI arenaAPI = ArenaCore.INSTANCE.getArenaAPI();
-    private final DuelConfig duelConfig = duelCore.getDuelConfig();
-    private final DuelConfig.ChoiceKitMenu choiceKitConfig = duelConfig.getChoiceKitMenu();
-    private final DuelConfig.ChoiceKitMenu.KitTypeChoice kitTypeChoice = choiceKitConfig.getKitTypeChoice();
-    private final DuelConfig.ChoiceKitMenu.RequestSettings requestSettings = choiceKitConfig.getRequestSettings();
+    private final DuelConfig duelConfig = this.duelCore.getDuelConfig();
+    private final DuelConfig.ChoiceKitMenu choiceKitConfig = this.duelConfig.getChoiceKitMenu();
+    private final DuelConfig.ChoiceKitMenu.KitTypeChoice kitTypeChoice = this.choiceKitConfig.getKitTypeChoice();
+    private final DuelConfig.ChoiceKitMenu.RequestSettings requestSettings = this.choiceKitConfig.getRequestSettings();
     private final DuelRequest duelRequest;
     private final boolean ffa;
 
@@ -34,17 +36,17 @@ public class DuelChoiceKitMenu extends VMenu {
         this.inventory = duelRequest.getDuelKit() == null ? Bukkit.createInventory(this, this.kitTypeChoice.getSize(), ColorUtil.color(this.kitTypeChoice.getTitle().replace("(player)", duelRequest.getReceiver().getName()))) : Bukkit.createInventory(this, this.requestSettings.getSize(), ColorUtil.color(this.requestSettings.getTitle().replace("(player)", duelRequest.getReceiver().getName())));
         this.duelRequest = duelRequest;
         if (duelRequest.getDuelKit() == null) {
-            setItem(this.kitTypeChoice.getCustomKit());
-            setItem(this.kitTypeChoice.getServerKit());
+            this.setItem(this.kitTypeChoice.getCustomKit());
+            this.setItem(this.kitTypeChoice.getServerKit());
         } else {
-            setItem(this.requestSettings.getNumGames().clone().replaceLore("(count)", duelRequest.getNumGames() == 0 ? ColorUtil.color(this.choiceKitConfig.getNoSelected()) : String.valueOf(duelRequest.getNumGames())));
-            setItem(this.requestSettings.getArena().clone().replaceLore("(arena)", duelRequest.getArena() == null ? ColorUtil.color(this.choiceKitConfig.getNoSelected()) : duelRequest.getArena().getDisplayName()));
-            setItem(this.requestSettings.getConfirm().clone().replaceLore("(player)", duelRequest.getReceiver().getDisplayName()));
+            this.setItem(this.requestSettings.getNumGames().clone().replaceLore("(count)", duelRequest.getNumGames() == 0 ? ColorUtil.color(this.choiceKitConfig.getNoSelected()) : String.valueOf(duelRequest.getNumGames())));
+            this.setItem(this.requestSettings.getArena().clone().replaceLore("(arena)", duelRequest.getArena() == null ? ColorUtil.color(this.choiceKitConfig.getNoSelected()) : duelRequest.getArena().getDisplayName()));
+            this.setItem(this.requestSettings.getConfirm().clone().replaceLore("(player)", duelRequest.getReceiver().getDisplayName()));
             if (duelRequest.getDuelKit() == DuelKitType.SERVER) {
-                setItem(this.requestSettings.getKit().clone().replaceLore("(kitName)", duelRequest.getKitModel() == null ? ColorUtil.color(this.choiceKitConfig.getNoSelected()) : duelRequest.getKitModel().getDisplayName()));
+                this.setItem(this.requestSettings.getKit().clone().replaceLore("(kitName)", duelRequest.getKitModel() == null ? ColorUtil.color(this.choiceKitConfig.getNoSelected()) : duelRequest.getKitModel().getDisplayName()));
             }
         }
-        setItem(this.choiceKitConfig.getExit());
+        this.setItem(this.choiceKitConfig.getExit());
     }
 
     @Override
@@ -70,16 +72,16 @@ public class DuelChoiceKitMenu extends VMenu {
             return;
         }
         if (slot == this.requestSettings.getNumGames().getSlot()) {
-            new DuelRequestMenu(this.duelRequest, this.choiceKitConfig.getRequestNumGames().getTitle(), this.choiceKitConfig.getRequestNumGames().getSize(), new ArrayList<>(this.choiceKitConfig.getRequestNumGames().getCountFightNum().keySet()), this.ffa).open(player);
+            new DuelRequestMenu(this.duelRequest, this.choiceKitConfig.getRequestNumGames().getTitle(), this.choiceKitConfig.getRequestNumGames().getSize(), new ArrayList<ItemBuilder>(this.choiceKitConfig.getRequestNumGames().getCountFightNum().keySet()), this.ffa).open(player);
             return;
         }
         if (slot == this.requestSettings.getArena().getSlot()) {
-            Map<ItemBuilder, String> arenas = this.choiceKitConfig.getRequestArena().getArenas();
-            new DuelRequestMenu(this.duelRequest, this.choiceKitConfig.getRequestArena().getTitle(), this.choiceKitConfig.getRequestArena().getSize(), new ArrayList<>(this.ffa ? arenas.entrySet().stream().filter(entry -> this.arenaAPI.getArenaFromDisplayName(entry.getValue()).isFfa()).map(Map.Entry::getKey).collect(Collectors.toList()) : arenas.entrySet().stream().filter(entry -> !this.arenaAPI.getArenaFromDisplayName(entry.getValue()).isFfa()).map(Map.Entry::getKey).collect(Collectors.toList())), this.ffa).open(player);
+            Stream<Map.Entry<ItemBuilder, String>> d = this.getEntryStream();
+            new DuelRequestMenu(this.duelRequest, this.choiceKitConfig.getRequestArena().getTitle(), this.choiceKitConfig.getRequestArena().getSize(), new ArrayList<ItemBuilder>(d.map(Map.Entry::getKey).collect(Collectors.toList())), this.ffa).open(player);
             return;
         }
         if (this.duelRequest.getDuelKit() == DuelKitType.SERVER && slot == this.requestSettings.getKit().getSlot()) {
-            new DuelRequestMenu(this.duelRequest, this.choiceKitConfig.getRequestKit().getTitle(), this.choiceKitConfig.getRequestKit().getSize(), new ArrayList<>(this.choiceKitConfig.getRequestKit().getKits().keySet()), this.ffa).open(player);
+            new DuelRequestMenu(this.duelRequest, this.choiceKitConfig.getRequestKit().getTitle(), this.choiceKitConfig.getRequestKit().getSize(), new ArrayList<ItemBuilder>(this.choiceKitConfig.getRequestKit().getKits().keySet()), this.ffa).open(player);
             return;
         }
         if (slot == this.requestSettings.getConfirm().getSlot()) {
@@ -94,10 +96,27 @@ public class DuelChoiceKitMenu extends VMenu {
                 this.duelRequest.setNumGames(1);
             }
             if (this.duelRequest.getArena() == null) {
-                this.duelRequest.setArena(this.duelCore.getDuelAPI().getFreeArena());
+                if (!this.duelRequest.getKitModel().isBindingArena()) {
+                    this.duelRequest.setArena(this.duelCore.getDuelAPI().getFreeArena());
+                } else {
+                    if (!this.arenaAPI.getArenaFromKit(this.duelRequest.getKitModel()).isPresent()) {
+                        player.closeInventory();
+                        player.sendMessage(RDuels.getInstance().getPluginMessage().getMessage("duelArenasFull"));
+                        return;
+                    }
+                    this.duelRequest.setArena(this.arenaAPI.getArenaFromKit(this.duelRequest.getKitModel()).get());
+                }
             }
             this.duelCore.getDuelAPI().addRequest(this.duelRequest);
             player.closeInventory();
         }
+    }
+
+    @NotNull
+    private Stream<Map.Entry<ItemBuilder, String>> getEntryStream() {
+        Map<ItemBuilder, String> arenas = this.choiceKitConfig.getRequestArena().getArenas();
+        Stream<Map.Entry<ItemBuilder, String>> d = this.ffa ? arenas.entrySet().stream().filter(entry -> this.arenaAPI.getArenaFromDisplayName((String)entry.getValue()).isFfa()) : arenas.entrySet().stream().filter(entry -> !this.arenaAPI.getArenaFromDisplayName((String)entry.getValue()).isFfa());
+        d = this.duelRequest.getKitModel() != null && this.duelRequest.getKitModel().isBindingArena() ? d.filter(entry -> this.arenaAPI.getArenaFromName((String)entry.getValue()).getCustomKitsName().contains(this.duelRequest.getKitModel().getDisplayName())) : d.filter(entry -> !this.arenaAPI.getArenaFromName((String)entry.getValue()).isCustomKits());
+        return d;
     }
 }

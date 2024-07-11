@@ -7,6 +7,7 @@ import ru.merkii.rduels.RDuels;
 import ru.merkii.rduels.core.Core;
 import ru.merkii.rduels.core.sign.api.SignAPI;
 import ru.merkii.rduels.core.sign.api.provider.SignAPIProvider;
+import ru.merkii.rduels.core.sign.command.QueueCommand;
 import ru.merkii.rduels.core.sign.listener.SignListener;
 import ru.merkii.rduels.core.sign.model.SignModel;
 import ru.merkii.rduels.core.sign.storage.SignStorage;
@@ -27,6 +28,7 @@ public class SignCore implements Core {
         reloadConfig(plugin);
         signAPI = new SignAPIProvider();
         plugin.registerListeners(new SignListener());
+        plugin.registerCommands(new QueueCommand());
         for (SignModel signModel : this.signStorage.getSigns()) {
             BlockPosition blockPosition = signModel.getBlockPosition();
             try {

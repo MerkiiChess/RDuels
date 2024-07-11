@@ -1,6 +1,7 @@
 package ru.merkii.rduels.core.party.api.provider;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -23,10 +24,7 @@ import ru.merkii.rduels.core.party.model.PartyModel;
 import ru.merkii.rduels.core.party.model.PartyRequestModel;
 import ru.merkii.rduels.util.PlayerUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class PartyAPIProvider implements PartyAPI {
@@ -58,7 +56,9 @@ public class PartyAPIProvider implements PartyAPI {
         if (partyModel.getOwner().equals(player.getUniqueId())) {
             player.getInventory().clear();
             player.getInventory().setArmorContents(null);
-            player.getInventory().setItem(this.settings.getCreateCustomKit().getSlot(), this.settings.getCreateCustomKit().build());
+            if (this.settings.isItemOpenCustomKit()) {
+                player.getInventory().setItem(this.settings.getCreateCustomKit().getSlot(), this.settings.getCreateCustomKit().build());
+            }
             player.updateInventory();
             if (partyModel.getPlayers().isEmpty()) {
                 this.partyBucket.remove(partyModel);
@@ -66,14 +66,14 @@ public class PartyAPIProvider implements PartyAPI {
                 return;
             }
             Player newOwner = Bukkit.getPlayer(partyModel.getPlayers().get(0));
-            assert newOwner != null;
+            assert (newOwner != null);
             partyModel.setOwner(newOwner.getUniqueId());
             partyModel.getPlayers().remove(0);
             newOwner.sendMessage(this.messageConfiguration.getMessage("partyNewOwner"));
         } else {
             partyModel.getPlayers().remove(player.getUniqueId());
         }
-        if (isFightParty(fightParty)) {
+        if (this.isFightParty(fightParty)) {
             this.partyFightBucket.remove(fightParty);
             this.partyFightBucket.add(partyModel);
         }
@@ -96,11 +96,10 @@ public class PartyAPIProvider implements PartyAPI {
     public void inviteParty(PartyModel partyModel, Player player) {
         this.addRequest(PartyRequestModel.create(partyModel, player.getUniqueId()));
         Player owner = Bukkit.getPlayer(partyModel.getOwner());
-        this.messageConfiguration.getMessages("partyInvited").stream().map(str -> str.replace("(player)", owner.getName())).forEach(player::sendMessage);
-
+        this.messageConfiguration.getMessages("partyInvited").stream().map(str -> str.replace("(player)", owner.getName())).forEach(arg_0 -> player.sendMessage(arg_0));
         Component accept = Component.text(this.messageConfiguration.getMessage("acceptButton")).clickEvent(ClickEvent.runCommand("/party yes " + owner.getName()));
         Component decline = Component.text(this.messageConfiguration.getMessage("declineButton")).clickEvent(ClickEvent.runCommand("/party no " + owner.getName()));
-        player.sendMessage(Component.text().append(accept).append(Component.text(" ")).append(decline));
+        player.sendMessage(((TextComponent.Builder)((Object)((TextComponent.Builder)((Object)Component.text().append(accept))).append(Component.text(" ")))).append(decline));
     }
 
     @Override
@@ -108,7 +107,7 @@ public class PartyAPIProvider implements PartyAPI {
         partyModel.getPlayers().add(player.getUniqueId());
         this.giveStartItems(player);
         player.sendMessage(this.messageConfiguration.getMessage("partyJoin"));
-        Bukkit.getPlayer(partyModel.getOwner()).sendMessage("partyJoin");
+        Bukkit.getPlayer(partyModel.getOwner()).sendMessage(this.messageConfiguration.getMessage("partyJoin"));
         PlayerUtil.convertListUUID(partyModel.getPlayers()).forEach(players -> players.sendMessage(this.messageConfiguration.getMessage("partyJoinAll").replace("(player)", player.getName())));
         if (this.isFightParty(partyModel)) {
             DuelCore.INSTANCE.getDuelAPI().addSpectate(player, DuelCore.INSTANCE.getDuelAPI().getFightModelFromPlayer(Bukkit.getPlayer(partyModel.getOwner())));
@@ -123,31 +122,32 @@ public class PartyAPIProvider implements PartyAPI {
     @Override
     public void removeRequest(PartyRequestModel partyRequestModel) {
         this.partyRequestBucket.removeRequest(partyRequestModel);
-
     }
 
-    @Nullable
     @Override
+    @Nullable
     public PartyRequestModel getPartyRequestModel(Player sender, Player receiver) {
         for (PartyRequestModel requestModel : this.partyRequestBucket.getPartyRequestModels()) {
-            if (requestModel.getInvitedParty().getOwner().equals(sender.getUniqueId()) && requestModel.getInvitedPlayer().equals(receiver.getUniqueId())) {
-                if (requestModel.getEndDurationRequest() < System.currentTimeMillis()) {
-                    this.partyRequestBucket.removeRequest(requestModel);
-                    return null;
-                }
-                return requestModel;
+            if (!requestModel.getInvitedParty().getOwner().equals(sender.getUniqueId()) || !requestModel.getInvitedPlayer().equals(receiver.getUniqueId())) continue;
+            if (requestModel.getEndDurationRequest() < System.currentTimeMillis()) {
+                this.partyRequestBucket.removeRequest(requestModel);
+                return null;
             }
+            return requestModel;
         }
         return null;
     }
 
-    @Nullable
     @Override
+    @Nullable
     public PartyModel getPartyModelFromPlayer(Player player) {
         for (PartyModel partyModel : this.partyBucket.getPartyModels()) {
-            if (partyModel.getOwner().equals(player.getUniqueId())) return partyModel;
+            if (partyModel.getOwner().equals(player.getUniqueId())) {
+                return partyModel;
+            }
             for (Player player1 : partyModel.getPlayers().stream().map(Bukkit::getPlayer).collect(Collectors.toList())) {
-                if (player1.getUniqueId().equals(player.getUniqueId())) return partyModel;
+                if (!player1.getUniqueId().equals(player.getUniqueId())) continue;
+                return partyModel;
             }
         }
         return null;
@@ -159,12 +159,12 @@ public class PartyAPIProvider implements PartyAPI {
     }
 
     @Override
-    public void addFightParty(PartyModel... partyModels) {
+    public void addFightParty(PartyModel ... partyModels) {
         Arrays.asList(partyModels).forEach(this.partyFightBucket::add);
     }
 
     @Override
-    public void removeFightParty(PartyModel... partyModels) {
+    public void removeFightParty(PartyModel ... partyModels) {
         Arrays.asList(partyModels).forEach(this.partyFightBucket::remove);
     }
 
@@ -187,8 +187,8 @@ public class PartyAPIProvider implements PartyAPI {
 
     @Override
     public void teleportToArena(DuelFightModel duelFightModel) {
-        assert duelFightModel.getSenderParty() != null;
-        assert duelFightModel.getReceiverParty() != null;
+        assert (duelFightModel.getSenderParty() != null);
+        assert (duelFightModel.getReceiverParty() != null);
         this.teleportToArena(duelFightModel.getSenderParty(), duelFightModel.getReceiverParty(), duelFightModel.getArenaModel());
     }
 
@@ -196,36 +196,29 @@ public class PartyAPIProvider implements PartyAPI {
     public void teleportToArena(PartyModel senderParty, PartyModel receiverParty, ArenaModel arenaModel) {
         Player sender = Bukkit.getPlayer(senderParty.getOwner());
         Player receiver = Bukkit.getPlayer(receiverParty.getOwner());
-        // BLOCK TELEPORT SENDER PARTY
-        {
-            assert sender != null;
-            sender.teleport(arenaModel.getFfaPositions().get(1).toLocation());
-            if (!senderParty.getPlayers().isEmpty()) {
-                for (int i = 0; i <= senderParty.getPlayers().size(); i++) {
-                    Player player = Bukkit.getPlayer(senderParty.getPlayers().get(i));
-                    assert player != null;
-                    player.teleport(arenaModel.getFfaPositions().get(i + 2).toLocation());
-                }
+        assert (sender != null);
+        sender.teleport(arenaModel.getFfaPositions().get(1).toLocation());
+        if (!senderParty.getPlayers().isEmpty()) {
+            for (int i = 0; i <= senderParty.getPlayers().size(); ++i) {
+                Player player = Bukkit.getPlayer(senderParty.getPlayers().get(i));
+                assert (player != null);
+                player.teleport(arenaModel.getFfaPositions().get(i + 2).toLocation());
             }
         }
-
-        // BLOCK TELEPORT RECEIVER PARTY
-        {
-            assert receiver != null;
-            int add = PartyCore.INSTANCE.getPartyConfig().getMaxPartySize() + 1;
-            receiver.teleport(arenaModel.getFfaPositions().get(add).toLocation());
-            if (!receiverParty.getPlayers().isEmpty()) {
-                for (int i = 0; i <= receiverParty.getPlayers().size(); i++) {
-                    Player player = Bukkit.getPlayer(senderParty.getPlayers().get(i));
-                    assert player != null;
-                    player.teleport(arenaModel.getFfaPositions().get(i + add + 1).toLocation());
-                }
+        assert (receiver != null);
+        int add = PartyCore.INSTANCE.getPartyConfig().getMaxPartySize() + 1;
+        receiver.teleport(arenaModel.getFfaPositions().get(add).toLocation());
+        if (!receiverParty.getPlayers().isEmpty()) {
+            for (int i = 0; i <= receiverParty.getPlayers().size(); ++i) {
+                Player player = Bukkit.getPlayer(senderParty.getPlayers().get(i));
+                assert (player != null);
+                player.teleport(arenaModel.getFfaPositions().get(i + add + 1).toLocation());
             }
         }
     }
 
     @Override
-    public void giveStartItems(Player... players) {
+    public void giveStartItems(Player ... players) {
         Arrays.asList(players).forEach(player -> {
             PlayerInventory inventory = player.getInventory();
             inventory.setArmorContents(null);

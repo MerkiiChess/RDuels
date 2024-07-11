@@ -20,13 +20,13 @@ public class CustomKitCreateMenu extends VMenu {
                 if (kits.isInvisible()) {
                     return;
                 }
-                setItem(kits.getSlot(), customKitConfig.getCreateMenu().getNoPermissionItem());
+                this.setItem(kits.getSlot(), this.customKitConfig.getCreateMenu().getNoPermissionItem());
             } else if (!this.customKitAPI.isSelectedKit(player, kits.getDisplayName())) {
-                setItem(kits.getSlot(), customKitConfig.getCreateMenu().getNotSelected());
+                this.setItem(kits.getSlot(), this.customKitConfig.getCreateMenu().getNotSelected());
             } else {
-                setItem(kits.getSlot(), customKitConfig.getCreateMenu().getSelected());
+                this.setItem(kits.getSlot(), this.customKitConfig.getCreateMenu().getSelected());
             }
-            setItem(kits.getSlot() - 9, customKitConfig.getCreateMenu().getEditItem().clone().replaceDisplayName("(kit)", kits.getDisplayName()));
+            this.setItem(kits.getSlot() - 9, this.customKitConfig.getCreateMenu().getEditItem().clone().replaceDisplayName("(kit)", kits.getDisplayName()));
         });
     }
 
@@ -34,11 +34,11 @@ public class CustomKitCreateMenu extends VMenu {
     public void onClick(ClickEvent event) {
         Player player = event.getPlayer();
         if (event.getItemBuilder().getMaterial() == this.customKitConfig.getCreateMenu().getEditItem().getMaterial()) {
-            new CustomKitEditMenu(customKitAPI.getNameKitSlot(event.getSlot() + 9), player).open(player);
+            new CustomKitEditMenu(this.customKitAPI.getNameKitSlot(event.getSlot() + 9), player).open(player);
             return;
         }
         if (event.getItemBuilder().equals(this.customKitConfig.getCreateMenu().getNotSelected())) {
-            this.customKitAPI.setKit(player, customKitAPI.getNameKitSlot(event.getSlot()));
+            this.customKitAPI.setKit(player, this.customKitAPI.getNameKitSlot(event.getSlot()));
             new CustomKitCreateMenu(player).open(player);
             return;
         }

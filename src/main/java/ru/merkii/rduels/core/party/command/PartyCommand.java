@@ -20,17 +20,17 @@ import java.util.stream.Collectors;
 public class PartyCommand extends BaseCommand {
 
     private final PartyCore partyCore = PartyCore.INSTANCE;
-    private final PartyAPI partyAPI = partyCore.getPartyAPI();
+    private final PartyAPI partyAPI = this.partyCore.getPartyAPI();
     private final MessageConfiguration messageConfiguration = RDuels.getInstance().getPluginMessage();
 
     @Default
-    @Description("Помощь по командам")
+    @Description(value="Помощь по командам")
     public void onParty(Player player) {
-        this.messageConfiguration.getMessages("partyHelp").forEach(player::sendMessage);
+        this.messageConfiguration.getMessages("partyHelp").forEach(arg_0 -> player.sendMessage(arg_0));
     }
 
-    @Subcommand("list")
-    @Description("Вывести список всех игроков")
+    @Subcommand(value="list")
+    @Description(value="Вывести список всех игроков")
     public void partyList(Player player) {
         if (!this.partyAPI.isPartyPlayer(player)) {
             player.sendMessage(this.messageConfiguration.getMessage("partyNo"));
@@ -43,15 +43,11 @@ public class PartyCommand extends BaseCommand {
         }
         StringBuilder players = new StringBuilder();
         partyModel.getPlayers().stream().map(Bukkit::getPlayer).filter(Objects::nonNull).map(Player::getName).forEach(name -> players.append(name).append(", "));
-        this.messageConfiguration.getMessages("partyPlayers")
-                .stream()
-                .map(str -> str.replace("(owner)", Bukkit.getPlayer(partyModel.getOwner()).getName()))
-                .map(str -> str.replace("(players)", players.toString()))
-                .forEach(player::sendMessage);
+        this.messageConfiguration.getMessages("partyPlayers").stream().map(str -> str.replace("(owner)", Bukkit.getPlayer(partyModel.getOwner()).getName())).map(str -> str.replace("(players)", players.toString())).forEach(player::sendMessage);
     }
 
-    @Subcommand("disband")
-    @Description("Распустить пати")
+    @Subcommand(value="disband")
+    @Description(value="Распустить пати")
     public void disband(Player player) {
         if (!this.partyAPI.isPartyPlayer(player)) {
             player.sendMessage(this.messageConfiguration.getMessage("partyNo"));
@@ -66,23 +62,24 @@ public class PartyCommand extends BaseCommand {
             player.sendMessage(this.messageConfiguration.getMessage("partyNoOwner"));
             return;
         }
-        PlayerUtil.convertListUUID(partyModel.getPlayers()).forEach(partyPlayer -> this.partyAPI.leaveParty(partyPlayer, false));
+        PlayerUtil.convertListUUID(partyModel.getPlayers()).forEach(partyPlayer -> this.partyAPI.leaveParty((Player)partyPlayer, false));
         this.partyAPI.leaveParty(player);
         player.sendMessage(this.messageConfiguration.getMessage("partyDisband"));
     }
 
-    @Subcommand("create")
-    @Description("Создать пати")
+    @Subcommand(value="create")
+    @Description(value="Создать пати")
     public void create(Player player) {
         if (this.partyAPI.isPartyPlayer(player)) {
             player.sendMessage(this.messageConfiguration.getMessage("partyAlready"));
             return;
         }
         this.partyAPI.createParty(player);
+        player.sendMessage(this.messageConfiguration.getMessage("partyCreate"));
     }
 
-    @Subcommand("leave")
-    @Description("Выйти с пати")
+    @Subcommand(value="leave")
+    @Description(value="Выйти с пати")
     public void onLeaveParty(Player player) {
         if (!this.partyAPI.isPartyPlayer(player)) {
             player.sendMessage(this.messageConfiguration.getMessage("partyNo"));
@@ -91,10 +88,10 @@ public class PartyCommand extends BaseCommand {
         this.partyAPI.leaveParty(player);
     }
 
-    @Subcommand("kick")
-    @CommandCompletion("@allplayers")
-    @Description("кикнуть игрока с пати")
-    public void onPartyKick(Player player, @Name("ник") String receiverName) {
+    @Subcommand(value="kick")
+    @CommandCompletion(value="@allplayers")
+    @Description(value="кикнуть игрока с пати")
+    public void onPartyKick(Player player, @Name(value="ник") String receiverName) {
         if (!this.partyAPI.isPartyPlayer(player)) {
             player.sendMessage(this.messageConfiguration.getMessage("partyNo"));
             return;
@@ -108,9 +105,7 @@ public class PartyCommand extends BaseCommand {
             player.sendMessage(this.messageConfiguration.getMessage("partyNoOwner"));
             return;
         }
-
         Player receiver = Bukkit.getPlayerExact(receiverName);
-
         if (receiver == null) {
             player.sendMessage(this.messageConfiguration.getMessage("duelOffline").replace("(player)", receiverName));
             return;
@@ -131,10 +126,10 @@ public class PartyCommand extends BaseCommand {
         this.partyAPI.leaveParty(receiver);
     }
 
-    @Subcommand("invite")
-    @CommandCompletion("@allplayers")
-    @Description("Пригласить игрока в пати")
-    public void onPartyInvite(Player player, @Name("игрок") String receiverName) {
+    @Subcommand(value="invite")
+    @CommandCompletion(value="@allplayers")
+    @Description(value="Пригласить игрока в пати")
+    public void onPartyInvite(Player player, @Name(value="игрок") String receiverName) {
         if (!this.partyAPI.isPartyPlayer(player)) {
             player.sendMessage(this.messageConfiguration.getMessage("partyNo"));
             return;
@@ -148,9 +143,7 @@ public class PartyCommand extends BaseCommand {
             player.sendMessage(this.messageConfiguration.getMessage("partyNoOwner"));
             return;
         }
-
         Player receiver = Bukkit.getPlayerExact(receiverName);
-
         if (receiver == null) {
             player.sendMessage(this.messageConfiguration.getMessage("duelOffline").replace("(player)", receiverName));
             return;
@@ -167,21 +160,19 @@ public class PartyCommand extends BaseCommand {
             player.sendMessage(this.messageConfiguration.getMessage("partyAlreadyInvite").replace("(player)", receiver.getName()));
             return;
         }
-        player.sendMessage(this.messageConfiguration.getMessage("partyInvite").replace("(player)", player.getName()));
+        player.sendMessage(this.messageConfiguration.getMessage("partyInvite").replace("(player)", receiver.getName()));
         this.partyAPI.inviteParty(partyModel, receiver);
     }
 
-    @Subcommand("yes")
-    @CommandCompletion("@allplayers")
-    @Description("Принять приглашение на пати")
-    public void onPartyYes(Player player, @Name("ник") String receiverName) {
+    @Subcommand(value="yes")
+    @CommandCompletion(value="@allplayers")
+    @Description(value="Принять приглашение на пати")
+    public void onPartyYes(Player player, @Name(value="ник") String receiverName) {
         if (this.partyAPI.isPartyPlayer(player)) {
             player.sendMessage(this.messageConfiguration.getMessage("partyAlready"));
             return;
         }
-
         Player receiver = Bukkit.getPlayerExact(receiverName);
-
         if (receiver == null) {
             player.sendMessage(this.messageConfiguration.getMessage("duelOffline").replace("(player)", receiverName));
             return;
@@ -203,17 +194,15 @@ public class PartyCommand extends BaseCommand {
         this.partyAPI.joinParty(requestModel.getInvitedParty(), player);
     }
 
-    @Subcommand("no")
-    @CommandCompletion("@allplayers")
-    @Description("Отклонить приглашение на пати")
-    public void onPartyNo(Player player, @Name("ник") String receiverName) {
+    @Subcommand(value="no")
+    @CommandCompletion(value="@allplayers")
+    @Description(value="Отклонить приглашение на пати")
+    public void onPartyNo(Player player, @Name(value="ник") String receiverName) {
         if (this.partyAPI.isPartyPlayer(player)) {
             player.sendMessage(this.messageConfiguration.getMessage("partyAlready"));
             return;
         }
-
         Player receiver = Bukkit.getPlayerExact(receiverName);
-
         if (receiver == null) {
             player.sendMessage(this.messageConfiguration.getMessage("duelOffline").replace("(player)", receiverName));
             return;

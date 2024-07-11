@@ -7,10 +7,16 @@ import ru.merkii.rduels.builder.ItemBuilder;
 import java.util.Map;
 
 @AllArgsConstructor
-@Getter
 public class CustomKitCategory {
 
     private ItemBuilder item;
-    private Map<Integer, Material> items;
+    private Map<Integer, ItemBuilder> items;
 
+    public ItemBuilder getItem() {
+        return item;
+    }
+
+    public Map<Integer, ItemBuilder> getItems() {
+        return items;
+    }
 }

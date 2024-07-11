@@ -3,6 +3,7 @@ package ru.merkii.rduels.core.customkit.menu;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import ru.merkii.rduels.builder.ItemBuilder;
 import ru.merkii.rduels.core.customkit.CustomKitCore;
 import ru.merkii.rduels.core.customkit.category.CustomKitCategoryEnchantItemType;
 import ru.merkii.rduels.core.customkit.config.CustomKitConfig;
@@ -17,10 +18,10 @@ import java.util.stream.Collectors;
 public class CustomKitEditMenu extends VMenu {
 
     private final CustomKitConfig customKitConfig = CustomKitCore.INSTANCE.getCustomKitConfig();
-    private final CustomKitConfig.CategoriesMenu categoriesMenu = customKitConfig.getCategoriesMenu();
-    private final CustomKitConfig.EditMenu editMenu = customKitConfig.getEditMenu();
+    private final CustomKitConfig.CategoriesMenu categoriesMenu = this.customKitConfig.getCategoriesMenu();
+    private final CustomKitConfig.EditMenu editMenu = this.customKitConfig.getEditMenu();
     private final Map<Integer, ItemStack> allItemsKit;
-    private final List<Integer> itemsSlot = new ArrayList<>();
+    private final List<Integer> itemsSlot = new ArrayList<Integer>();
     private final String kitName;
 
     public CustomKitEditMenu(String kitName, Player player) {
@@ -29,63 +30,98 @@ public class CustomKitEditMenu extends VMenu {
         this.kitName = kitName;
         this.allItemsKit.forEach((key, value) -> {
             if (value.getType() != Material.AIR) {
-                this.inventory.setItem(key, value);
-                itemsSlot.add(key);
+                this.setItem((int)key, ItemBuilder.builder().fromItemStack((ItemStack)value));
+                this.itemsSlot.add((Integer)key);
             }
         });
-        for (int i = 0; i <= 40; i++) {
-            if (!itemsSlot.contains(i)) {
-                if (i <= 8) {
-                    setItem(i, this.editMenu.getNoSlotMainLine());
-                } else if (i <= 35) {
-                    setItem(i, this.editMenu.getNoSlotOtherLines());
-                } else if (i <= 39) {
-                    if (i == 39) setItem(i, this.editMenu.getNoSlotBoots());
-                    else if (i == 38) setItem(i, this.editMenu.getNoSlotLeggings());
-                    else if (i == 37) setItem(i, this.editMenu.getNoSlotChestplate());
-                    else setItem(i, this.editMenu.getNoSlotHelmet());
-                } else {
-                    setItem(i, this.editMenu.getNoSlotOffHand());
-                }
+        for (int i = 0; i <= 40; ++i) {
+            if (this.itemsSlot.contains(i)) continue;
+            if (i <= 8) {
+                this.setItem(i, this.editMenu.getNoSlotMainLine());
+                continue;
             }
+            if (i <= 35) {
+                this.setItem(i, this.editMenu.getNoSlotOtherLines());
+                continue;
+            }
+            if (i <= 39) {
+                if (i == 39) {
+                    this.setItem(i, this.editMenu.getNoSlotBoots());
+                    continue;
+                }
+                if (i == 38) {
+                    this.setItem(i, this.editMenu.getNoSlotLeggings());
+                    continue;
+                }
+                if (i == 37) {
+                    this.setItem(i, this.editMenu.getNoSlotChestplate());
+                    continue;
+                }
+                this.setItem(i, this.editMenu.getNoSlotHelmet());
+                continue;
+            }
+            this.setItem(i, this.editMenu.getNoSlotOffHand());
         }
-        setItem(53, this.editMenu.getExit());
+        this.setItem(53, this.editMenu.getExit());
     }
 
     @Override
     public void onClick(ClickEvent event) {
-        if (event.getClickedItem().equals(this.editMenu.getExit().build())) {
-            new CustomKitCreateMenu(event.getPlayer()).open(event.getPlayer());
+        ItemStack clickedItem = event.getClickedItem();
+        Player player = event.getPlayer();
+        if (clickedItem.equals(this.editMenu.getExit().build())) {
+            new CustomKitCreateMenu(player).open(player);
             return;
         }
         if (event.isShiftClick()) {
-            CustomKitCore.INSTANCE.getCustomKitStorage().setItemSlot(new ItemStack(Material.AIR), this.kitName, event.getSlot(), event.getPlayer());
-            new CustomKitEditMenu(this.kitName, event.getPlayer()).open(event.getPlayer());
+            CustomKitCore.INSTANCE.getCustomKitStorage().setItemSlot(new ItemStack(Material.AIR), this.kitName, event.getSlot(), player);
+            new CustomKitEditMenu(this.kitName, player).open(player);
             return;
         }
         if (this.allItemsKit.get(event.getSlot()) == null || event.isLeftClick()) {
             if (event.isRightClick()) {
                 return;
             }
-            new CustomKitCategoryMenu(this.categoriesMenu.getCategories(), this.kitName, event.getSlot()).open(event.getPlayer());
+            if (event.getItemBuilder().equals(this.editMenu.getNoSlotChestplate()) || event.getItemBuilder().equals(this.editMenu.getNoSlotBoots()) || event.getItemBuilder().equals(this.editMenu.getNoSlotHelmet()) || event.getItemBuilder().equals(this.editMenu.getNoSlotLeggings())) {
+                new CustomKitCategoryMenu(this.categoriesMenu.getCategories().stream().filter(customKitCategory -> customKitCategory.getItem().getMaterial() == this.categoriesMenu.getMaterialArmorCategory()).findFirst().get(), this.kitName, event.getSlot()).open(player);
+                return;
+            }
+            new CustomKitCategoryMenu(this.categoriesMenu.getCategories(), this.kitName, event.getSlot()).open(player);
+            return;
+        }
+        if (event.getItemBuilder().equals(this.editMenu.getNoSlotMainLine()) || event.getItemBuilder().equals(this.editMenu.getNoSlotOtherLines()) || event.getItemBuilder().equals(this.editMenu.getNoSlotChestplate()) || event.getItemBuilder().equals(this.editMenu.getNoSlotBoots()) || event.getItemBuilder().equals(this.editMenu.getNoSlotHelmet()) || event.getItemBuilder().equals(this.editMenu.getNoSlotLeggings()) || event.getItemBuilder().equals(this.editMenu.getNoSlotOffHand())) {
             return;
         }
         if (event.isRightClick()) {
-            if (isSwordItem(event.getClickedItem())) {
-                new CustomKitCategoryMenu(this.kitName, event.getSlot(), this.categoriesMenu.getEnchantCategories().stream().filter(enchantCategory -> enchantCategory.getEnchantItemType() == CustomKitCategoryEnchantItemType.SWORD).collect(Collectors.toList())).open(event.getPlayer());
-            } else if (isArmorItem(event.getClickedItem())) {
-                new CustomKitCategoryMenu(this.kitName, event.getSlot(), this.categoriesMenu.getEnchantCategories().stream().filter(enchantCategory -> enchantCategory.getEnchantItemType() == CustomKitCategoryEnchantItemType.ARMOR).collect(Collectors.toList())).open(event.getPlayer());
+            if (this.isSwordItem(clickedItem)) {
+                new CustomKitCategoryMenu(this.kitName, event.getSlot(), this.categoriesMenu.getEnchantCategories().stream().filter(enchantCategory -> enchantCategory.getEnchantItemType() == CustomKitCategoryEnchantItemType.SWORD).collect(Collectors.toList())).open(player);
+            } else if (this.isArmorItem(clickedItem)) {
+                new CustomKitCategoryMenu(this.kitName, event.getSlot(), this.categoriesMenu.getEnchantCategories().stream().filter(enchantCategory -> enchantCategory.getEnchantItemType() == CustomKitCategoryEnchantItemType.ARMOR).collect(Collectors.toList())).open(player);
+            } else if (this.isAxeItem(clickedItem)) {
+                new CustomKitCategoryMenu(this.kitName, event.getSlot(), this.categoriesMenu.getEnchantCategories().stream().filter(enchantCategory -> enchantCategory.getEnchantItemType() == CustomKitCategoryEnchantItemType.AXE).collect(Collectors.toList())).open(player);
+            } else if (this.isPickaxeItem(clickedItem)) {
+                new CustomKitCategoryMenu(this.kitName, event.getSlot(), this.categoriesMenu.getEnchantCategories().stream().filter(enchantCategory -> enchantCategory.getEnchantItemType() == CustomKitCategoryEnchantItemType.PICKAXE).collect(Collectors.toList())).open(player);
             } else {
-                new CustomKitItemAmountMenu(this.kitName, event.getSlot(), event.getClickedItem().getType(), this.categoriesMenu.getItemStacks().keySet()).open(event.getPlayer());
+                new CustomKitItemAmountMenu(this.kitName, event.getSlot(), clickedItem.getType(), this.categoriesMenu.getItemStacks().keySet()).open(player);
             }
         }
     }
 
-    public boolean isSwordItem(ItemStack itemStack) {
+    private boolean isAxeItem(ItemStack itemStack) {
+        Material material = itemStack.getType();
+        return material == Material.DIAMOND_AXE || material == Material.GOLDEN_AXE || material == Material.IRON_AXE || material == Material.NETHERITE_AXE || material == Material.STONE_AXE || material == Material.WOODEN_AXE;
+    }
+
+    private boolean isPickaxeItem(ItemStack itemStack) {
+        Material material = itemStack.getType();
+        return material.name().contains("PICKAXE");
+    }
+
+    private boolean isSwordItem(ItemStack itemStack) {
         return itemStack.getType().name().contains("SWORD");
     }
 
-    public boolean isArmorItem(ItemStack itemStack) {
+    private boolean isArmorItem(ItemStack itemStack) {
         String nameMaterial = itemStack.getType().name();
         return nameMaterial.contains("ELYTRA") || nameMaterial.contains("SHIELD") || nameMaterial.contains("BOOTS") || nameMaterial.contains("LEGGINGS") || nameMaterial.contains("CHESTPLATE") || nameMaterial.contains("HELMET");
     }

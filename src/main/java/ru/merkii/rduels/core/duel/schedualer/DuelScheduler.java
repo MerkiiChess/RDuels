@@ -29,14 +29,12 @@ public class DuelScheduler extends BukkitRunnable {
     public void run() {
         --time;
         if (time <= 1) {
-            RDuels.getInstance().getLogger().info("duel stopped");
             DuelCore.INSTANCE.getDuelAPI().stopFight(this.duelFightModel, null, null);
             this.cancel();
         }
     }
 
     public void updateTime(DuelFightModel duelFightModel) {
-        RDuels.getInstance().getLogger().info("Time updated");
         this.time = TimeUtil.parseTime(RDuels.getInstance().getSettings().getDurationFight(), TimeUnit.MINUTES) / 1000L;
         this.duelFightModel = duelFightModel;
     }

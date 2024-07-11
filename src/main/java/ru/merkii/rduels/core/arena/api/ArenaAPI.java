@@ -2,8 +2,10 @@ package ru.merkii.rduels.core.arena.api;
 
 import org.jetbrains.annotations.Nullable;
 import ru.merkii.rduels.core.arena.model.ArenaModel;
+import ru.merkii.rduels.model.KitModel;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ArenaAPI {
 
@@ -63,5 +65,7 @@ public interface ArenaAPI {
      * @param arenaModel The arena model to restore.
      */
     void restoreArena(ArenaModel arenaModel);
+
+    Optional<ArenaModel> getArenaFromKit(KitModel kitModel);
 
 }

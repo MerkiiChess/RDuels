@@ -11,7 +11,7 @@ import java.util.List;
 @Getter
 public class ArenaSettings extends Config {
 
-    private List<ArenaModel> arenas = fastList(ArenaModel.builder().arenaName("default").displayName("Поле").onePosition(new EntityPosition("world", 50, 64, 50)).twoPosition(new EntityPosition("world", 50, 64, 52)).threePosition(new EntityPosition("world", 80, 64, 50)).fourPosition(new EntityPosition("world", 80, 64, 53)).breaking(false).schematic("NO_SCHEMATIC").material(Material.GRASS).build());
+    private List<ArenaModel> arenas = ArenaSettings.fastList(ArenaModel.builder().arenaName("default").displayName("Поле").onePosition(new EntityPosition("world", 50.0, 64.0, 50.0)).twoPosition(new EntityPosition("world", 50.0, 64.0, 52.0)).breaking(false).schematic("NO_SCHEMATIC").material(Material.GRASS).build());
 
 
 }

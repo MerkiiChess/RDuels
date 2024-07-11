@@ -115,6 +115,11 @@ public class ItemBuilder implements Cloneable {
         return this;
     }
 
+    public ItemBuilder setPotionEffect(String potionEffect, boolean extended, boolean upgraded) {
+        this.basePotionEffect = potionEffect + ":" + extended + ":" + upgraded;
+        return this;
+    }
+
     public ItemBuilder fromItemStack(ItemStack itemStack) {
         this.material = itemStack.getType().name();
         this.data = itemStack.getData().getData();

@@ -27,10 +27,11 @@ public class CustomKitItemAmountMenu extends VMenu {
         List<ItemBuilder> itemBuilders = items.stream().map(item -> item.setMaterial(material)).collect(Collectors.toList());
         for (ItemBuilder itemBuilder : itemBuilders) {
             if (itemBuilder.getMaterial().name().contains("POTION")) {
-                setItem(itemBuilder);
-            } else if (itemBuilder.getMaterial().getMaxStackSize() >= itemBuilder.getAmount()) {
-                setItem(itemBuilder);
+                this.setItem(itemBuilder);
+                continue;
             }
+            if (itemBuilder.getMaterial().getMaxStackSize() < itemBuilder.getAmount()) continue;
+            this.setItem(itemBuilder);
         }
     }
 

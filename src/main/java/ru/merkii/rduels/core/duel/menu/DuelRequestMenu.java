@@ -16,8 +16,8 @@ import java.util.List;
 public class DuelRequestMenu extends VMenu {
 
     private final DuelCore duelCore = DuelCore.INSTANCE;
-    private final DuelConfig duelConfig = duelCore.getDuelConfig();
-    private final DuelConfig.ChoiceKitMenu choiceKitMenu = duelConfig.getChoiceKitMenu();
+    private final DuelConfig duelConfig = this.duelCore.getDuelConfig();
+    private final DuelConfig.ChoiceKitMenu choiceKitMenu = this.duelConfig.getChoiceKitMenu();
     private final DuelRequest duelRequest;
     private final boolean ffa;
 
@@ -32,24 +32,21 @@ public class DuelRequestMenu extends VMenu {
     public void onClick(ClickEvent event) {
         Player player = event.getPlayer();
         ItemBuilder item = event.getItemBuilder();
-        // Настройка сколько раз будет бой
         if (this.choiceKitMenu.getRequestNumGames().getCountFightNum().containsKey(item)) {
             this.duelRequest.setNumGames(this.choiceKitMenu.getRequestNumGames().getCountFightNum().get(item));
             new DuelChoiceKitMenu(this.duelRequest, this.ffa).open(player);
             return;
         }
-        // Настройка серверного кита
         if (this.choiceKitMenu.getRequestKit().getKits().containsKey(item)) {
             this.duelRequest.setKitModel(this.choiceKitMenu.getRequestKit().getKits().get(item));
             new DuelChoiceKitMenu(this.duelRequest, this.ffa).open(player);
             return;
         }
-        // Настройки арены
         if (this.choiceKitMenu.getRequestArena().getArenas().containsKey(item)) {
             ArenaModel arenaModel = this.duelCore.getDuelAPI().getFreeArenaName(this.choiceKitMenu.getRequestArena().getArenas().get(item));
             if (arenaModel == null) {
-                inventory.setItem(event.getSlot(), this.choiceKitMenu.getRequestArena().getError().build());
-                Bukkit.getScheduler().runTaskLater(RDuels.getInstance(), () -> inventory.setItem(event.getSlot(), item.build()), 45L);
+                this.inventory.setItem(event.getSlot(), this.choiceKitMenu.getRequestArena().getError().build());
+                Bukkit.getScheduler().runTaskLater(RDuels.getInstance(), () -> this.inventory.setItem(event.getSlot(), item.build()), 45L);
                 return;
             }
             this.duelRequest.setArena(this.duelCore.getDuelAPI().getFreeArenaName(this.choiceKitMenu.getRequestArena().getArenas().get(item)));

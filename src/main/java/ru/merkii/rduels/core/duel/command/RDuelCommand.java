@@ -29,15 +29,15 @@ import java.util.HashMap;
 public class RDuelCommand extends BaseCommand {
 
     private final RDuels plugin = RDuels.getInstance();
-    private final Settings settings = plugin.getSettings();
+    private final Settings settings = this.plugin.getSettings();
     private final ArenaSettings arenas = ArenaCore.INSTANCE.getArenas();
     private final ArenaAPI arenaAPI = ArenaCore.INSTANCE.getArenaAPI();
     private final DuelAPI duelAPI = DuelCore.INSTANCE.getDuelAPI();
 
     @Default
-    @CommandPermission("r.duel")
-    @Description("Основная команда R-Duel")
-    @CommandCompletion("setlobby|arena|sign|savekit")
+    @CommandPermission(value="r.duel")
+    @Description(value="Основная команда R-Duel")
+    @CommandCompletion(value="setlobby|arena|sign|savekit")
     public void rDuel(CommandSender sender) {
         sender.sendMessage("§e/r-duel setlobby - Поставить лобби");
         sender.sendMessage("§e/r-duel arena - Создание арен");
@@ -45,28 +45,28 @@ public class RDuelCommand extends BaseCommand {
         sender.sendMessage("§e/r-duel savekit <название> - сохранить серверный кит");
     }
 
-    @Subcommand("setlobby")
-    @CommandPermission("r-duel.setlobby")
-    @Description("Поставить точку спавна")
+    @Subcommand(value="setlobby")
+    @CommandPermission(value="r-duel.setlobby")
+    @Description(value="Поставить точку спавна")
     public void setLobby(Player player) {
-        settings.getSpawns().add(new EntityPosition(player));
-        settings.save();
+        this.settings.getSpawns().add(new EntityPosition(player));
+        this.settings.save();
         player.sendMessage("Успешно поставлена новая точка спавна");
     }
 
-    @Subcommand("arena")
-    @CommandPermission("r-duel.arena")
-    @Description("Управление аренами")
-    @CommandCompletion("create|setspawn")
+    @Subcommand(value="arena")
+    @CommandPermission(value="r-duel.arena")
+    @Description(value="Управление аренами")
+    @CommandCompletion(value="create|setspawn")
     public void arena(CommandSender sender) {
         sender.sendMessage("/r-duels arena create [название_арены] [тип_боя] - создать новую арену");
         sender.sendMessage("r-duels arena setspawn [название_арены] [позиция_игрока] - создать/заменить позицию на арене");
     }
 
-    @Subcommand("arena create")
-    @CommandPermission("r-duel.arena.create")
-    @Description("Создание новой арены")
-    @CommandCompletion("<название_в_конфиге> <название_которое_видят_игроки> @materials")
+    @Subcommand(value="arena create")
+    @CommandPermission(value="r-duel.arena.create")
+    @Description(value="Создание новой арены")
+    @CommandCompletion(value="<название_в_конфиге> <название_которое_видят_игроки> @materials")
     public void arenaCreate(CommandSender sender, String name, String displayName, Material material) {
         if (material == null) {
             sender.sendMessage("Материал не найден");
@@ -76,29 +76,23 @@ public class RDuelCommand extends BaseCommand {
             sender.sendMessage("Такая арена уже существует");
             return;
         }
-        this.arenas.getArenas().add(ArenaModel.builder()
-                .material(material)
-                .arenaName(name)
-                .displayName(displayName)
-                .breaking(false)
-                .schematic("no")
-                .build());
+        this.arenas.getArenas().add(ArenaModel.builder().material(material).arenaName(name).displayName(displayName).breaking(false).schematic("no").build());
         this.arenas.save();
         sender.sendMessage("Создана арена: " + name);
     }
 
-    @Subcommand("sign")
-    @CommandPermission("r-duel.sign")
-    @Description("Управление табличками")
-    @CommandCompletion("set|remove")
+    @Subcommand(value="sign")
+    @CommandPermission(value="r-duel.sign")
+    @Description(value="Управление табличками")
+    @CommandCompletion(value="set|remove")
     public void sign(CommandSender sender) {
         sender.sendMessage("§e/r-duel sign set {1v1/2v2} {server/custom}");
         sender.sendMessage("§e/r-duel sign remove");
     }
 
-    @Subcommand("sign remove")
-    @CommandPermission("r-duel.sign.remove")
-    @Description("Удаление таблички")
+    @Subcommand(value="sign remove")
+    @CommandPermission(value="r-duel.sign.remove")
+    @Description(value="Удаление таблички")
     public void signRemove(Player player) {
         Block block = player.getTargetBlock(6);
         if (block == null || !(block.getState() instanceof Sign)) {
@@ -113,11 +107,52 @@ public class RDuelCommand extends BaseCommand {
         player.sendMessage("Табличка удалена");
     }
 
-    @Subcommand("sign set")
-    @CommandPermission("r-duel.sign.set")
-    @Description("Установка таблички")
-    @CommandCompletion("1v1|2v2 server|custom @duelkits")
-    public void signSet(Player player, String duelTypeStr, String kitTypeStr, @Default("null") String kitName) {
+    @Subcommand(value="sign set 1v1")
+    @CommandPermission(value="r-duel.sign.set")
+    @Description(value="Установка таблички боя 1в1")
+    @CommandCompletion(value="server|custom")
+    public void signSetOne(Player player) {
+        player.sendMessage("/r-duel sign set 1v1 server - серверный кит");
+        player.sendMessage("/r-duel sign set 1v1 custom - кастомный кит");
+    }
+
+    @Subcommand(value="sign set 2v2")
+    @CommandPermission(value="r-duel.sign.set")
+    @Description(value="Установить таблички боя 2в2")
+    @CommandCompletion(value="server|custom")
+    public void signSetTwo(Player player) {
+        player.sendMessage("/r-duel sign set 2v2 server - серверный кит");
+        player.sendMessage("/r-duel sign set 2v2 custom - кастомный кит");
+    }
+
+    @Subcommand(value="sign set 1v1 server")
+    @CommandPermission(value="r-due.sign.set")
+    @Description(value="Установка таблички боя 1в1 кастом кита")
+    @CommandCompletion(value="@duelkits")
+    public void signSetOneServer(Player player, String kitName) {
+        Block block = player.getTargetBlock(6);
+        if (block == null || !(block.getState() instanceof Sign)) {
+            player.sendMessage("Нужно смотреть на табличку");
+            return;
+        }
+        if (!this.isKitName(kitName)) {
+            player.sendMessage("Укажите название кита для серверного выбора");
+            return;
+        }
+        SignAPI signAPI = SignCore.INSTANCE.getSignAPI();
+        Sign sign = (Sign) block.getState();
+        DuelType duelType = DuelType.ONE;
+        DuelKitType duelKitType = DuelKitType.SERVER;
+        SignModel signModel = new SignModel(new BlockPosition(block.getLocation()), duelType, duelKitType, DuelCore.INSTANCE.getDuelAPI().getKitFromName(kitName));
+        signAPI.addSign(signModel);
+        signAPI.setSignWait(sign, 0, duelType.getSize(), duelKitType, kitName);
+        player.sendMessage("Успешно поставлена");
+    }
+
+    @Subcommand(value="sign set 1v1 custom")
+    @CommandPermission(value="r-due.sign.set")
+    @Description(value="Установка таблички боя 1в1 кастом кита")
+    public void signSetOneCustom(Player player) {
         Block block = player.getTargetBlock(6);
         if (block == null || !(block.getState() instanceof Sign)) {
             player.sendMessage("Нужно смотреть на табличку");
@@ -125,34 +160,77 @@ public class RDuelCommand extends BaseCommand {
         }
         SignAPI signAPI = SignCore.INSTANCE.getSignAPI();
         Sign sign = (Sign) block.getState();
-        DuelType duelType = DuelType.fromString(duelTypeStr);
-        if (duelType == null) {
-            player.sendMessage("Не найден тип боя. (1v1/2v2)");
+        DuelType duelType = DuelType.ONE;
+        DuelKitType duelKitType = DuelKitType.CUSTOM;
+        SignModel signModel = new SignModel(new BlockPosition(block.getLocation()), duelType, duelKitType, null);
+        signAPI.addSign(signModel);
+        signAPI.setSignWait(sign, 0, duelType.getSize(), duelKitType, "");
+        player.sendMessage("Успешно поставлена");
+    }
+
+    @Subcommand(value="sign set 2v2 server")
+    @CommandPermission(value="r-due.sign.set")
+    @Description(value="Установка таблички боя 1в1 кастом кита")
+    @CommandCompletion(value="@duelkits")
+    public void signSetTwoServer(Player player, String kitName) {
+        Block block = player.getTargetBlock(6);
+        if (block == null || !(block.getState() instanceof Sign)) {
+            player.sendMessage("Нужно смотреть на табличку");
             return;
         }
-        DuelKitType kitType = DuelKitType.fromString(kitTypeStr);
-        if (kitType == null) {
-            player.sendMessage("Не найден выбор кита. (server/custom)");
-            return;
-        }
-        if (kitType == DuelKitType.SERVER && !isKitName(kitName)) {
+        if (!this.isKitName(kitName)) {
             player.sendMessage("Укажите название кита для серверного выбора");
             return;
         }
-        SignModel signModel = new SignModel(new BlockPosition(block.getLocation()), duelType, kitType, kitName.equals("null") ? null : DuelCore.INSTANCE.getDuelAPI().getKitFromName(kitName));
+        SignAPI signAPI = SignCore.INSTANCE.getSignAPI();
+        Sign sign = (Sign)((Object)block.getState());
+        DuelType duelType = DuelType.TWO;
+        DuelKitType duelKitType = DuelKitType.SERVER;
+        SignModel signModel = new SignModel(new BlockPosition(block.getLocation()), duelType, duelKitType, DuelCore.INSTANCE.getDuelAPI().getKitFromName(kitName));
         signAPI.addSign(signModel);
-        signAPI.setSignWait(sign, 0, duelType.getSize(), kitType, kitName);
+        signAPI.setSignWait(sign, 0, duelType.getSize(), duelKitType, kitName);
         player.sendMessage("Успешно поставлена");
+    }
+
+    @Subcommand(value="sign set 2v2 custom")
+    @CommandPermission(value="r-due.sign.set")
+    @Description(value="Установка таблички боя 2в2 кастом кита")
+    public void signSetTwoCustom(Player player) {
+        Block block = player.getTargetBlock(6);
+        if (block == null || !(block.getState() instanceof Sign)) {
+            player.sendMessage("Нужно смотреть на табличку");
+            return;
+        }
+        SignAPI signAPI = SignCore.INSTANCE.getSignAPI();
+        Sign sign = (Sign) block.getState();
+        DuelType duelType = DuelType.TWO;
+        DuelKitType duelKitType = DuelKitType.CUSTOM;
+        SignModel signModel = new SignModel(new BlockPosition(block.getLocation()), duelType, duelKitType, null);
+        signAPI.addSign(signModel);
+        signAPI.setSignWait(sign, 0, duelType.getSize(), duelKitType, "");
+        player.sendMessage("Успешно поставлена");
+    }
+
+    @Subcommand(value="sign set")
+    @CommandPermission(value="r-duel.sign.set")
+    @Description(value="Установка таблички")
+    @CommandCompletion(value="1v1|2v2")
+    public void signSet(Player player) {
+        player.sendMessage("/r-duel sign set 1v1 - установить табличку 1 на 1");
+        player.sendMessage("/r-duel sign set 1v1 - установить табличку 2 на 2");
     }
 
     private boolean isKitName(String kitName) {
         return this.plugin.getKitConfig().getKits().stream().anyMatch(model -> model.getDisplayName().equalsIgnoreCase(kitName));
     }
 
-    @Subcommand("arena setspawn")
-    @CommandPermission("r-duel.arena.setspawn")
-    @Description("Установка точки спавна на арене")
-    @CommandCompletion("@arenas <позиция>")
+    /*
+     * Enabled aggressive block sorting
+     */
+    @Subcommand(value="arena setspawn")
+    @CommandPermission(value="r-duel.arena.setspawn")
+    @Description(value="Установка точки спавна на арене")
+    @CommandCompletion(value="@arenas <позиция>")
     public void arenaSetSpawn(CommandSender sender, String name, String position) {
         ArenaModel arenaModel = this.arenaAPI.getArenaFromName(name);
         if (arenaModel == null) {
@@ -161,31 +239,38 @@ public class RDuelCommand extends BaseCommand {
         }
         Player player = (Player) sender;
         EntityPosition pos = new EntityPosition(player);
-        if (arenaModel.isFfa()) {
-            if (TimeUtil.isInt(position)) {
-                int posNum = Integer.parseInt(position);
-                if (arenaModel.getFfaPositions() == null) {
-                    arenaModel.setFfaPositions(new HashMap<>());
-                }
-                arenaModel.getFfaPositions().put(posNum, pos);
-            } else if (position.equalsIgnoreCase("spectate")) {
-                arenaModel.setSpectatorPosition(pos);
-            } else {
+        if (position.equalsIgnoreCase("schematic")) {
+            arenaModel.setSchematicPosition(pos);
+        } else if (position.equalsIgnoreCase("spectate") || position.equalsIgnoreCase("spec") || position.equalsIgnoreCase("spectator")) {
+            arenaModel.setSpectatorPosition(pos);
+        } else if (arenaModel.isFfa()) {
+            if (!TimeUtil.isInt(position)) {
                 sender.sendMessage("Укажите или позицию ффа или spectate");
                 return;
             }
+            int posNum = Integer.parseInt(position);
+            if (arenaModel.getFfaPositions() == null) {
+                arenaModel.setFfaPositions(new HashMap<>());
+            }
+            arenaModel.getFfaPositions().put(posNum, pos);
         } else {
             if (!TimeUtil.isInt(position)) {
                 sender.sendMessage("Позиция должна быть числом");
                 return;
             }
             switch (Integer.parseInt(position)) {
-                case 1: arenaModel.setOnePosition(pos); break;
-                case 2: arenaModel.setTwoPosition(pos); break;
-                case 3: arenaModel.setThreePosition(pos); break;
-                case 4: arenaModel.setFourPosition(pos); break;
-                case 5: arenaModel.setSpectatorPosition(pos); break;
-                default: sender.sendMessage("Позиция должна быть от 1 до 5"); return;
+                case 1: {
+                    arenaModel.setOnePosition(pos);
+                    break;
+                }
+                case 2: {
+                    arenaModel.setTwoPosition(pos);
+                    break;
+                }
+                default: {
+                    sender.sendMessage("Позиция должна быть от 1 до 2");
+                    return;
+                }
             }
         }
         this.arenas.getArenas().remove(arenaModel);
@@ -194,18 +279,18 @@ public class RDuelCommand extends BaseCommand {
         sender.sendMessage("Локация добавлена");
     }
 
-    @Subcommand("reload")
-    @CommandPermission("r.duel.reload")
-    @Description("Перезагрузка конфигурации")
+    @Subcommand(value="reload")
+    @CommandPermission(value="r.duel.reload")
+    @Description(value="Перезагрузка конфигурации")
     public void reload(CommandSender sender) {
         this.plugin.reloadConfigs();
         sender.sendMessage("Конфиги перезагружены");
     }
 
-    @Subcommand("savekit")
-    @CommandPermission("r.duel.savekit")
-    @Description("Сохранение кита")
-    @CommandCompletion("<название>")
+    @Subcommand(value="savekit")
+    @CommandPermission(value="r.duel.savekit")
+    @Description(value="Сохранение кита")
+    @CommandCompletion(value="<название>")
     public void saveKit(CommandSender sender, String kitName) {
         if (this.duelAPI.isKitNameContains(kitName)) {
             sender.sendMessage("Такое название уже существует");
