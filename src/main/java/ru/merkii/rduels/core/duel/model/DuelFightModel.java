@@ -20,8 +20,10 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class DuelFightModel {
 
-    final Player sender;
-    final Player receiver;
+    @Setter
+    Player sender;
+    @Setter
+    Player receiver;
     final int numGames;
     final KitModel kitModel;
     final ArenaModel arenaModel;
@@ -40,6 +42,8 @@ public class DuelFightModel {
     Player player2;
     @Setter
     Player player4;
+    @Setter
+    boolean end;
 
     public DuelFightModel(Player sender, Player receiver, int numGames, KitModel kitModel, ArenaModel arenaModel) {
         this.sender = sender;
@@ -48,6 +52,7 @@ public class DuelFightModel {
         this.kitModel = kitModel;
         this.arenaModel = arenaModel;
         this.spectates = new ArrayList<>();
+        this.end = false;
     }
 
     @Nullable

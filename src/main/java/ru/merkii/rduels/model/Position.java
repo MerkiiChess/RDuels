@@ -7,8 +7,8 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.util.Vector;
 
-public interface Position extends Cloneable,
-        Comparable<Position> {
+public interface Position extends Cloneable, Comparable<Position> {
+
     default void setWorld(World world) {
         this.setWorld(world.getName());
     }

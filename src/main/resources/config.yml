@@ -86,6 +86,8 @@ messages:
     - "Вас пригласил игрок (player) в свое пати"
 
   signStartQueue: "Вы встали в очередь с китом (kit)"
+  signStopQueue: "Вы вышли с очереди"
+  signNoQueue: "Вы не находитесь в очереди"
   signServerReplacer: "Серверный кит: (kit)"
   signCustomReplacer: "Кастомный кит"
   signNoStart: "У вас не установлен кастомный кит!"

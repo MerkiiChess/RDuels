@@ -1,5 +1,6 @@
 package ru.merkii.rduels.core.duel.event;
 
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -14,8 +15,11 @@ public class DuelStartFightEvent extends Event {
 
     private static final HandlerList handlers = new HandlerList();
 
+    @Getter
     private final Player sender;
+    @Getter
     private final Player receiver;
+    @Getter
     private final DuelFightModel duelFightModel;
     private final PartyModel senderParty;
     private final PartyModel receiverParty;
@@ -47,18 +51,6 @@ public class DuelStartFightEvent extends Event {
     @Override
     public @NotNull HandlerList getHandlers() {
         return handlers;
-    }
-
-    public Player getSender() {
-        return sender;
-    }
-
-    public Player getReceiver() {
-        return receiver;
-    }
-
-    public DuelFightModel getDuelFightModel() {
-        return duelFightModel;
     }
 
     @Nullable

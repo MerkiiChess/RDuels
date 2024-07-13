@@ -27,12 +27,37 @@ public class LeaveCommand extends BaseCommand {
             player.sendMessage(this.messageConfiguration.getMessage("duelNoFighting"));
             return;
         }
-        if (player.getGameMode() == GameMode.SPECTATOR) {
+        if (player.getGameMode() == GameMode.SPECTATOR || fightModel.isEnd()) {
             player.sendMessage(this.messageConfiguration.getMessage("noStopFight"));
+            return;
+        }
+        if (fightModel.getPlayer2() != null || fightModel.getPlayer4() != null) {
+            deleteFromFight(player, fightModel);
             return;
         }
         Player winner = this.duelAPI.getWinnerFromFight(fightModel, player);
         this.duelAPI.stopFight(fightModel, winner, this.duelAPI.getLoserFromFight(fightModel, winner));
+    }
+
+    private void deleteFromFight(Player player, DuelFightModel fightModel) {
+        if (fightModel.getSender() != null && fightModel.getSender().equals(player)) {
+            fightModel.setSender(null);
+        } else if (fightModel.getReceiver() != null && fightModel.getReceiver().equals(player)) {
+            fightModel.setReceiver(null);
+        } else if (fightModel.getPlayer2() != null && fightModel.getPlayer2().equals(player)) {
+            fightModel.setPlayer2(null);
+        } else if (fightModel.getPlayer4() != null && fightModel.getPlayer4().equals(player)) {
+            fightModel.setPlayer4(null);
+        }
+        if (fightModel.getSender() == null && fightModel.getPlayer2() == null) {
+            Player winner = fightModel.getReceiver() == null ? fightModel.getPlayer4() : fightModel.getReceiver();
+            this.duelAPI.stopFight(fightModel, winner, this.duelAPI.getLoserFromFight(fightModel, winner));
+            return;
+        }
+        if (fightModel.getReceiver() == null && fightModel.getPlayer4() == null) {
+            Player winner = fightModel.getSender() == null ? fightModel.getPlayer2() : fightModel.getSender();
+            this.duelAPI.stopFight(fightModel, winner, this.duelAPI.getLoserFromFight(fightModel, winner));
+        }
     }
 
 }

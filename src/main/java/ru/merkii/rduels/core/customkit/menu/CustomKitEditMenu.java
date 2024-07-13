@@ -69,6 +69,7 @@ public class CustomKitEditMenu extends VMenu {
     public void onClick(ClickEvent event) {
         ItemStack clickedItem = event.getClickedItem();
         Player player = event.getPlayer();
+        int slot = event.getSlot();
         if (clickedItem.equals(this.editMenu.getExit().build())) {
             new CustomKitCreateMenu(player).open(player);
             return;
@@ -82,7 +83,7 @@ public class CustomKitEditMenu extends VMenu {
             if (event.isRightClick()) {
                 return;
             }
-            if (event.getItemBuilder().equals(this.editMenu.getNoSlotChestplate()) || event.getItemBuilder().equals(this.editMenu.getNoSlotBoots()) || event.getItemBuilder().equals(this.editMenu.getNoSlotHelmet()) || event.getItemBuilder().equals(this.editMenu.getNoSlotLeggings())) {
+            if (slot == 39 || slot == 38 || slot == 37 || slot == 36) {
                 new CustomKitCategoryMenu(this.categoriesMenu.getCategories().stream().filter(customKitCategory -> customKitCategory.getItem().getMaterial() == this.categoriesMenu.getMaterialArmorCategory()).findFirst().get(), this.kitName, event.getSlot()).open(player);
                 return;
             }
@@ -101,20 +102,50 @@ public class CustomKitEditMenu extends VMenu {
                 new CustomKitCategoryMenu(this.kitName, event.getSlot(), this.categoriesMenu.getEnchantCategories().stream().filter(enchantCategory -> enchantCategory.getEnchantItemType() == CustomKitCategoryEnchantItemType.AXE).collect(Collectors.toList())).open(player);
             } else if (this.isPickaxeItem(clickedItem)) {
                 new CustomKitCategoryMenu(this.kitName, event.getSlot(), this.categoriesMenu.getEnchantCategories().stream().filter(enchantCategory -> enchantCategory.getEnchantItemType() == CustomKitCategoryEnchantItemType.PICKAXE).collect(Collectors.toList())).open(player);
+            } else if (isBow(clickedItem)) {
+                new CustomKitCategoryMenu(this.kitName, event.getSlot(), this.categoriesMenu.getEnchantCategories().stream().filter(enchantCategory -> enchantCategory.getEnchantItemType() == CustomKitCategoryEnchantItemType.BOW).collect(Collectors.toList())).open(player);
+            } else if (isCrossBow(clickedItem)) {
+                new CustomKitCategoryMenu(this.kitName, event.getSlot(), this.categoriesMenu.getEnchantCategories().stream().filter(enchantCategory -> enchantCategory.getEnchantItemType() == CustomKitCategoryEnchantItemType.CROSSBOW).collect(Collectors.toList())).open(player);
+            } else if (isTrident(clickedItem)) {
+                new CustomKitCategoryMenu(this.kitName, event.getSlot(), this.categoriesMenu.getEnchantCategories().stream().filter(enchantCategory -> enchantCategory.getEnchantItemType() == CustomKitCategoryEnchantItemType.TRIDENT).collect(Collectors.toList())).open(player);
+            } else if (isShovel(clickedItem)) {
+                new CustomKitCategoryMenu(this.kitName, event.getSlot(), this.categoriesMenu.getEnchantCategories().stream().filter(enchantCategory -> enchantCategory.getEnchantItemType() == CustomKitCategoryEnchantItemType.SHOVEL).collect(Collectors.toList())).open(player);
+            } else if (isFishingRod(clickedItem)) {
+                new CustomKitCategoryMenu(this.kitName, event.getSlot(), this.categoriesMenu.getEnchantCategories().stream().filter(enchantCategory -> enchantCategory.getEnchantItemType() == CustomKitCategoryEnchantItemType.FISHING_ROD).collect(Collectors.toList())).open(player);
             } else {
                 new CustomKitItemAmountMenu(this.kitName, event.getSlot(), clickedItem.getType(), this.categoriesMenu.getItemStacks().keySet()).open(player);
             }
         }
     }
 
+    private boolean isBow(ItemStack itemStack) {
+        return itemStack.getType() == Material.BOW || itemStack.getType() == Material.BOWL;
+    }
+
+    private boolean isShovel(ItemStack itemStack) {
+        return itemStack.getType().name().endsWith("_SHOVEL");
+    }
+
+    private boolean isFishingRod(ItemStack itemStack) {
+        return itemStack.getType().name().endsWith("FISHING_ROD");
+    }
+
+    private boolean isCrossBow(ItemStack itemStack) {
+        return itemStack.getType() == Material.CROSSBOW;
+    }
+
     private boolean isAxeItem(ItemStack itemStack) {
         Material material = itemStack.getType();
-        return material == Material.DIAMOND_AXE || material == Material.GOLDEN_AXE || material == Material.IRON_AXE || material == Material.NETHERITE_AXE || material == Material.STONE_AXE || material == Material.WOODEN_AXE;
+        return material.name().endsWith("_AXE");
     }
 
     private boolean isPickaxeItem(ItemStack itemStack) {
         Material material = itemStack.getType();
-        return material.name().contains("PICKAXE");
+        return material.name().endsWith("_PICKAXE");
+    }
+
+    private boolean isTrident(ItemStack itemStack) {
+        return itemStack.getType() == Material.TRIDENT;
     }
 
     private boolean isSwordItem(ItemStack itemStack) {

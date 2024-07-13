@@ -1,22 +1,18 @@
 package ru.merkii.rduels.util;
 
 import org.jetbrains.annotations.NotNull;
-
 import java.util.*;
 
 public class LinkedSet<E> extends AbstractSet<E> {
 
     private static class LinkedElement<E> {
         E value;
-
         boolean exists;
-
         LinkedElement<E> prev;
         LinkedElement<E> next;
     }
 
     private final Map<E, LinkedElement<E>> map = new HashMap<>();
-
     private LinkedElement<E> placeholder = new LinkedElement<>();
     private LinkedElement<E> head = placeholder;
 
@@ -27,48 +23,39 @@ public class LinkedSet<E> extends AbstractSet<E> {
     public int size() { return map.size(); }
 
     @Override
-    public boolean contains(Object o) { return map.containsKey(o); }
+    public boolean contains(Object o) {
+        return map.containsKey(o);
+    }
 
-    // здесь будут методы для добавления, удаления, итерирования
     @Override
     public boolean add(E e) {
         LinkedElement<E> element = map.putIfAbsent(e, placeholder);
-
         if (element != null) {
             return false;
         }
-
         element = placeholder;
         element.exists = true;
         element.value = e;
-
         placeholder = new LinkedElement<>();
         placeholder.prev = element;
-
         element.next = placeholder;
-
         return true;
     }
 
     @Override
     public boolean remove(Object o) {
         LinkedElement<E> removedElement = map.remove(o);
-
         if (removedElement == null) {
             return false;
         }
-
         removeElementFromLinkedList(removedElement);
-
         return true;
     }
 
     private void removeElementFromLinkedList(LinkedElement<E> element) {
         element.exists = false;
         element.value = null;
-
         element.next.prev = element.prev;
-
         if (element.prev != null) {
             element.prev.next = element.next;
             element.prev = null;
@@ -85,14 +72,11 @@ public class LinkedSet<E> extends AbstractSet<E> {
     private class ElementIterator implements Iterator<E> {
         LinkedElement<E> next = head;
         LinkedElement<E> current = null;
-
         LinkedElement<E> findNext() {
             LinkedElement<E> n = next;
-
             while (!n.exists && n.next != null) {
                 next = n = n.next;
             }
-
             return n;
         }
 
@@ -104,14 +88,11 @@ public class LinkedSet<E> extends AbstractSet<E> {
         @Override
         public E next() {
             LinkedElement<E> n = findNext();
-
             if (!n.exists) {
                 throw new NoSuchElementException();
             }
-
             current = n;
             next = n.next;
-
             return n.value;
         }
 
@@ -120,7 +101,6 @@ public class LinkedSet<E> extends AbstractSet<E> {
             if (current == null) {
                 throw new IllegalStateException();
             }
-
             if (map.remove(current.value, current)) {
                 removeElementFromLinkedList(current);
             } else {
@@ -128,5 +108,4 @@ public class LinkedSet<E> extends AbstractSet<E> {
             }
         }
     }
-
 }

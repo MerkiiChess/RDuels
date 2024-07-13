@@ -7,6 +7,7 @@ import org.bukkit.entity.*;
 import org.bukkit.inventory.*;
 import org.jetbrains.annotations.Nullable;
 import ru.merkii.rduels.RDuels;
+import ru.merkii.rduels.api.Duel;
 import ru.merkii.rduels.builder.ItemBuilder;
 import ru.merkii.rduels.config.messages.MessageConfiguration;
 import ru.merkii.rduels.config.settings.*;
@@ -52,7 +53,7 @@ public class DuelAPIProvider implements DuelAPI {
     @Override
     public boolean isFightPlayer(Player player) {
         for (DuelFightModel fightModel : this.fightBucket.getDuelFights()) {
-            if (fightModel.getArenaModel().isFfa() && (fightModel.getReceiverParty() != null && fightModel.getSenderParty() != null ? fightModel.getReceiverParty().getPlayers().contains(player.getUniqueId()) || Objects.requireNonNull(fightModel.getSenderParty()).getPlayers().contains(player.getUniqueId()) : fightModel.getPlayer2().equals(player) || fightModel.getPlayer4().equals(player))) {
+            if (fightModel.getArenaModel().isFfa() && (fightModel.getReceiverParty() != null && fightModel.getSenderParty() != null ? fightModel.getReceiverParty().getPlayers().contains(player.getUniqueId()) || Objects.requireNonNull(fightModel.getSenderParty()).getPlayers().contains(player.getUniqueId()) : fightModel.getPlayer2() != null && fightModel.getPlayer2().equals(player) || fightModel.getPlayer4() != null && fightModel.getPlayer4().equals(player))) {
                 return true;
             }
             if (!fightModel.getReceiver().equals(player) && !fightModel.getSender().equals(player)) continue;
@@ -65,7 +66,7 @@ public class DuelAPIProvider implements DuelAPI {
     @Nullable
     public DuelFightModel getFightModelFromPlayer(Player player) {
         for (DuelFightModel fightModel : this.fightBucket.getDuelFights()) {
-            if (fightModel.getArenaModel().isFfa() && (fightModel.getReceiverParty() != null && fightModel.getSenderParty() != null ? fightModel.getReceiverParty().getPlayers().contains(player.getUniqueId()) || Objects.requireNonNull(fightModel.getSenderParty()).getPlayers().contains(player.getUniqueId()) : fightModel.getPlayer2().equals(player) || fightModel.getPlayer4().equals(player))) {
+            if (fightModel.getArenaModel().isFfa() && (fightModel.getReceiverParty() != null && fightModel.getSenderParty() != null ? fightModel.getReceiverParty().getPlayers().contains(player.getUniqueId()) || Objects.requireNonNull(fightModel.getSenderParty()).getPlayers().contains(player.getUniqueId()) : fightModel.getPlayer2() != null && fightModel.getPlayer2().equals(player) || fightModel.getPlayer4() != null && fightModel.getPlayer4().equals(player))) {
                 return fightModel;
             }
             if (!fightModel.getReceiver().getUniqueId().equals(player.getUniqueId()) && !fightModel.getSender().getUniqueId().equals(player.getUniqueId())) continue;
@@ -84,7 +85,7 @@ public class DuelAPIProvider implements DuelAPI {
         sender.sendMessage(this.messageConfiguration.getMessage("requestSender").replace("(player)", duelRequest.getReceiver().getName()));
         Component accept = Component.text(this.messageConfiguration.getMessage("acceptButton")).clickEvent(ClickEvent.clickEvent(ClickEvent.Action.RUN_COMMAND, "/duel yes " + sender.getName()));
         Component decline = Component.text(this.messageConfiguration.getMessage("declineButton")).clickEvent(ClickEvent.clickEvent(ClickEvent.Action.RUN_COMMAND, "/duel no " + sender.getName()));
-        this.messageConfiguration.getMessages("requestReceiver").stream().map(str -> str.replace("(player)", duelRequest.getSender().getName())).map(str -> str.replace("(kit)", duelRequest.getDuelKit() == DuelKitType.CUSTOM ? duelRequest.getDuelKit().getMessage() : duelRequest.getKitModel().getDisplayName())).map(str -> str.replace("(numGames)", duelRequest.getNumGames() + "")).map(str -> str.replace("(arena)", duelRequest.getArena().getArenaName())).forEach(text -> duelRequest.getReceiver().sendMessage((String)text));
+        this.messageConfiguration.getMessages("requestReceiver").stream().map(str -> str.replace("(player)", duelRequest.getSender().getName())).map(str -> str.replace("(kit)", duelRequest.getDuelKit() == DuelKitType.CUSTOM ? duelRequest.getDuelKit().getMessage() : duelRequest.getKitModel().getDisplayName())).map(str -> str.replace("(numGames)", duelRequest.getNumGames() + "")).map(str -> str.replace("(arena)", duelRequest.getArena().getArenaName())).map(ColorUtil::color).forEach(text -> duelRequest.getReceiver().sendMessage(text));
         Component message = (Component.text().append(accept).append(Component.text(" ")).append(decline)).asComponent();
         receiver.sendMessage(message);
     }
@@ -96,9 +97,8 @@ public class DuelAPIProvider implements DuelAPI {
 
     @Override
     public void startFight(DuelRequest duelRequest) {
-        Player receiver;
         Player sender = duelRequest.getSenderParty() == null ? duelRequest.getSender() : Bukkit.getPlayer(duelRequest.getSenderParty().getOwner());
-        Player player = receiver = duelRequest.getReceiverParty() == null ? duelRequest.getReceiver() : Bukkit.getPlayer(duelRequest.getReceiverParty().getOwner());
+        Player receiver = duelRequest.getReceiverParty() == null ? duelRequest.getReceiver() : Bukkit.getPlayer(duelRequest.getReceiverParty().getOwner());
         assert (sender != null);
         assert (receiver != null);
         ArenaModel arenaModel = duelRequest.getArena();
@@ -147,6 +147,7 @@ public class DuelAPIProvider implements DuelAPI {
                 return;
             }
         }
+        Duel.getArenaAPI().restoreArena(arenaModel);
         DuelFightModel duelFightModel = new DuelFightModel(sender, receiver, duelRequest.getNumGames(), duelRequest.getKitModel(), arenaModel);
         if (duelRequest.getSignModel() != null) {
             duelFightModel.setSignModel(duelRequest.getSignModel());

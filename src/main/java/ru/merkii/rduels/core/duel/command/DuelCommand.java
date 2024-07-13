@@ -29,12 +29,11 @@ public class DuelCommand extends BaseCommand {
     @CommandCompletion("@allplayers")
     @Description("Вызвать игрока на дуэль.")
     public void onDuel(CommandSender sender, @Name("игрок") String receiverName) {
-        if (!(sender instanceof Player)) {
+        if (!(sender instanceof Player senderPlayer)) {
             sender.sendMessage("Эта команда доступна только в игре.");
             return;
         }
 
-        Player senderPlayer = (Player) sender;
         Player receiver = Bukkit.getPlayerExact(receiverName);
 
         if (receiver == null) {

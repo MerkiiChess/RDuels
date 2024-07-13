@@ -5,6 +5,11 @@ public enum CustomKitCategoryEnchantItemType {
     SWORD,
     AXE,
     PICKAXE,
+    CROSSBOW,
+    BOW,
+    TRIDENT,
+    SHOVEL,
+    FISHING_ROD,
     ARMOR;
 
 }

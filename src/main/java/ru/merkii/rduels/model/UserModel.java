@@ -6,6 +6,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
+import org.bukkit.Bukkit;
+
+import java.util.UUID;
 
 @DatabaseTable(tableName = "rduels")
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -17,6 +20,8 @@ public class UserModel {
     int id;
     @DatabaseField
     String UUID;
+    @DatabaseField
+    String name;
     @DatabaseField
     int winRounds;
     @DatabaseField
@@ -32,8 +37,9 @@ public class UserModel {
 
     public UserModel() {}
 
-    public UserModel(String UUID, int winRounds, int allRounds, int kills, int death, boolean night, boolean day) {
+    public UserModel(String UUID, String name, int winRounds, int allRounds, int kills, int death, boolean night, boolean day) {
         this.UUID = UUID;
+        this.name = name;
         this.winRounds = winRounds;
         this.allRounds = allRounds;
         this.kills = kills;
@@ -41,7 +47,7 @@ public class UserModel {
     }
 
     public static UserModel create(String UUID, int winRounds, int allRounds, int kills, int death) {
-        return new UserModel(UUID, winRounds, allRounds, kills, death, false, false);
+        return new UserModel(UUID, Bukkit.getOfflinePlayer(java.util.UUID.fromString(UUID)).getName(), winRounds, allRounds, kills, death, false, false);
     }
 
 }

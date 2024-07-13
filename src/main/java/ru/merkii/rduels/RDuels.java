@@ -8,6 +8,7 @@ import lombok.Getter;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.merkii.rduels.command.DayCommand;
 import ru.merkii.rduels.command.NightCommand;
@@ -100,6 +101,7 @@ public final class RDuels extends JavaPlugin {
         }
         this.settings = loadSettings("config.json", Settings.class);
         this.kitConfig = loadSettings("kitConfig.json", KitConfig.class);
+        this.saveConfig();
     }
 
     public void debug(String str) {
@@ -109,8 +111,9 @@ public final class RDuels extends JavaPlugin {
     }
 
     public void registerListeners(Listener... listeners) {
+        PluginManager pluginManager = this.getServer().getPluginManager();
         for (Listener listener : listeners) {
-            this.getServer().getPluginManager().registerEvents(listener, this);
+            pluginManager.registerEvents(listener, this);
         }
     }
 

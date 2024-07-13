@@ -174,7 +174,7 @@ public class RDuelCommand extends BaseCommand {
     @CommandCompletion(value="@duelkits")
     public void signSetTwoServer(Player player, String kitName) {
         Block block = player.getTargetBlock(6);
-        if (block == null || !(block.getState() instanceof Sign)) {
+        if (block == null || !(block.getState() instanceof Sign sign)) {
             player.sendMessage("Нужно смотреть на табличку");
             return;
         }
@@ -183,7 +183,6 @@ public class RDuelCommand extends BaseCommand {
             return;
         }
         SignAPI signAPI = SignCore.INSTANCE.getSignAPI();
-        Sign sign = (Sign)((Object)block.getState());
         DuelType duelType = DuelType.TWO;
         DuelKitType duelKitType = DuelKitType.SERVER;
         SignModel signModel = new SignModel(new BlockPosition(block.getLocation()), duelType, duelKitType, DuelCore.INSTANCE.getDuelAPI().getKitFromName(kitName));
@@ -197,12 +196,11 @@ public class RDuelCommand extends BaseCommand {
     @Description(value="Установка таблички боя 2в2 кастом кита")
     public void signSetTwoCustom(Player player) {
         Block block = player.getTargetBlock(6);
-        if (block == null || !(block.getState() instanceof Sign)) {
+        if (block == null || !(block.getState() instanceof Sign sign)) {
             player.sendMessage("Нужно смотреть на табличку");
             return;
         }
         SignAPI signAPI = SignCore.INSTANCE.getSignAPI();
-        Sign sign = (Sign) block.getState();
         DuelType duelType = DuelType.TWO;
         DuelKitType duelKitType = DuelKitType.CUSTOM;
         SignModel signModel = new SignModel(new BlockPosition(block.getLocation()), duelType, duelKitType, null);

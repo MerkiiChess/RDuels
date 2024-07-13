@@ -7,7 +7,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -29,9 +28,9 @@ import ru.merkii.rduels.core.sign.model.SignModel;
 import ru.merkii.rduels.core.sign.model.SignQueueModel;
 import ru.merkii.rduels.core.sign.util.SignUtil;
 import ru.merkii.rduels.model.BlockPosition;
+import ru.merkii.rduels.model.KitModel;
 import ru.merkii.rduels.util.ColorUtil;
 import ru.merkii.rduels.util.PlayerUtil;
-
 import java.util.Objects;
 import java.util.Optional;
 
@@ -338,7 +337,8 @@ public class SignListener implements Listener {
                 this.setPlayerQueue(signQueueModel, player2, null);
             }
             Sign sign = (Sign) player.getWorld().getBlockAt(signQueueModel.getSignModel().getBlockPosition().toLocation()).getState();
-            this.signAPI.setSignWait(sign, this.getSizeQueue(signQueueModel), signQueueModel.getSignModel().getDuelType().getSize(), signQueueModel.getSignModel().getDuelKit(), signQueueModel.getSignModel().getKitModel().getDisplayName());
+            KitModel kitModel = signQueueModel.getSignModel().getKitModel();
+            this.signAPI.setSignWait(sign, this.getSizeQueue(signQueueModel), signQueueModel.getSignModel().getDuelType().getSize(), signQueueModel.getSignModel().getDuelKit(), kitModel != null ? this.messageConfiguration.getMessage("signServerReplacer").replace("(kit)", kitModel.getDisplayName()) : this.messageConfiguration.getMessage("signCustomReplacer"));
         });
     }
 

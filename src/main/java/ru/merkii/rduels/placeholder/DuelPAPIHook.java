@@ -21,11 +21,11 @@ public class DuelPAPIHook extends PlaceholderExpansion {
             case "death": return String.valueOf(this.databaseManager.getDeaths(player).join());
             case "wins": return String.valueOf(this.databaseManager.getWinRounds(player).join());
             case "all_rounds": return String.valueOf(this.databaseManager.getAllRounds(player).join() - this.databaseManager.getWinRounds(player).join());
-            case "opponent": return !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : duelAPI.getOpponentFromFight(player).getName();
-            case "time": return !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : TimeUtil.getTimeInMaxUnit(duelAPI.getFightModelFromPlayer(player).getBukkitTask().getTime() * 1000L);
-            case "count_rounds": return !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : String.valueOf(duelAPI.getFightModelFromPlayer(player).getNumGames());
-            case "played_count_rounds": return !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : String.valueOf(duelAPI.getFightModelFromPlayer(player).getCountNumGames());
-            case "kit": return !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : duelAPI.getFightModelFromPlayer(player).getKitModel().getDisplayName();
+            case "opponent": return player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : duelAPI.getOpponentFromFight(player).getName();
+            case "time": return player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : TimeUtil.getTimeInMaxUnit(duelAPI.getFightModelFromPlayer(player).getBukkitTask().getTime() * 1000L);
+            case "count_rounds": return player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : String.valueOf(duelAPI.getFightModelFromPlayer(player).getNumGames());
+            case "played_count_rounds": return player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : String.valueOf(duelAPI.getFightModelFromPlayer(player).getCountNumGames());
+            case "kit": return player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : duelAPI.getFightModelFromPlayer(player).getKitModel().getDisplayName();
         }
         return null;
     }

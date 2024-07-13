@@ -30,16 +30,17 @@ public class PartyListener implements Listener {
         if (!this.partyAPI.isPartyPlayer(player)) {
             return;
         }
-        event.setCancelled(true);
         PlayerInventory inventory = player.getInventory();
         ItemStack mainHand = inventory.getItemInMainHand();
         ItemStack offHand = inventory.getItemInOffHand();
         if (mainHand.equals(this.settings.getFightParty().build()) || offHand.equals(this.settings.getFightParty().build())) {
             new PartyFightMenu().open(player);
+            event.setCancelled(true);
             return;
         }
         if (mainHand.equals(this.settings.getLeaveParty().build()) || offHand.equals(this.settings.getLeaveParty().build())) {
             this.partyAPI.leaveParty(player);
+            event.setCancelled(true);
         }
     }
 

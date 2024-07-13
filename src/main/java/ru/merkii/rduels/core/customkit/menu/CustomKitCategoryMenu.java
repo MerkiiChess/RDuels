@@ -85,7 +85,10 @@ public class CustomKitCategoryMenu extends VMenu {
     }
 
     private Optional<CustomKitCategory> getCategoryFromSlot(int slot) {
-        return this.categories.stream().filter(category -> category.getItem().getSlot() == slot).findFirst();
+        return this.categories
+                .stream()
+                .filter(category -> category.getItem().getSlot() == slot)
+                .findFirst();
     }
 
 }

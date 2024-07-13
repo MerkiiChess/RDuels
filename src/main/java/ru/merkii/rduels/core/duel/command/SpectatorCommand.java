@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import ru.merkii.rduels.RDuels;
+import ru.merkii.rduels.api.Duel;
 import ru.merkii.rduels.config.messages.MessageConfiguration;
 import ru.merkii.rduels.core.duel.DuelCore;
 import ru.merkii.rduels.core.duel.api.DuelAPI;
@@ -28,6 +29,10 @@ public class SpectatorCommand extends BaseCommand {
             return;
         }
         Player player = (Player) sender;
+        if (Duel.getDuelPlayer(player).isFight()) {
+            player.sendMessage(this.messageConfiguration.getMessage("duelCommandIsBlocked"));
+            return;
+        }
         if (targetName == null) {
             if (!this.duelAPI.isSpectate(player)) {
                 player.sendMessage(this.messageConfiguration.getMessage("duelSpecArgs"));
