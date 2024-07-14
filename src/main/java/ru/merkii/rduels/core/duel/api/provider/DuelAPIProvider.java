@@ -656,8 +656,8 @@ public class DuelAPIProvider implements DuelAPI {
 
     @Override
     public KitModel getRandomKit() {
-        ArrayList<KitModel> kit = new ArrayList<KitModel>(this.duelCore.getDuelConfig().getChoiceKitMenu().getRequestKit().getKits().values());
-        return (KitModel)kit.get(ThreadLocalRandom.current().nextInt(kit.size()));
+        ArrayList<KitModel> kit = new ArrayList<>(this.duelCore.getDuelConfig().getChoiceKitMenu().getRequestKit().getKits().values());
+        return kit.get(ThreadLocalRandom.current().nextInt(kit.size()));
     }
 
     @Override

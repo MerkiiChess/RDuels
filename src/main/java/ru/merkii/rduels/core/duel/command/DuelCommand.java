@@ -65,13 +65,10 @@ public class DuelCommand extends BaseCommand {
     @CommandCompletion("@allplayers")
     @Description("Принять вызов на дуэль.")
     public void onYes(CommandSender sender, @Name("игрок") String senderName) {
-        if (!(sender instanceof Player)) {
+        if (!(sender instanceof Player receiver)) {
             sender.sendMessage("Эта команда доступна только в игре.");
             return;
         }
-
-        Player receiver = (Player) sender;
-        Player senderPlayer = Bukkit.getPlayerExact(senderName);
 
         List<DuelRequest> requests = duelAPI.getRequestsFromReceiver(receiver);
         if (requests == null || requests.isEmpty()) {
@@ -79,17 +76,13 @@ public class DuelCommand extends BaseCommand {
             return;
         }
 
+        Player senderPlayer = Bukkit.getPlayerExact(senderName);
+
         if (senderPlayer == null) {
             sender.sendMessage(messageConfiguration.getMessage("duelOffline").replace("(player)", senderName));
             return;
         }
-        DuelRequest request = null;
-        for (DuelRequest requestParser : requests) {
-            if (requestParser.getSender().getName().equalsIgnoreCase(senderPlayer.getName())) {
-                request = requestParser;
-                break;
-            }
-        }
+        DuelRequest request = requests.stream().filter(duelRequest -> duelRequest.getSender().getUniqueId().equals(senderPlayer.getUniqueId())).findFirst().orElse(null);
 
         if (request == null) {
             sender.sendMessage(messageConfiguration.getMessage("duelPlayerNotRequest").replace("(player)", senderPlayer.getName()));
@@ -116,12 +109,10 @@ public class DuelCommand extends BaseCommand {
     @CommandCompletion("@allplayers")
     @Description("Отклонить вызов на дуэль.")
     public void onNo(CommandSender sender, @Name("игрок") String senderName) {
-        if (!(sender instanceof Player)) {
+        if (!(sender instanceof Player receiver)) {
             sender.sendMessage("Эта команда доступна только в игре.");
             return;
         }
-
-        Player receiver = (Player) sender;
 
         List<DuelRequest> requests = duelAPI.getRequestsFromReceiver(receiver);
         if (requests == null || requests.isEmpty()) {
@@ -135,13 +126,7 @@ public class DuelCommand extends BaseCommand {
             sender.sendMessage(messageConfiguration.getMessage("duelOffline").replace("(player)", senderName));
             return;
         }
-        DuelRequest request = null;
-        for (DuelRequest requestParser : requests) {
-            if (requestParser.getSender().getName().equalsIgnoreCase(senderPlayer.getName())) {
-                request = requestParser;
-                break;
-            }
-        }
+        DuelRequest request = requests.stream().filter(duelRequest -> duelRequest.getSender().getUniqueId().equals(senderPlayer.getUniqueId())).findFirst().orElse(null);
 
         if (request == null) {
             sender.sendMessage(messageConfiguration.getMessage("duelPlayerNotRequest").replace("(player)", senderPlayer.getName()));

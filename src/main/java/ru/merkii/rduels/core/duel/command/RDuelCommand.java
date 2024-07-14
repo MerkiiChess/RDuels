@@ -126,12 +126,12 @@ public class RDuelCommand extends BaseCommand {
     }
 
     @Subcommand(value="sign set 1v1 server")
-    @CommandPermission(value="r-due.sign.set")
+    @CommandPermission(value="r-duel.sign.set")
     @Description(value="Установка таблички боя 1в1 кастом кита")
     @CommandCompletion(value="@duelkits")
     public void signSetOneServer(Player player, String kitName) {
         Block block = player.getTargetBlock(6);
-        if (block == null || !(block.getState() instanceof Sign)) {
+        if (block == null || !(block.getState() instanceof Sign sign)) {
             player.sendMessage("Нужно смотреть на табличку");
             return;
         }
@@ -140,7 +140,6 @@ public class RDuelCommand extends BaseCommand {
             return;
         }
         SignAPI signAPI = SignCore.INSTANCE.getSignAPI();
-        Sign sign = (Sign) block.getState();
         DuelType duelType = DuelType.ONE;
         DuelKitType duelKitType = DuelKitType.SERVER;
         SignModel signModel = new SignModel(new BlockPosition(block.getLocation()), duelType, duelKitType, DuelCore.INSTANCE.getDuelAPI().getKitFromName(kitName));
@@ -150,7 +149,7 @@ public class RDuelCommand extends BaseCommand {
     }
 
     @Subcommand(value="sign set 1v1 custom")
-    @CommandPermission(value="r-due.sign.set")
+    @CommandPermission(value="r-duel.sign.set")
     @Description(value="Установка таблички боя 1в1 кастом кита")
     public void signSetOneCustom(Player player) {
         Block block = player.getTargetBlock(6);
@@ -169,7 +168,7 @@ public class RDuelCommand extends BaseCommand {
     }
 
     @Subcommand(value="sign set 2v2 server")
-    @CommandPermission(value="r-due.sign.set")
+    @CommandPermission(value="r-duel.sign.set")
     @Description(value="Установка таблички боя 1в1 кастом кита")
     @CommandCompletion(value="@duelkits")
     public void signSetTwoServer(Player player, String kitName) {
@@ -192,7 +191,7 @@ public class RDuelCommand extends BaseCommand {
     }
 
     @Subcommand(value="sign set 2v2 custom")
-    @CommandPermission(value="r-due.sign.set")
+    @CommandPermission(value="r-duel.sign.set")
     @Description(value="Установка таблички боя 2в2 кастом кита")
     public void signSetTwoCustom(Player player) {
         Block block = player.getTargetBlock(6);
@@ -222,9 +221,6 @@ public class RDuelCommand extends BaseCommand {
         return this.plugin.getKitConfig().getKits().stream().anyMatch(model -> model.getDisplayName().equalsIgnoreCase(kitName));
     }
 
-    /*
-     * Enabled aggressive block sorting
-     */
     @Subcommand(value="arena setspawn")
     @CommandPermission(value="r-duel.arena.setspawn")
     @Description(value="Установка точки спавна на арене")

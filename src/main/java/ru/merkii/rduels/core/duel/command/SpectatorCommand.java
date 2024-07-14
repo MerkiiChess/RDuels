@@ -24,11 +24,10 @@ public class SpectatorCommand extends BaseCommand {
     @CommandCompletion(value="@allplayers")
     @Description(value="Присоединиться к наблюдению за дуэлью между игроками.")
     public void onSpec(CommandSender sender, @Optional String targetName) {
-        if (!(sender instanceof Player)) {
+        if (!(sender instanceof Player player)) {
             sender.sendMessage("Эта команда доступна только в игре.");
             return;
         }
-        Player player = (Player) sender;
         if (Duel.getDuelPlayer(player).isFight()) {
             player.sendMessage(this.messageConfiguration.getMessage("duelCommandIsBlocked"));
             return;

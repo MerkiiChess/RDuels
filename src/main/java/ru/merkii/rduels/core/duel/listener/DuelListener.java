@@ -17,9 +17,12 @@ import org.bukkit.event.player.*;
 import org.bukkit.inventory.PlayerInventory;
 import org.jetbrains.annotations.NotNull;
 import ru.merkii.rduels.RDuels;
+import ru.merkii.rduels.api.Duel;
+import ru.merkii.rduels.api.DuelPlayer;
 import ru.merkii.rduels.config.messages.MessageConfiguration;
 import ru.merkii.rduels.core.duel.DuelCore;
 import ru.merkii.rduels.core.duel.api.DuelAPI;
+import ru.merkii.rduels.core.duel.event.DuelKillPlayerEvent;
 import ru.merkii.rduels.core.duel.model.DuelFightModel;
 import ru.merkii.rduels.core.party.model.PartyModel;
 import ru.merkii.rduels.manager.DatabaseManager;
@@ -65,39 +68,47 @@ public class DuelListener implements Listener {
             event.setCancelled(true);
             return;
         }
-        Bukkit.getScheduler().runTaskLater(this.plugin, player.spigot()::respawn, 1L);
         UUID playerUUID = player.getUniqueId();
         Player killer = this.getPlayer(player, fightModel, playerUUID);
-        if (!this.databaseManager.isTableExists(player).join()) {
-            this.databaseManager.insert(UserModel.create(player.getUniqueId().toString(), 0, 0, 0, 0));
+        DuelKillPlayerEvent duelKillPlayerEvent = new DuelKillPlayerEvent(Duel.getDuelPlayer(killer), Duel.getDuelPlayer(player));
+        duelKillPlayerEvent.call();
+        if (duelKillPlayerEvent.isCancelled()) {
+            event.setCancelled(true);
         }
-        if (!this.databaseManager.isTableExists(killer).join()) {
-            this.databaseManager.insert(UserModel.create(killer.getUniqueId().toString(), 0, 0, 0, 0));
-        }
-        this.databaseManager.addKill(killer).join();
-        this.databaseManager.addDeath(player).join();
-        player.setGameMode(GameMode.SPECTATOR);
-        player.teleport(killer);
+    }
+
+    @EventHandler
+    public void onKillPlayer(DuelKillPlayerEvent event) {
+        DuelPlayer victimPlayer = event.getVictim();
+        DuelPlayer killerPlayer = event.getKiller();
+        DuelFightModel fightModel = event.getDuelFightModel();
+        victimPlayer.respawnPlayer();
+        killerPlayer.addKill();
+        victimPlayer.addDeath();
+        victimPlayer.setGameMode(GameMode.SPECTATOR);
+        victimPlayer.teleport(killerPlayer);
+        Player killer = killerPlayer.getPlayer();
+        Player victim = victimPlayer.getPlayer();
         if (fightModel.getArenaModel().isFfa()) {
             if (fightModel.getReceiverParty() != null && fightModel.getSenderParty() != null) {
-                this.onParty(player, fightModel);
+                this.onParty(victim, fightModel);
                 return;
             }
-            this.onFour(player, fightModel);
+            this.onFour(victim, fightModel);
             return;
         }
-        this.databaseManager.addAllRound(player);
-        this.databaseManager.addWinRound(killer);
-        this.databaseManager.addAllRound(killer);
+        victimPlayer.addAllRound();
+        killerPlayer.addWinRound();
+        killerPlayer.addAllRound();
         fightModel.setCountNumGames(fightModel.getCountNumGames() + 1);
         if (fightModel.getCountNumGames() == fightModel.getNumGames()) {
-            Player winner = this.duelAPI.getWinnerFromFight(fightModel, player);
+            Player winner = this.duelAPI.getWinnerFromFight(fightModel, victim);
             fightModel.setEnd(true);
-            Bukkit.getScheduler().runTaskLater(this.plugin, () -> Bukkit.getScheduler().runTask(this.plugin, () -> this.duelAPI.stopFight(fightModel, winner, player)), (long)this.plugin.getSettings().getStopFightTime() * 20L);
+            Bukkit.getScheduler().runTaskLater(this.plugin, () -> Bukkit.getScheduler().runTask(this.plugin, () -> this.duelAPI.stopFight(fightModel, winner, victim)), (long)this.plugin.getSettings().getStopFightTime() * 20L);
             return;
         }
         String message = this.messageConfiguration.getMessage("duelNextRound").replace("(player)", killer.getName()).replace("(round)", String.valueOf(fightModel.getCountNumGames())).replace("(rounds)", String.valueOf(fightModel.getNumGames()));
-        PlayerUtil.sendMessage(message, player, killer);
+        PlayerUtil.sendMessage(message, victim, killer);
         Bukkit.getScheduler().runTaskLater(this.plugin, () -> this.duelAPI.nextRound(fightModel), (long)this.plugin.getSettings().getNextRoundTime() * 20L);
     }
 
@@ -144,10 +155,9 @@ public class DuelListener implements Listener {
 
     @EventHandler(priority=EventPriority.HIGHEST, ignoreCancelled=true)
     public void onEntityAttack(EntityDamageEvent event) {
-        if (!(event.getEntity() instanceof Player)) {
+        if (!(event.getEntity() instanceof Player player)) {
             return;
         }
-        Player player = (Player)event.getEntity();
         if (this.duelAPI.isNoMovePlayer(player)) {
             event.setCancelled(true);
         }
@@ -253,11 +263,9 @@ public class DuelListener implements Listener {
     @EventHandler
     public void onProjectileHit(ProjectileHitEvent event) {
         Projectile projectile = event.getEntity();
-        if (!(projectile.getShooter() instanceof Player) || !(event.getHitEntity() instanceof Player)) {
+        if (!(projectile.getShooter() instanceof Player damager) || !(event.getHitEntity() instanceof Player player)) {
             return;
         }
-        Player damager = (Player) projectile.getShooter();
-        Player player = (Player)event.getHitEntity();
         DuelFightModel fightModel = this.duelAPI.getFightModelFromPlayer(player);
         if (fightModel == null || !this.isHitTeam(damager, player, fightModel)) {
             return;
@@ -267,10 +275,9 @@ public class DuelListener implements Listener {
 
     @EventHandler
     public void onPotionSplash(PotionSplashEvent event) {
-        if (!(event.getPotion().getShooter() instanceof Player)) {
+        if (!(event.getPotion().getShooter() instanceof Player damager)) {
             return;
         }
-        Player damager = (Player) event.getPotion().getShooter();
         DuelFightModel fightModel = this.duelAPI.getFightModelFromPlayer(damager);
         if (fightModel == null) {
             return;
@@ -386,20 +393,17 @@ public class DuelListener implements Listener {
 
     private boolean isAlive(Player player, DuelFightModel fightModel) {
         boolean alive = true;
-        this.plugin.getLogger().info("Sender: " + fightModel.getSender().getGameMode() + " Sender Helper: " + fightModel.getPlayer2().getGameMode() + " Receiver: " + fightModel.getReceiver().getGameMode() + " Receiver Helper: " + fightModel.getPlayer4().getGameMode());
-        if (player.equals(fightModel.getSender()) || player.equals(fightModel.getPlayer2())) {
-            boolean senderGameModeSpectator = fightModel.getSender().getGameMode() == GameMode.SPECTATOR;
-            boolean player2GameModeSpectator = fightModel.getPlayer2().getGameMode() == GameMode.SPECTATOR;
+        if ((fightModel.getSender() != null && player.equals(fightModel.getSender())) || (fightModel.getPlayer2() != null && player.equals(fightModel.getPlayer2()))) {
+            boolean senderGameModeSpectator = fightModel.getSender() == null || fightModel.getSender().getGameMode() == GameMode.SPECTATOR;
+            boolean player2GameModeSpectator = fightModel.getPlayer4() == null || fightModel.getPlayer2().getGameMode() == GameMode.SPECTATOR;
             if (senderGameModeSpectator && player2GameModeSpectator) {
                 alive = false;
-                this.plugin.getLogger().info("Sender and Player 2 is dead");
             }
         } else {
-            boolean receiverGameModeSpectator = fightModel.getReceiver().getGameMode() == GameMode.SPECTATOR;
-            boolean player4GameModeSpectator = fightModel.getPlayer4().getGameMode() == GameMode.SPECTATOR;
+            boolean receiverGameModeSpectator = fightModel.getReceiver() == null || fightModel.getReceiver().getGameMode() == GameMode.SPECTATOR;
+            boolean player4GameModeSpectator = fightModel.getPlayer4() == null || fightModel.getPlayer4().getGameMode() == GameMode.SPECTATOR;
             if (receiverGameModeSpectator && player4GameModeSpectator) {
                 alive = false;
-                this.plugin.getLogger().info("Receiver and Player 4 is dead");
             }
         }
         return alive;

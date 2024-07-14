@@ -16,18 +16,24 @@ public class DuelPAPIHook extends PlaceholderExpansion {
     @Override
     public String onPlaceholderRequest(Player player, String identifier) {
         DuelAPI duelAPI = DuelCore.INSTANCE.getDuelAPI();
-        switch (identifier) {
-            case "kills": return String.valueOf(this.databaseManager.getKills(player).join());
-            case "death": return String.valueOf(this.databaseManager.getDeaths(player).join());
-            case "wins": return String.valueOf(this.databaseManager.getWinRounds(player).join());
-            case "all_rounds": return String.valueOf(this.databaseManager.getAllRounds(player).join() - this.databaseManager.getWinRounds(player).join());
-            case "opponent": return player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : duelAPI.getOpponentFromFight(player).getName();
-            case "time": return player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : TimeUtil.getTimeInMaxUnit(duelAPI.getFightModelFromPlayer(player).getBukkitTask().getTime() * 1000L);
-            case "count_rounds": return player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : String.valueOf(duelAPI.getFightModelFromPlayer(player).getNumGames());
-            case "played_count_rounds": return player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : String.valueOf(duelAPI.getFightModelFromPlayer(player).getCountNumGames());
-            case "kit": return player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : duelAPI.getFightModelFromPlayer(player).getKitModel().getDisplayName();
-        }
-        return null;
+        return switch (identifier) {
+            case "kills" -> String.valueOf(this.databaseManager.getKills(player).join());
+            case "death" -> String.valueOf(this.databaseManager.getDeaths(player).join());
+            case "wins" -> String.valueOf(this.databaseManager.getWinRounds(player).join());
+            case "all_rounds" ->
+                    String.valueOf(this.databaseManager.getAllRounds(player).join() - this.databaseManager.getWinRounds(player).join());
+            case "opponent" ->
+                    player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : duelAPI.getOpponentFromFight(player).getName();
+            case "time" ->
+                    player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : TimeUtil.getTimeInMaxUnit(duelAPI.getFightModelFromPlayer(player).getBukkitTask().getTime() * 1000L);
+            case "count_rounds" ->
+                    player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : String.valueOf(duelAPI.getFightModelFromPlayer(player).getNumGames());
+            case "played_count_rounds" ->
+                    player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : String.valueOf(duelAPI.getFightModelFromPlayer(player).getCountNumGames());
+            case "kit" ->
+                    player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : duelAPI.getFightModelFromPlayer(player).getKitModel().getDisplayName();
+            default -> null;
+        };
     }
 
 

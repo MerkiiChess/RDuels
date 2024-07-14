@@ -35,8 +35,7 @@ public class CustomKitStorage {
         FileConfiguration config = getConfig(player);
         ConfigurationSection section = config.getConfigurationSection(kitName);
         if (section == null) {
-            config.createSection(kitName);
-            section = config.getConfigurationSection(kitName);
+            section = config.createSection(kitName);
         }
         section.set(String.valueOf(slot), itemStack);
         save(config, player);

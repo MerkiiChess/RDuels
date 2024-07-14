@@ -48,7 +48,8 @@ public class SignListener implements Listener {
         }
         BlockPosition blockPosition = new BlockPosition(block);
         if (this.signAPI.isContainsSignPosition(blockPosition)) {
-            Optional.ofNullable(this.signAPI.getModelInBlockPosition(blockPosition)).ifPresent(signModel -> SignClickEvent.create(event.getPlayer(), block, (Sign)((Object)block.getState()), signModel, event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK, event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK).call());
+            event.setCancelled(true);
+            Optional.ofNullable(this.signAPI.getModelInBlockPosition(blockPosition)).ifPresent(signModel -> SignClickEvent.create(event.getPlayer(), block, (Sign) block.getState(), signModel, event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK, event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK).call());
         }
     }
 
@@ -57,36 +58,12 @@ public class SignListener implements Listener {
         SignModel signModel = event.getSignModel();
         Player player = event.getPlayer();
         Sign sign = event.getSign();
-        event.setCancelled(true);
         PartyModel partyModel = this.partyAPI.getPartyModelFromPlayer(player);
         if (this.signAPI.isFightSign(signModel)) {
             return;
         }
         if (this.signAPI.isClickedSignQueuePlayer(player, signModel)) {
-            SignQueueModel signQueueModel = this.signAPI.getQueueInSignModel(signModel);
-            if (signQueueModel == null) {
-                return;
-            }
-            if (signModel.getDuelType().getSize() == 4) {
-                if (partyModel != null) {
-                    if (!partyModel.getOwner().equals(player.getUniqueId())) {
-                        return;
-                    }
-                    this.setPlayerQueue(signQueueModel, player, null);
-                    this.setPlayerQueue(signQueueModel, Objects.requireNonNull(Bukkit.getPlayer(partyModel.getPlayers().get(0))), null);
-                    this.signAPI.setSignWait(sign, this.getSizeQueue(signQueueModel), signModel.getDuelType().getSize(), signModel.getDuelKit(), signModel.getKitModel() == null ? "" : signModel.getKitModel().getDisplayName());
-                    return;
-                }
-                this.setPlayerQueue(signQueueModel, player, null);
-                int size = this.getSizeQueue(signQueueModel);
-                this.signAPI.setSignWait(sign, size, signModel.getDuelType().getSize(), signModel.getDuelKit(), signModel.getKitModel() == null ? "" : signModel.getKitModel().getDisplayName());
-                return;
-            }
-            this.signAPI.removeQueueSign(signQueueModel);
-            if (signModel.getDuelKit() == DuelKitType.CUSTOM) {
-                signModel.setKitModel(null);
-            }
-            this.signAPI.setSignWait(sign, 0, signModel.getDuelType().getSize(), signModel.getDuelKit(), signModel.getKitModel() == null ? "" : signModel.getKitModel().getDisplayName());
+            this.handleQueueSign(signModel, partyModel, sign, player);
             return;
         }
         if (this.signAPI.isQueuePlayer(player)) {
@@ -95,21 +72,7 @@ public class SignListener implements Listener {
         }
         SignQueueModel signQueueModel = this.signAPI.getQueueInSignModel(signModel);
         if (signQueueModel == null) {
-            if (partyModel != null) {
-                this.onParty(partyModel, player, signModel, sign);
-                return;
-            }
-            if (signModel.getDuelKit() == DuelKitType.CUSTOM) {
-                signModel.setKitModel(CustomKitCore.INSTANCE.getCustomKitAPI().getKitModel(player));
-                if (signModel.getKitModel().getDisplayName().equalsIgnoreCase("null")) {
-                    signModel.setKitModel(null);
-                    player.sendMessage(RDuels.getInstance().getPluginMessage().getMessage("signNoStart"));
-                    return;
-                }
-            }
-            this.signAPI.addQueueSign(SignQueueModel.create(signModel, player));
-            this.signAPI.setSignWait(sign, 1, signModel.getDuelType().getSize(), signModel.getDuelKit(), signModel.getKitModel() == null ? "" : signModel.getKitModel().getDisplayName());
-            player.sendMessage(this.messageConfiguration.getMessage("signStartQueue").replace("(kit)", ColorUtil.color(signModel.getKitModel().getDisplayName())));
+            handleEmptyQueueSign(partyModel, signModel, sign, player);
             return;
         }
         if (signModel.getDuelType().getSize() == 2) {
@@ -120,36 +83,13 @@ public class SignListener implements Listener {
             return;
         }
         if (partyModel != null) {
-            if (this.getSizeQueue(signQueueModel) == 3) {
-                return;
-            }
-            if (partyModel.getPlayers().size() != 1) {
-                return;
-            }
-            if (signQueueModel.getSender() == null && signQueueModel.getSenderHelper() == null) {
-                signQueueModel.setSender(player);
-                signQueueModel.setSenderHelper(Bukkit.getPlayer(partyModel.getPlayers().get(0)));
-                if (signQueueModel.getReceiver() != null && signQueueModel.getReceiverHelper() != null) {
-                    this.startFightFour(sign, signQueueModel, signModel);
-                    return;
-                }
-                this.signAPI.setSignWait(sign, this.getSizeQueue(signQueueModel), signModel.getDuelType().getSize(), signModel.getDuelKit(), signModel.getKitModel() == null ? "" : signModel.getKitModel().getDisplayName());
-                player.sendMessage(this.messageConfiguration.getMessage("signStartQueue").replace("(kit)", ColorUtil.color(signModel.getKitModel().getDisplayName())));
-                return;
-            }
-            if (signQueueModel.getReceiver() == null && signQueueModel.getReceiverHelper() == null) {
-                signQueueModel.setReceiver(player);
-                signQueueModel.setReceiverHelper(Bukkit.getPlayer(partyModel.getPlayers().get(0)));
-                if (signQueueModel.getSender() != null && signQueueModel.getSenderHelper() != null) {
-                    this.startFightFour(sign, signQueueModel, signModel);
-                    return;
-                }
-                this.signAPI.setSignWait(sign, this.getSizeQueue(signQueueModel), signModel.getDuelType().getSize(), signModel.getDuelKit(), signModel.getKitModel() == null ? "" : signModel.getKitModel().getDisplayName());
-                player.sendMessage(this.messageConfiguration.getMessage("signStartQueue").replace("(kit)", ColorUtil.color(signModel.getKitModel().getDisplayName())));
-                return;
-            }
+            handleParty(signQueueModel, partyModel, signModel, sign, player);
             return;
         }
+        handleFourSign(signQueueModel, signModel, sign, player);
+    }
+
+    private void handleFourSign(SignQueueModel signQueueModel, SignModel signModel, Sign sign, Player player) {
         if (signQueueModel.getSender() == null) {
             if (signModel.getDuelKit() == DuelKitType.CUSTOM) {
                 signModel.setKitModel(CustomKitCore.INSTANCE.getCustomKitAPI().getKitModel(player));
@@ -191,6 +131,81 @@ public class SignListener implements Listener {
         }
         signQueueModel.setReceiverHelper(player);
         this.startFightFour(sign, signQueueModel, signModel);
+    }
+
+    private void handleParty(SignQueueModel signQueueModel, PartyModel partyModel, SignModel signModel, Sign sign, Player player) {
+        if (this.getSizeQueue(signQueueModel) == 3) {
+            return;
+        }
+        if (partyModel.getPlayers().size() != 1) {
+            return;
+        }
+        if (signQueueModel.getSender() == null && signQueueModel.getSenderHelper() == null) {
+            signQueueModel.setSender(player);
+            signQueueModel.setSenderHelper(Bukkit.getPlayer(partyModel.getPlayers().get(0)));
+            if (signQueueModel.getReceiver() != null && signQueueModel.getReceiverHelper() != null) {
+                this.startFightFour(sign, signQueueModel, signModel);
+                return;
+            }
+            this.signAPI.setSignWait(sign, this.getSizeQueue(signQueueModel), signModel.getDuelType().getSize(), signModel.getDuelKit(), signModel.getKitModel() == null ? "" : signModel.getKitModel().getDisplayName());
+            player.sendMessage(this.messageConfiguration.getMessage("signStartQueue").replace("(kit)", ColorUtil.color(signModel.getKitModel().getDisplayName())));
+            return;
+        }
+        if (signQueueModel.getReceiver() == null && signQueueModel.getReceiverHelper() == null) {
+            signQueueModel.setReceiver(player);
+            signQueueModel.setReceiverHelper(Bukkit.getPlayer(partyModel.getPlayers().get(0)));
+            if (signQueueModel.getSender() != null && signQueueModel.getSenderHelper() != null) {
+                this.startFightFour(sign, signQueueModel, signModel);
+                return;
+            }
+            this.signAPI.setSignWait(sign, this.getSizeQueue(signQueueModel), signModel.getDuelType().getSize(), signModel.getDuelKit(), signModel.getKitModel() == null ? "" : signModel.getKitModel().getDisplayName());
+            player.sendMessage(this.messageConfiguration.getMessage("signStartQueue").replace("(kit)", ColorUtil.color(signModel.getKitModel().getDisplayName())));
+        }
+    }
+
+    private void handleEmptyQueueSign(PartyModel partyModel, SignModel signModel, Sign sign, Player player) {
+        if (partyModel != null) {
+            this.onParty(partyModel, player, signModel, sign);
+            return;
+        }
+        if (signModel.getDuelKit() == DuelKitType.CUSTOM) {
+            signModel.setKitModel(CustomKitCore.INSTANCE.getCustomKitAPI().getKitModel(player));
+            if (signModel.getKitModel().getDisplayName().equalsIgnoreCase("null")) {
+                signModel.setKitModel(null);
+                player.sendMessage(RDuels.getInstance().getPluginMessage().getMessage("signNoStart"));
+                return;
+            }
+        }
+        this.signAPI.addQueueSign(SignQueueModel.create(signModel, player));
+        this.signAPI.setSignWait(sign, 1, signModel.getDuelType().getSize(), signModel.getDuelKit(), signModel.getKitModel().getDisplayName());
+        player.sendMessage(this.messageConfiguration.getMessage("signStartQueue").replace("(kit)", ColorUtil.color(signModel.getKitModel().getDisplayName())));
+    }
+
+    private void handleQueueSign(SignModel signModel, PartyModel partyModel, Sign sign, Player player) {
+        SignQueueModel signQueueModel = this.signAPI.getQueueInSignModel(signModel);
+        if (signQueueModel == null) {
+            return;
+        }
+        if (signModel.getDuelType().getSize() == 4) {
+            if (partyModel != null) {
+                if (!partyModel.getOwner().equals(player.getUniqueId())) {
+                    return;
+                }
+                this.setPlayerQueue(signQueueModel, player, null);
+                this.setPlayerQueue(signQueueModel, Objects.requireNonNull(Bukkit.getPlayer(partyModel.getPlayers().get(0))), null);
+                this.signAPI.setSignWait(sign, this.getSizeQueue(signQueueModel), signModel.getDuelType().getSize(), signModel.getDuelKit(), signModel.getKitModel() == null ? "" : signModel.getKitModel().getDisplayName());
+                return;
+            }
+            this.setPlayerQueue(signQueueModel, player, null);
+            int size = this.getSizeQueue(signQueueModel);
+            this.signAPI.setSignWait(sign, size, signModel.getDuelType().getSize(), signModel.getDuelKit(), signModel.getKitModel() == null ? "" : signModel.getKitModel().getDisplayName());
+            return;
+        }
+        this.signAPI.removeQueueSign(signQueueModel);
+        if (signModel.getDuelKit() == DuelKitType.CUSTOM) {
+            signModel.setKitModel(null);
+        }
+        this.signAPI.setSignWait(sign, 0, signModel.getDuelType().getSize(), signModel.getDuelKit(), "");
     }
 
     private void onParty(PartyModel partyModel, Player player, SignModel signModel, Sign sign) {
@@ -241,7 +256,6 @@ public class SignListener implements Listener {
             }
             SignQueueModel signQueue = SignQueueModel.builder().signModel(signModel).sender(player).senderHelper(Bukkit.getPlayer(partyModel.getPlayers().get(0))).receiver(Bukkit.getPlayer(partyModel.getPlayers().get(1))).receiverHelper(Bukkit.getPlayer(partyModel.getPlayers().get(2))).build();
             this.startFightFour(sign, signQueue, signModel);
-            return;
         }
     }
 

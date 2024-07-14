@@ -89,8 +89,7 @@ public class ArenaAPIProvider implements ArenaAPI {
                     blocks.stream().filter(Objects::nonNull).forEach(block -> block.setType(Material.AIR));
                     blocks.clear();
                 }
-            }
-            catch (NullPointerException ignored) {
+            } catch (NullPointerException ignored) {
                 List<Block> blocks = ArenaCore.INSTANCE.getArenaBlockBuildBucket().getAllBlocks(arenaModel);
                 if (blocks.isEmpty()) break block11;
                 blocks.stream().filter(Objects::nonNull).forEach(block -> block.setType(Material.AIR));
@@ -103,14 +102,13 @@ public class ArenaAPIProvider implements ArenaAPI {
             for (int y = location.getBlockY() - radius; y < location.getBlockY() + radius; ++y) {
                 for (int z = location.getBlockZ() - radius; z < location.getBlockY() + radius; ++z) {
                     Location newLocation = new Location(location.getWorld(), x, y, z);
-                    newLocation.getBlock().setType(Material.STONE);
                     newLocation.getBlock().setType(Material.AIR);
                 }
             }
         }
         File file = new File(RDuels.getInstance().getDataFolder() + "/schematic", arenaModel.getSchematic());
         if (!file.exists()) {
-            RDuels.getInstance().getLogger().info("Схематика: " + arenaModel.getSchematic() + " не найдена!");
+            RDuels.getInstance().getLogger().warning("Схематика: " + arenaModel.getSchematic() + " не найдена!");
             return;
         }
         ClipboardFormat format = ClipboardFormats.findByFile(file);

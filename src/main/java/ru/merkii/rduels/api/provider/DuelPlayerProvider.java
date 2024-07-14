@@ -1,5 +1,8 @@
 package ru.merkii.rduels.api.provider;
 
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 import ru.merkii.rduels.RDuels;
@@ -7,13 +10,21 @@ import ru.merkii.rduels.api.Duel;
 import ru.merkii.rduels.api.DuelPlayer;
 import ru.merkii.rduels.core.duel.model.DuelFightModel;
 import ru.merkii.rduels.core.party.model.PartyModel;
+import ru.merkii.rduels.manager.DatabaseManager;
+import ru.merkii.rduels.model.BlockPosition;
+import ru.merkii.rduels.model.EntityPosition;
+import ru.merkii.rduels.model.UserModel;
+
+import java.util.UUID;
 
 public class DuelPlayerProvider implements DuelPlayer {
 
     private final Player player;
+    private final DatabaseManager databaseManager;
 
     public DuelPlayerProvider(Player player) {
         this.player = player;
+        this.databaseManager = RDuels.getInstance().getDatabaseManager();
     }
 
     @Override
@@ -42,37 +53,104 @@ public class DuelPlayerProvider implements DuelPlayer {
     }
 
     @Override
-    public void addKill(int amount) {
-        RDuels.getInstance().getDatabaseManager().addKill(this.player).join();
+    public void addKill() {
+        if (!this.databaseManager.isTableExists(this.player).join()) {
+            this.databaseManager.insert(UserModel.create(this.player.getUniqueId().toString(), 0, 0, 0, 0));
+        }
+        this.databaseManager.addKill(this.player).join();
     }
 
     @Override
-    public void addDeath(int amount) {
-        RDuels.getInstance().getDatabaseManager().addDeath(this.player).join();
+    public void addDeath() {
+        if (!this.databaseManager.isTableExists(this.player).join()) {
+            this.databaseManager.insert(UserModel.create(this.player.getUniqueId().toString(), 0, 0, 0, 0));
+        }
+        this.databaseManager.addDeath(this.player).join();
     }
 
     @Override
-    public void addWin(int amount) {
-        RDuels.getInstance().getDatabaseManager().addWinRound(this.player).join();
+    public void addWinRound() {
+        if (!this.databaseManager.isTableExists(this.player).join()) {
+            this.databaseManager.insert(UserModel.create(this.player.getUniqueId().toString(), 0, 0, 0, 0));
+        }
+        this.databaseManager.addWinRound(this.player).join();
+    }
+
+    @Override
+    public void addAllRound() {
+        if (!this.databaseManager.isTableExists(this.player).join()) {
+            this.databaseManager.insert(UserModel.create(this.player.getUniqueId().toString(), 0, 0, 0, 0));
+        }
+        this.databaseManager.addAllRound(this.player).join();
+    }
+
+    @Override
+    public void respawnPlayer() {
+        Bukkit.getScheduler().runTaskLater(RDuels.getInstance(), this.player.spigot()::respawn, 1L);
+    }
+
+    @Override
+    public void setGameMode(GameMode gameMode) {
+        this.player.setGameMode(gameMode);
+    }
+
+    @Override
+    public void teleport(Location location) {
+        this.player.teleport(location);
+    }
+
+    @Override
+    public void teleport(Player player) {
+        this.teleport(player.getLocation());
+    }
+
+    @Override
+    public void teleport(DuelPlayer duelPlayer) {
+        this.teleport(duelPlayer.getPlayer().getLocation());
+    }
+
+    @Override
+    public void teleport(BlockPosition blockPosition) {
+        this.teleport(blockPosition.toLocation());
+    }
+
+    @Override
+    public void teleport(EntityPosition entityPosition) {
+        this.teleport(entityPosition.toLocation());
+    }
+
+    @Override
+    public GameMode getGameMode() {
+        return this.player.getGameMode();
     }
 
     @Override
     public int getKills() {
-        return RDuels.getInstance().getDatabaseManager().getKills(this.player).join();
+        return this.databaseManager.getKills(this.player).join();
     }
 
     @Override
     public int getDeath() {
-        return RDuels.getInstance().getDatabaseManager().getDeaths(this.player).join();
+        return this.databaseManager.getDeaths(this.player).join();
     }
 
     @Override
-    public int getWin() {
-        return RDuels.getInstance().getDatabaseManager().getWinRounds(this.player).join();
+    public int getWinRounds() {
+        return this.databaseManager.getWinRounds(this.player).join();
+    }
+
+    @Override
+    public int getAllRounds() {
+        return this.databaseManager.getAllRounds(this.player).join();
     }
 
     @Override
     public Player getPlayer() {
         return this.player;
+    }
+
+    @Override
+    public UUID getUUID() {
+        return this.player.getUniqueId();
     }
 }
