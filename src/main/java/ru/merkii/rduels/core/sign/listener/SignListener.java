@@ -266,7 +266,19 @@ public class SignListener implements Listener {
         duelRequest.setDuelKit(signModel.getDuelKit());
         duelRequest.setKitName(signModel.getKitModel().getDisplayName());
         duelRequest.setSignModel(signModel);
-        duelRequest.setArena(DuelCore.INSTANCE.getDuelAPI().getFreeArenaFFA());
+        ArenaModel arenaModel = null;
+        if (signModel.getKitModel().isBindingArena()) {
+            if (signModel.getKitModel() != null && !ArenaCore.INSTANCE.getArenaAPI().getArenaFromKit(signModel.getKitModel()).isPresent()) {
+                SignUtil.clearSignsLines(sign);
+                this.signAPI.setSignWait(sign, 0, signModel.getDuelType().getSize(), signModel.getDuelKit(), signModel.getKitModel() == null ? "" : signModel.getKitModel().getDisplayName());
+                this.signAPI.removePlayerQueueSign(signQueueModel.getSender(), signQueueModel.getSenderHelper(), signQueueModel.getReceiver(), signQueueModel.getReceiverHelper());
+                PlayerUtil.sendMessage(this.messageConfiguration.getMessage("duelArenasFull"), signQueueModel.getSender(), signQueueModel.getSenderHelper(), signQueueModel.getReceiver(), signQueueModel.getReceiverHelper());
+                return;
+            }
+        } else {
+            arenaModel = DuelCore.INSTANCE.getDuelAPI().getFreeArenaFFA();
+        }
+        duelRequest.setArena(arenaModel);
         this.signAPI.setSignActive(sign, signQueueModel.getSender(), signQueueModel.getReceiver(), signModel.getDuelKit());
         this.signAPI.addSignFight(signModel);
         DuelCore.INSTANCE.getDuelAPI().startFightFour(signQueueModel.getSender(), signQueueModel.getSenderHelper(), signQueueModel.getReceiver(), signQueueModel.getReceiverHelper(), duelRequest);

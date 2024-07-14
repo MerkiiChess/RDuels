@@ -568,7 +568,9 @@ public class DuelAPIProvider implements DuelAPI {
     @Override
     @Nullable
     public ArenaModel getFreeArenaFFA() {
-        return this.arenaCore.getArenas().getArenas().stream().filter(arenaModel -> !this.arenaCore.getArenaBusyBucket().getArenas().contains(arenaModel)).filter(ArenaModel::isFfa).findFirst().orElse(null);
+        List<ArenaModel> arenaModels = this.arenaCore.getArenas().getArenas().stream().filter(arenaModel -> !this.arenaCore.getArenaBusyBucket().getArenas().contains(arenaModel)).filter(ArenaModel::isFfa).toList();
+        if (arenaModels.isEmpty()) return null;
+        return arenaModels.get(ThreadLocalRandom.current().nextInt(arenaModels.size()));
     }
 
     @Override
