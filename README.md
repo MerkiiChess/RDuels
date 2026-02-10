@@ -5,6 +5,8 @@
 ![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
 ![Spigot](https://img.shields.io/badge/Spigot-1.16.5-yellow?style=for-the-badge)
 ![Paper](https://img.shields.io/badge/Paper-Supported-red?style=for-the-badge)
+[![Discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/DmxBGHCagv)
+
 
 **Мощный, гибкий и полностью настраиваемый плагин для дуэлей на вашем сервере.**  
 DuelCore предоставляет полный набор инструментов для создания соревновательной PvP-среды с уникальными возможностями для игроков и администраторов.
