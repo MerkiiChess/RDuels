@@ -1,45 +1,32 @@
 package ru.merkii.rduels.core.customkit.menu;
 
 import org.bukkit.Material;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.entity.Player;
+import ru.merkii.rduels.RDuels;
 import ru.merkii.rduels.builder.ItemBuilder;
-import ru.merkii.rduels.core.customkit.CustomKitCore;
-import ru.merkii.rduels.core.customkit.storage.CustomKitStorage;
-import ru.merkii.rduels.menu.VMenu;
-import ru.merkii.rduels.menu.event.ClickEvent;
-import ru.merkii.rduels.util.ColorUtil;
+import ru.merkii.rduels.gui.internal.InventoryGUI;
+import ru.merkii.rduels.gui.internal.InventoryGUIFactory;
+import ru.merkii.rduels.gui.internal.context.InventoryContext;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
 
-public class CustomKitItemAmountMenu extends VMenu {
+public class CustomKitItemAmountMenu {
 
-    private final int itemSlot;
-    private final CustomKitStorage customKitStorage;
-    private final String kitName;
+    private final InventoryGUIFactory factory;
 
-    public CustomKitItemAmountMenu(String kitName, int slot, Material material, Collection<ItemBuilder> items) {
-        super(CustomKitCore.INSTANCE.getCustomKitConfig().getCategoriesMenu().getSize(), ColorUtil.color(CustomKitCore.INSTANCE.getCustomKitConfig().getTitleEdit().replace("(kit)", kitName)));
-        this.itemSlot = slot;
-        this.customKitStorage = CustomKitCore.INSTANCE.getCustomKitStorage();
-        this.kitName = kitName;
-        List<ItemBuilder> itemBuilders = items.stream().map(item -> item.setMaterial(material)).collect(Collectors.toList());
-        for (ItemBuilder itemBuilder : itemBuilders) {
-            if (itemBuilder.getMaterial().name().contains("POTION")) {
-                this.setItem(itemBuilder);
-                continue;
-            }
-            if (itemBuilder.getMaterial().getMaxStackSize() < itemBuilder.getAmount()) continue;
-            this.setItem(itemBuilder);
-        }
+    public CustomKitItemAmountMenu() {
+        this.factory = RDuels.beanScope().get(InventoryGUIFactory.class);
     }
 
-    @Override
-    public void onClick(ClickEvent event) {
-        ItemStack itemStack = this.customKitStorage.getItemFromSlot(this.itemSlot, this.kitName, event.getPlayer());
-        itemStack.setAmount(CustomKitCore.INSTANCE.getCustomKitConfig().getCategoriesMenu().getItemStacks().get(event.getItemBuilder()));
-        this.customKitStorage.setItemSlot(itemStack, this.kitName, this.itemSlot, event.getPlayer());
-        new CustomKitEditMenu(this.kitName, event.getPlayer()).open(event.getPlayer());
+    public void open(Player player, String kitName, int slot, Material material, Collection<ItemBuilder> items) {
+        Map<String, Object> raw = new HashMap<>();
+        raw.put("kit_name", kitName);
+        raw.put("slot", slot);
+        raw.put("material", material);
+        raw.put("items", items);
+        InventoryContext context = InventoryContext.create(raw);
+        factory.create("item-amount", player, context).ifPresent(InventoryGUI::open);
     }
 }

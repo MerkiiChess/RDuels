@@ -1,5 +1,6 @@
 package ru.merkii.rduels.core.arena.bucket;
 
+import jakarta.inject.Singleton;
 import org.bukkit.block.Block;
 import ru.merkii.rduels.core.arena.model.ArenaModel;
 
@@ -8,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Singleton
 public class ArenaBlockBuildBucket {
 
     private final Map<ArenaModel, List<Block>> blocksBuild = new HashMap<ArenaModel, List<Block>>();

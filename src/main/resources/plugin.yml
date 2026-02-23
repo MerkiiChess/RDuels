@@ -1,7 +1,7 @@
 name: RDuels
-version: '${project.version}'
+version: '2.0-beta'
 main: ru.merkii.rduels.RDuels
-api-version: '1.16'
+api-version: '1.21'
 depend:
   - PlaceholderAPI
   - WorldEdit

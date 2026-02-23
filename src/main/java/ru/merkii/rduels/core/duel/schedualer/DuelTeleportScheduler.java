@@ -5,29 +5,37 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import ru.merkii.rduels.RDuels;
+import ru.merkii.rduels.adapter.DuelPlayer;
+import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
 import ru.merkii.rduels.core.duel.DuelCore;
 import ru.merkii.rduels.core.duel.api.DuelAPI;
-import ru.merkii.rduels.core.duel.config.DuelConfig;
+import ru.merkii.rduels.core.duel.config.DuelConfiguration;
+import ru.merkii.rduels.core.duel.config.TitleSettingsConfiguration;
 import ru.merkii.rduels.core.duel.model.DuelFightModel;
 import ru.merkii.rduels.util.ColorUtil;
 import ru.merkii.rduels.util.PlayerUtil;
 
 public class DuelTeleportScheduler extends BukkitRunnable {
 
-    private final DuelAPI duelAPI = DuelCore.INSTANCE.getDuelAPI();
+    private final DuelConfiguration duelConfiguration;
+    private final TitleSettingsConfiguration titleSettings;
+    private final DuelAPI duelAPI;
     @Getter
     private final DuelFightModel duelFightModel;
     private int time;
 
     public DuelTeleportScheduler(DuelFightModel fightModel) {
+        this.duelAPI = RDuels.beanScope().get(DuelAPI.class);
+        this.duelConfiguration = RDuels.beanScope().get(DuelConfiguration.class);
+        this.titleSettings = duelConfiguration.titleSettings();
         this.duelFightModel = fightModel;
         this.time = 5;
         this.duelAPI.addNoMove(fightModel.getReceiver());
         this.duelAPI.addNoMove(fightModel.getSender());
         if (fightModel.getArenaModel().isFfa()) {
             if (fightModel.getReceiverParty() != null && fightModel.getSenderParty() != null) {
-                PlayerUtil.convertListUUID(fightModel.getReceiverParty().getPlayers()).forEach(this.duelAPI::addNoMove);
-                PlayerUtil.convertListUUID(fightModel.getSenderParty().getPlayers()).forEach(this.duelAPI::addNoMove);
+                PlayerUtil.duelPlayersConvertListUUID(fightModel.getReceiverParty().getPlayers()).forEach(this.duelAPI::addNoMove);
+                PlayerUtil.duelPlayersConvertListUUID(fightModel.getSenderParty().getPlayers()).forEach(this.duelAPI::addNoMove);
             } else {
                 this.duelAPI.addNoMove(fightModel.getPlayer2());
                 this.duelAPI.addNoMove(fightModel.getPlayer4());
@@ -39,59 +47,63 @@ public class DuelTeleportScheduler extends BukkitRunnable {
     @Override
     public void run() {
         --this.time;
-        Player receiver = this.duelFightModel.getReceiver();
-        Player sender = this.duelFightModel.getSender();
-        DuelConfig.TitleSettings titleSettings = DuelCore.INSTANCE.getDuelConfig().getTitleSettings();
+        DuelPlayer receiver = this.duelFightModel.getReceiver();
+        DuelPlayer sender = this.duelFightModel.getSender();
+        Player bukkitReceiver = BukkitAdapter.adapt(receiver);
+        Player bukkitSender = BukkitAdapter.adapt(sender);
+        String text = this.time != -1 ? ColorUtil.color(titleSettings.toFight().text()) : ColorUtil.color(titleSettings.fight().text());
+        int fadeIn = this.time != 1 ? titleSettings.toFight().fadeIn() : titleSettings.fight().fadeIn();
+        int fadeOut = this.time != -1 ? titleSettings.toFight().fadeOut() : titleSettings.fight().fadeOut();
+        int stay = this.time != -1 ? titleSettings.toFight().stay() : titleSettings.fight().stay();
+        Sound sound = this.time != -1 ? Sound.valueOf(titleSettings.toFight().soundName()) : Sound.valueOf(titleSettings.fight().soundName());
+        float v1 = this.time != -1 ? titleSettings.toFight().v1() : titleSettings.fight().v1();
+        float v2 = this.time != -1 ? titleSettings.toFight().v2() : titleSettings.fight().v2();
         if (this.time != 1) {
-            String text = ColorUtil.color(titleSettings.getToFight().getText()).replace("(time)", String.valueOf(this.time));
-            receiver.sendTitle(text, "", titleSettings.getToFight().getFadeIn(), titleSettings.getToFight().getStay(), titleSettings.getToFight().getFadeOut());
-            sender.sendTitle(text, "", titleSettings.getToFight().getFadeIn(), titleSettings.getToFight().getStay(), titleSettings.getToFight().getFadeOut());
+            String textS = text.replace("(time)", String.valueOf(this.time));
+            bukkitReceiver.sendTitle(textS, "", fadeIn, stay, fadeOut);
+            bukkitSender.sendTitle(textS, "", fadeIn, stay, fadeOut);
             if (this.duelFightModel.getArenaModel().isFfa()) {
                 if (this.duelFightModel.getSenderParty() != null && this.duelFightModel.getReceiverParty() != null) {
-                    PlayerUtil.convertListUUID(this.duelFightModel.getReceiverParty().getPlayers()).forEach(player -> player.sendTitle(text, "", titleSettings.getToFight().getFadeIn(), titleSettings.getToFight().getStay(), titleSettings.getToFight().getFadeOut()));
-                    PlayerUtil.convertListUUID(this.duelFightModel.getSenderParty().getPlayers()).forEach(player -> player.sendTitle(text, "", titleSettings.getToFight().getFadeIn(), titleSettings.getToFight().getStay(), titleSettings.getToFight().getFadeOut()));
+                    PlayerUtil.convertListUUID(this.duelFightModel.getReceiverParty().getPlayers()).forEach(player -> player.sendTitle(textS, "", fadeIn, stay, fadeOut));
+                    PlayerUtil.convertListUUID(this.duelFightModel.getSenderParty().getPlayers()).forEach(player -> player.sendTitle(textS, "", fadeIn, stay, fadeOut));
                 } else if (this.duelFightModel.getPlayer2() != null && this.duelFightModel.getPlayer4() != null) {
-                    this.duelFightModel.getPlayer4().sendTitle(text, "", titleSettings.getToFight().getFadeIn(), titleSettings.getToFight().getStay(), titleSettings.getToFight().getFadeOut());
-                    this.duelFightModel.getPlayer2().sendTitle(text, "", titleSettings.getToFight().getFadeIn(), titleSettings.getToFight().getStay(), titleSettings.getToFight().getFadeOut());
+                    BukkitAdapter.adapt(this.duelFightModel.getPlayer4()).sendTitle(textS, "", fadeIn, stay, fadeOut);
+                    BukkitAdapter.adapt(this.duelFightModel.getPlayer2()).sendTitle(textS, "", fadeIn, stay, fadeOut);
                 }
             }
-            Sound sound = Sound.valueOf(titleSettings.getToFight().getSoundName());
             if (sound == null) {
-                RDuels.getInstance().debug("Sound " + titleSettings.getToFight().getSoundName() + " not found!");
                 return;
             }
-            receiver.playSound(receiver.getLocation(), sound, titleSettings.getToFight().getV1(), titleSettings.getToFight().getV2());
-            sender.playSound(sender.getLocation(), sound, titleSettings.getToFight().getV1(), titleSettings.getToFight().getV2());
+            bukkitReceiver.playSound(bukkitReceiver.getLocation(), sound, v1, v2);
+            bukkitSender.playSound(bukkitSender.getLocation(), sound, v1, v2);
             return;
         }
-        Sound sound = Sound.valueOf(titleSettings.getFight().getSoundName());
-        if (sound == null) {
-            RDuels.getInstance().debug("Sound " + titleSettings.getFight().getSoundName() + " not found!");
-        } else {
-            receiver.playSound(receiver.getLocation(), sound, titleSettings.getFight().getV1(), titleSettings.getFight().getV2());
-            sender.playSound(sender.getLocation(), sound, titleSettings.getFight().getV1(), titleSettings.getFight().getV2());
-        }
-        receiver.sendTitle(ColorUtil.color(titleSettings.getFight().getText()), "", titleSettings.getFight().getFadeIn(), titleSettings.getFight().getStay(), titleSettings.getFight().getFadeOut());
-        sender.sendTitle(ColorUtil.color(titleSettings.getFight().getText()), "", titleSettings.getFight().getFadeIn(), titleSettings.getFight().getStay(), titleSettings.getFight().getFadeOut());
+        bukkitReceiver.sendTitle(text, "", fadeIn, stay, fadeOut);
+        bukkitSender.sendTitle(text, "", fadeIn, stay, fadeOut);
         this.duelAPI.removeNoMove(receiver);
         this.duelAPI.removeNoMove(sender);
         if (this.duelFightModel.getArenaModel().isFfa()) {
             if (this.duelFightModel.getReceiverParty() != null && this.duelFightModel.getSenderParty() != null) {
                 PlayerUtil.convertListUUID(this.duelFightModel.getReceiverParty().getPlayers()).forEach(player -> {
-                    this.duelAPI.removeNoMove(player);
-                    player.sendTitle(ColorUtil.color(titleSettings.getFight().getText()), "", titleSettings.getFight().getFadeIn(), titleSettings.getFight().getStay(), titleSettings.getFight().getFadeOut());
+                    this.duelAPI.removeNoMove(BukkitAdapter.adapt(player));
+                    player.sendTitle(text, "", fadeIn, stay, fadeOut);
                 });
                 PlayerUtil.convertListUUID(this.duelFightModel.getSenderParty().getPlayers()).forEach(player -> {
-                    this.duelAPI.removeNoMove(player);
-                    player.sendTitle(ColorUtil.color(titleSettings.getFight().getText()), "", titleSettings.getFight().getFadeIn(), titleSettings.getFight().getStay(), titleSettings.getFight().getFadeOut());
+                    this.duelAPI.removeNoMove(BukkitAdapter.adapt(player));
+                    player.sendTitle(text, "", fadeIn, stay, fadeOut);
                 });
             } else {
-                this.duelFightModel.getPlayer2().sendTitle(ColorUtil.color(titleSettings.getFight().getText()), "", titleSettings.getFight().getFadeIn(), titleSettings.getFight().getStay(), titleSettings.getFight().getFadeOut());
-                this.duelFightModel.getPlayer4().sendTitle(ColorUtil.color(titleSettings.getFight().getText()), "", titleSettings.getFight().getFadeIn(), titleSettings.getFight().getStay(), titleSettings.getFight().getFadeOut());
+                BukkitAdapter.adapt(this.duelFightModel.getPlayer2()).sendTitle(text, "", fadeIn, stay, fadeOut);
+                BukkitAdapter.adapt(this.duelFightModel.getPlayer4()).sendTitle(text, "", fadeIn, stay, fadeOut);
                 this.duelAPI.removeNoMove(this.duelFightModel.getPlayer2());
                 this.duelAPI.removeNoMove(this.duelFightModel.getPlayer4());
             }
         }
+        if (sound == null) {
+            return;
+        }
+        bukkitReceiver.playSound(bukkitReceiver.getLocation(), sound, v1, v2);
+        bukkitSender.playSound(bukkitSender.getLocation(), sound, v1, v2);
         this.cancel();
     }
 }

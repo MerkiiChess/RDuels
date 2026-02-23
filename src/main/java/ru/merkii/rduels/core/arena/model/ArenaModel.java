@@ -50,7 +50,7 @@ public class ArenaModel implements Cloneable {
         }
     }
 
-    ArenaModel(String arenaName, String displayName, Material material, EntityPosition onePosition, EntityPosition twoPosition, EntityPosition spectatorPosition, Map<Integer, EntityPosition> ffaPositions, EntityPosition schematicPosition, boolean customKits, List<String> customKitsName, boolean ffa, boolean breaking, String schematic, int radiusDeleteBlocks) {
+    public ArenaModel(String arenaName, String displayName, Material material, EntityPosition onePosition, EntityPosition twoPosition, EntityPosition spectatorPosition, Map<Integer, EntityPosition> ffaPositions, EntityPosition schematicPosition, boolean customKits, List<String> customKitsName, boolean ffa, boolean breaking, String schematic, int radiusDeleteBlocks) {
         this.arenaName = arenaName;
         this.displayName = displayName;
         this.material = material;

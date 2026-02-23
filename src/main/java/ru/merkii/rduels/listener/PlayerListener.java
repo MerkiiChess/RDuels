@@ -1,27 +1,36 @@
 package ru.merkii.rduels.listener;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.config.settings.Settings;
+import ru.merkii.rduels.config.settings.SettingsConfiguration;
+import ru.merkii.rduels.manager.DatabaseManager;
 
+@Singleton
 public class PlayerListener implements Listener {
 
-    private final RDuels plugin = RDuels.getInstance();
-    private final Settings settings = plugin.getSettings();
+    private final DatabaseManager databaseManager;
+    private final SettingsConfiguration settings;
+
+    @Inject
+    public PlayerListener(DatabaseManager databaseManager, SettingsConfiguration settings) {
+        this.databaseManager = databaseManager;
+        this.settings = settings;
+    }
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        if (this.settings.isItemOpenCustomKit()) {
-            player.getInventory().setItem(this.settings.getCreateCustomKit().getSlot(), this.settings.getCreateCustomKit().build());
+        if (this.settings.itemOpenCustomKit()) {
+            player.getInventory().setItem(this.settings.createCustomKit().slot(), this.settings.createCustomKit().build());
         }
-        if (this.plugin.getDatabaseManager().isDay(player).join()) {
-            player.setPlayerTime(this.settings.getDayTicks(), false);
-        } else if (this.plugin.getDatabaseManager().isNight(event.getPlayer()).join()) {
-            player.setPlayerTime(this.settings.getNightTicks(), false);
+        if (databaseManager.isDay(player.getUniqueId()).join()) {
+            player.setPlayerTime(this.settings.dayTicks(), false);
+        } else if (databaseManager.isNight(player.getUniqueId()).join()) {
+            player.setPlayerTime(this.settings.nightTicks(), false);
         }
     }
 

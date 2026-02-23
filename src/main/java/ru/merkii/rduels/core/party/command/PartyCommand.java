@@ -1,224 +1,175 @@
 package ru.merkii.rduels.core.party.command;
 
-import co.aikar.commands.BaseCommand;
-import co.aikar.commands.annotation.*;
-import org.bukkit.Bukkit;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.bukkit.entity.Player;
-import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.config.messages.MessageConfiguration;
-import ru.merkii.rduels.core.party.PartyCore;
+import revxrsal.commands.annotation.*;
+import revxrsal.commands.bukkit.actor.BukkitCommandActor;
+import ru.merkii.rduels.adapter.DuelPlayer;
+import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
+import ru.merkii.rduels.config.Placeholder;
+import ru.merkii.rduels.config.messages.MessageConfig;
 import ru.merkii.rduels.core.party.api.PartyAPI;
+import ru.merkii.rduels.core.party.config.PartyConfiguration;
 import ru.merkii.rduels.core.party.model.PartyModel;
 import ru.merkii.rduels.core.party.model.PartyRequestModel;
-import ru.merkii.rduels.util.PlayerUtil;
+import ru.merkii.rduels.lamp.suggestion.AllPlayers;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
+@Command({"party", "p"})
+@Singleton
+public class PartyCommand {
 
-@CommandAlias("party")
-public class PartyCommand extends BaseCommand {
+    private final PartyAPI partyAPI;
+    private final PartyConfiguration partyConfiguration;
+    private final MessageConfig messageConfig;
 
-    private final PartyCore partyCore = PartyCore.INSTANCE;
-    private final PartyAPI partyAPI = this.partyCore.getPartyAPI();
-    private final MessageConfiguration messageConfiguration = RDuels.getInstance().getPluginMessage();
-
-    @Default
-    @Description(value="Помощь по командам")
-    public void onParty(Player player) {
-        this.messageConfiguration.getMessages("partyHelp").forEach(arg_0 -> player.sendMessage(arg_0));
+    @Inject
+    public PartyCommand(PartyAPI partyAPI, PartyConfiguration partyConfiguration, MessageConfig messageConfig) {
+        this.partyAPI = partyAPI;
+        this.partyConfiguration = partyConfiguration;
+        this.messageConfig = messageConfig;
     }
 
-    @Subcommand(value="list")
-    @Description(value="Вывести список всех игроков")
-    public void partyList(Player player) {
-        if (!this.partyAPI.isPartyPlayer(player)) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyNo"));
+    @Command("create")
+    @Description("Создать пати")
+    public void create(BukkitCommandActor actor) {
+        Player bukkitPlayer = actor.asPlayer();
+        DuelPlayer player = BukkitAdapter.adapt(bukkitPlayer);
+        if (partyAPI.isPartyPlayer(player)) {
+            messageConfig.sendTo(player, "party-already");
             return;
         }
-        PartyModel partyModel = this.partyAPI.getPartyModelFromPlayer(player);
+        partyAPI.createParty(player);
+        messageConfig.sendTo(player, "party-created");
+    }
+
+    @Command("invite")
+    @Description("Пригласить в пати")
+    public void invite(BukkitCommandActor actor, @SuggestWith(AllPlayers.class) Player targetBukkit) {
+        Player bukkitPlayer = actor.asPlayer();
+        if (targetBukkit == null) {
+            // TODO Сообщение если еблана нет в сети
+            return;
+        }
+        DuelPlayer target = BukkitAdapter.adapt(targetBukkit);
+        DuelPlayer player = BukkitAdapter.adapt(bukkitPlayer);
+        PartyModel partyModel = partyAPI.getPartyModelFromPlayer(player);
         if (partyModel == null) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyNo"));
+            messageConfig.sendTo(player, "party-no");
             return;
         }
-        StringBuilder players = new StringBuilder();
-        partyModel.getPlayers().stream().map(Bukkit::getPlayer).filter(Objects::nonNull).map(Player::getName).forEach(name -> players.append(name).append(", "));
-        this.messageConfiguration.getMessages("partyPlayers").stream().map(str -> str.replace("(owner)", Bukkit.getPlayer(partyModel.getOwner()).getName())).map(str -> str.replace("(players)", players.toString())).forEach(player::sendMessage);
+        if (!partyModel.getOwner().equals(player.getUUID())) {
+            messageConfig.sendTo(player, "party-no-owner");
+            return;
+        }
+        if (partyModel.getPlayers().size() >= partyConfiguration.maxPartySize() - 1) {
+            messageConfig.sendTo(player, "party-full-sender");
+            return;
+        }
+        if (partyAPI.isPartyPlayer(target)) {
+            messageConfig.sendTo(player, Placeholder.wrapped("(player)", target.getName()), "party-already-player");
+            return;
+        }
+        if (partyAPI.getPartyRequestModel(player, target) != null) {
+            messageConfig.sendTo(player, Placeholder.wrapped("(player)", target.getName()), "party-already-invite");
+            return;
+        }
+        partyAPI.inviteParty(partyModel, target);
+        messageConfig.sendTo(player, Placeholder.wrapped("(player)", target.getName()), "party-invite");
     }
 
-    @Subcommand(value="disband")
-    @Description(value="Распустить пати")
-    public void disband(Player player) {
-        if (!this.partyAPI.isPartyPlayer(player)) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyNo"));
+    @Command("yes")
+    @Description("Принять приглашение в пати")
+    public void yes(BukkitCommandActor actor, @SuggestWith(AllPlayers.class) Player bukkitSender) {
+        Player bukkitPlayer = actor.asPlayer();
+        DuelPlayer sender = BukkitAdapter.adapt(bukkitSender);
+        DuelPlayer player = BukkitAdapter.adapt(bukkitPlayer);
+        PartyRequestModel request = partyAPI.getPartyRequestModel(sender, player);
+        if (request == null) {
+            messageConfig.sendTo(player, "party-end-duration");
             return;
         }
-        PartyModel partyModel = this.partyAPI.getPartyModelFromPlayer(player);
+        PartyModel partyModel = request.getInvitedParty();
+        if (partyModel.getPlayers().size() >= partyConfiguration.maxPartySize() - 1) {
+            messageConfig.sendTo(player, Placeholder.wrapped("(player)", sender.getName()), "party-full");
+            partyAPI.removeRequest(request);
+            return;
+        }
+        partyAPI.removeRequest(request);
+        partyAPI.joinParty(partyModel, player);
+    }
+
+    @Command("no")
+    @Description("Отклонить приглашение в пати")
+    public void no(BukkitCommandActor actor, @SuggestWith(AllPlayers.class) Player bukkitSender) {
+        Player bukkitPlayer = actor.asPlayer();
+        DuelPlayer sender = BukkitAdapter.adapt(bukkitSender);
+        DuelPlayer player = BukkitAdapter.adapt(bukkitPlayer);
+        PartyRequestModel request = partyAPI.getPartyRequestModel(sender, player);
+        if (request == null) {
+            messageConfig.sendTo(player, "party-end-duration");messageConfig.sendTo(player, "party-end-duration");
+            return;
+        }
+        partyAPI.removeRequest(request);
+        messageConfig.sendTo(player, "party-decline");
+        messageConfig.sendTo(sender, Placeholder.wrapped("(player)", player.getName()), "party-decline-sender");
+    }
+
+    @Command("leave")
+    @Description("Выйти из пати")
+    public void leave(BukkitCommandActor actor) {
+        Player bukkitPlayer = actor.asPlayer();
+        DuelPlayer player = BukkitAdapter.adapt(bukkitPlayer);
+        if (!partyAPI.isPartyPlayer(player)) {
+            messageConfig.sendTo(player, "party-no");
+            return;
+        }
+        partyAPI.leaveParty(player);
+    }
+
+    @Command("disband")
+    @Description("Распустить пати")
+    public void disband(BukkitCommandActor actor) {
+        Player bukkitPlayer = actor.asPlayer();
+        DuelPlayer player = BukkitAdapter.adapt(bukkitPlayer);
+        PartyModel partyModel = partyAPI.getPartyModelFromPlayer(player);
         if (partyModel == null) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyNo"));
+            messageConfig.sendTo(player, "party-no");
             return;
         }
-        if (!partyModel.getOwner().equals(player.getUniqueId())) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyNoOwner"));
+        if (!partyModel.getOwner().equals(player.getUUID())) {
+            messageConfig.sendTo(player, "party-no-owner");
             return;
         }
-        PlayerUtil.convertListUUID(partyModel.getPlayers()).forEach(partyPlayer -> this.partyAPI.leaveParty((Player)partyPlayer, false));
-        this.partyAPI.leaveParty(player);
-        player.sendMessage(this.messageConfiguration.getMessage("partyDisband"));
+        partyAPI.leaveParty(player, false);
+        messageConfig.sendTo(player, "party-disband");
     }
 
-    @Subcommand(value="create")
-    @Description(value="Создать пати")
-    public void create(Player player) {
-        if (this.partyAPI.isPartyPlayer(player)) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyAlready"));
-            return;
-        }
-        this.partyAPI.createParty(player);
-        player.sendMessage(this.messageConfiguration.getMessage("partyCreate"));
-    }
-
-    @Subcommand(value="leave")
-    @Description(value="Выйти с пати")
-    public void onLeaveParty(Player player) {
-        if (!this.partyAPI.isPartyPlayer(player)) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyNo"));
-            return;
-        }
-        this.partyAPI.leaveParty(player);
-    }
-
-    @Subcommand(value="kick")
-    @CommandCompletion(value="@allplayers")
-    @Description(value="кикнуть игрока с пати")
-    public void onPartyKick(Player player, @Name(value="ник") String receiverName) {
-        if (!this.partyAPI.isPartyPlayer(player)) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyNo"));
-            return;
-        }
-        PartyModel partyModel = this.partyAPI.getPartyModelFromPlayer(player);
+    @Command("kick")
+    @Description("Кикнуть игрока из пати")
+    public void kick(BukkitCommandActor actor, @SuggestWith(AllPlayers.class) Player bukkitTarget) {
+        Player bukkitPlayer = actor.asPlayer();
+        DuelPlayer target = BukkitAdapter.adapt(bukkitTarget);
+        DuelPlayer player = BukkitAdapter.adapt(bukkitPlayer);
+        PartyModel partyModel = partyAPI.getPartyModelFromPlayer(player);
         if (partyModel == null) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyNo"));
+            messageConfig.sendTo(player, "party-no");
             return;
         }
-        if (!partyModel.getOwner().equals(player.getUniqueId())) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyNoOwner"));
+        if (!partyModel.getOwner().equals(player.getUUID())) {
+            messageConfig.sendTo(player, "party-no-owner");
             return;
         }
-        Player receiver = Bukkit.getPlayerExact(receiverName);
-        if (receiver == null) {
-            player.sendMessage(this.messageConfiguration.getMessage("duelOffline").replace("(player)", receiverName));
+        if (!partyModel.getPlayers().contains(target.getUUID())) {
+            messageConfig.sendTo(player, Placeholder.wrapped("(player)", target.getName()), "party-no-your-player");
             return;
         }
-        if (!this.partyAPI.isPartyPlayer(receiver)) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyNoPlayer").replace("(player)", receiver.getName()));
-            return;
-        }
-        PartyModel partyModelReceiver = this.partyAPI.getPartyModelFromPlayer(receiver);
-        if (partyModelReceiver == null) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyNoPlayer").replace("(player)", receiver.getName()));
-            return;
-        }
-        if (!partyModelReceiver.getOwner().equals(player.getUniqueId())) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyNoYourPlayer").replace("(player)", receiver.getName()));
-            return;
-        }
-        this.partyAPI.leaveParty(receiver);
+        partyAPI.leaveParty(target);
+        messageConfig.sendTo(player, Placeholder.wrapped("(player)", target.getName()), "party-kick");
     }
-
-    @Subcommand(value="invite")
-    @CommandCompletion(value="@allplayers")
-    @Description(value="Пригласить игрока в пати")
-    public void onPartyInvite(Player player, @Name(value="игрок") String receiverName) {
-        if (!this.partyAPI.isPartyPlayer(player)) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyNo"));
-            return;
-        }
-        PartyModel partyModel = this.partyAPI.getPartyModelFromPlayer(player);
-        if (partyModel == null) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyNo"));
-            return;
-        }
-        if (!partyModel.getOwner().equals(player.getUniqueId())) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyNoOwner"));
-            return;
-        }
-        Player receiver = Bukkit.getPlayerExact(receiverName);
-        if (receiver == null) {
-            player.sendMessage(this.messageConfiguration.getMessage("duelOffline").replace("(player)", receiverName));
-            return;
-        }
-        if (this.partyAPI.isPartyPlayer(receiver)) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyAlreadyPlayer").replace("(player)", receiver.getName()));
-            return;
-        }
-        if (partyModel.getPlayers().size() + 1 == this.partyCore.getPartyConfig().getMaxPartySize()) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyFullSender"));
-            return;
-        }
-        if (this.partyAPI.getPartyRequestModel(player, receiver) != null) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyAlreadyInvite").replace("(player)", receiver.getName()));
-            return;
-        }
-        player.sendMessage(this.messageConfiguration.getMessage("partyInvite").replace("(player)", receiver.getName()));
-        this.partyAPI.inviteParty(partyModel, receiver);
+    @Command("help")
+    @Description("Помощь по командам пати")
+    public void help(BukkitCommandActor actor) {
+        messageConfig.sendTo(actor.requirePlayer(), "party-help");
     }
-
-    @Subcommand(value="yes")
-    @CommandCompletion(value="@allplayers")
-    @Description(value="Принять приглашение на пати")
-    public void onPartyYes(Player player, @Name(value="ник") String receiverName) {
-        if (this.partyAPI.isPartyPlayer(player)) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyAlready"));
-            return;
-        }
-        Player receiver = Bukkit.getPlayerExact(receiverName);
-        if (receiver == null) {
-            player.sendMessage(this.messageConfiguration.getMessage("duelOffline").replace("(player)", receiverName));
-            return;
-        }
-        if (!this.partyAPI.isPartyPlayer(receiver)) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyNoPlayer").replace("(player)", player.getName()));
-            return;
-        }
-        PartyRequestModel requestModel = this.partyAPI.getPartyRequestModel(receiver, player);
-        if (requestModel == null) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyEndDuration"));
-            return;
-        }
-        this.partyAPI.removeRequest(requestModel);
-        if (requestModel.getInvitedParty().getPlayers().size() == this.partyCore.getPartyConfig().getMaxPartySize()) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyFull").replace("(player)", player.getName()));
-            return;
-        }
-        this.partyAPI.joinParty(requestModel.getInvitedParty(), player);
-    }
-
-    @Subcommand(value="no")
-    @CommandCompletion(value="@allplayers")
-    @Description(value="Отклонить приглашение на пати")
-    public void onPartyNo(Player player, @Name(value="ник") String receiverName) {
-        if (this.partyAPI.isPartyPlayer(player)) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyAlready"));
-            return;
-        }
-        Player receiver = Bukkit.getPlayerExact(receiverName);
-        if (receiver == null) {
-            player.sendMessage(this.messageConfiguration.getMessage("duelOffline").replace("(player)", receiverName));
-            return;
-        }
-        if (!this.partyAPI.isPartyPlayer(receiver)) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyNoPlayer").replace("(player)", player.getName()));
-            return;
-        }
-        PartyRequestModel requestModel = this.partyAPI.getPartyRequestModel(receiver, player);
-        if (requestModel == null) {
-            player.sendMessage(this.messageConfiguration.getMessage("partyEndDuration"));
-            return;
-        }
-        this.partyAPI.removeRequest(requestModel);
-        player.sendMessage(this.messageConfiguration.getMessage("partyDecline"));
-        receiver.sendMessage(this.messageConfiguration.getMessage("partyDeclineSender").replace("(player)", player.getName()));
-    }
-
 }

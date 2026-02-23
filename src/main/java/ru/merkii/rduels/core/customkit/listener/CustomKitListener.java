@@ -1,19 +1,31 @@
 package ru.merkii.rduels.core.customkit.listener;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.config.settings.Settings;
+import ru.merkii.rduels.adapter.DuelPlayer;
+import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
+import ru.merkii.rduels.config.settings.SettingsConfiguration;
 import ru.merkii.rduels.core.customkit.menu.CustomKitCreateMenu;
 import ru.merkii.rduels.core.duel.DuelCore;
+import ru.merkii.rduels.core.duel.api.DuelAPI;
 
+@Singleton
 public class CustomKitListener implements Listener {
 
-    private final RDuels plugin = RDuels.getInstance();
-    private final Settings settings = plugin.getSettings();
+    private final DuelAPI duelAPI;
+    private final SettingsConfiguration settings;
+
+    @Inject
+    public CustomKitListener(SettingsConfiguration settings, DuelAPI duelAPI) {
+        this.duelAPI = duelAPI;
+        this.settings = settings;
+    }
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
@@ -21,17 +33,18 @@ public class CustomKitListener implements Listener {
         if (!(event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
             return;
         }
-        if (DuelCore.INSTANCE.getDuelAPI().isFightPlayer(player)) {
+        DuelPlayer duelPlayer = BukkitAdapter.adapt(player);
+        if (duelPlayer.isFight()) {
             return;
         }
-        if (!player.getInventory().getItemInMainHand().equals(this.settings.getCreateCustomKit().build())) {
+        if (!player.getInventory().getItemInMainHand().equals(this.settings.createCustomKit().build())) {
             return;
         }
-        if (!this.settings.isItemOpenCustomKit()) {
+        if (!this.settings.itemOpenCustomKit()) {
             return;
         }
         event.setCancelled(true);
-        new CustomKitCreateMenu(player).open(player);
+        new CustomKitCreateMenu().open(player);
     }
 
 }

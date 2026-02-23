@@ -1,0 +1,451 @@
+settings:
+  gui:
+    create-kit:
+      title: '<gold>Создание кита'
+      inventory:
+        page-resolver: KIT_LIST
+        structure:
+          - xxxxxxxxx
+          - yyyyyyyyy
+          - xxxxxxxxx
+        mapping:
+          x: background
+          y: kit-selection
+        page-items:
+          - y
+        items:
+          background:
+            material: GRAY_STAINED_GLASS_PANE
+            name: " "
+          kit-selection:
+            material: 'GRAY_GLAZED_TERRACOTTA'
+            name: '%kit_display_name%'
+            lore:
+              - '<white>Выбран: %is_selected%'
+              - '<gold>ЛКМ: выбрать'
+              - '<gold>ПКМ: редактировать'
+            on-click:
+              left:
+                callback: SELECT_KIT
+              right:
+                open: edit-kit
+
+    edit-kit:
+      title: '<gold>Редактирование кита'
+      inventory:
+        page-items:
+          - '*'
+          - H
+          - C
+          - L
+          - B
+          - O
+        page-resolver: KIT_SLOTS
+        structure:
+          - "* * * * * * * * *"
+          - "* * * * * * * * *"
+          - "* * * * * * * * *"
+          - "* * * * * * * * *"
+          - "H C L B O * * * *"
+          - x x x x E x x x x
+        mapping:
+          x: background
+          E: exit
+          H: helmet
+          C: chestplate
+          L: leggings
+          B: boots
+          O: offhand
+          '*': kit-slot
+        items:
+          background:
+            material: BLACK_STAINED_GLASS_PANE
+          exit:
+            material: BARRIER
+            name: '<red>Выход'
+            on-click:
+              callback: EXIT_MENU
+          helmet:
+            slot-id: 100
+            category-id: HELMET
+            material: "%slot_material%"
+            default-material: BARRIER
+            name: "%slot_name%"
+            on-click:
+              left:
+                callback: OPEN_CATEGORY
+              right:
+                callback: EDIT_ENCHANT_OR_AMOUNT
+              shift-left:
+                callback: REMOVE_ITEM
+              shift-right:
+                callback: REMOVE_ITEM
+          chestplate:
+            slot-id: 101
+            category-id: CHESTPLATE
+            material: "%slot_material%"
+            default-material: BARRIER
+            name: "%slot_name%"
+            on-click:
+              left:
+                callback: OPEN_CATEGORY
+              right:
+                callback: EDIT_ENCHANT_OR_AMOUNT
+              shift-left:
+                callback: REMOVE_ITEM
+              shift-right:
+                callback: REMOVE_ITEM
+          leggings:
+            slot-id: 102
+            category-id: LEGGINGS
+            material: "%slot_material%"
+            default-material: BARRIER
+            name: "%slot_name%"
+            on-click:
+              left:
+                callback: OPEN_CATEGORY
+              right:
+                callback: EDIT_ENCHANT_OR_AMOUNT
+              shift-left:
+                callback: REMOVE_ITEM
+              shift-right:
+                callback: REMOVE_ITEM
+          boots:
+            slot-id: 103
+            category-id: BOOTS
+            material: "%slot_material%"
+            default-material: BARRIER
+            name: "%slot_name%"
+            on-click:
+              left:
+                callback: OPEN_CATEGORY
+              right:
+                callback: EDIT_ENCHANT_OR_AMOUNT
+              shift-left:
+                callback: REMOVE_ITEM
+              shift-right:
+                callback: REMOVE_ITEM
+          offhand:
+            slot-id: 104
+            category-id: "ALL"
+            material: "%slot_material%"
+            default-material: BARRIER
+            name: "%slot_name%"
+            on-click:
+              left:
+                callback: OPEN_CATEGORY
+              right:
+                callback: EDIT_ENCHANT_OR_AMOUNT
+              shift-left:
+                callback: REMOVE_ITEM
+              shift-right:
+                callback: REMOVE_ITEM
+          kit-slot:
+            category-id: "ALL"
+            material: "%slot_material%"
+            default-material: BARRIER
+            name: "%slot_name%"
+            lore:
+              - '<gold>ЛКМ: выбрать категорию'
+              - '<gold>ПКМ: зачаровать/количество'
+              - '<gold>Shift: удалить'
+            on-click:
+              left:
+                callback: OPEN_CATEGORY
+              right:
+                callback: EDIT_ENCHANT_OR_AMOUNT
+              shift-left:
+                callback: REMOVE_ITEM
+              shift-right:
+                callback: REMOVE_ITEM
+
+    category-menu:
+      title: '<gold>Категории'
+      inventory:
+        page-items:
+          - C
+        page-resolver: CATEGORIES
+        structure:
+          - x x x x x x x x x
+          - C C C C C C C C C
+          - x x x x E x x x x
+        mapping:
+          x: background
+          E: exit
+          C: category-item
+        items:
+          background:
+            material: GRAY_STAINED_GLASS_PANE
+          exit:
+            material: BARRIER
+            name: '<red>Выход'
+            on-click:
+              callback: EXIT_MENU
+          category-item:
+            material: '%category_material%'
+            name: '%category_name%'
+            on-click:
+              left:
+                callback: CHOICE_ITEM
+
+    choice-item-category-menu:
+      title: '<gold>Выбор предмета'
+      inventory:
+        page-items:
+          - I
+        page-resolver: CHOICE_ITEM_CATEGORY
+        structure:
+          - I I I I I I I I I
+          - I I I I I I I I I
+          - I I I I I I I I I
+          - I I I I I I I I I
+          - I I I I I I I I I
+          - x x x x E x x x x
+        mapping:
+          x: background
+          E: exit
+          I: item
+        items:
+          background:
+            material: GRAY_STAINED_GLASS_PANE
+            name: ' '
+          exit:
+            material: BARRIER
+            name: '<red>Выход'
+          item:
+            material: "%category_material%"
+            on-click:
+              left:
+                callback: SELECT_CATEGORY
+              right:
+                callback: SELECT_CATEGORY
+
+    enchant-category:
+      title: '<gold>Зачарования для %item_name%'
+      inventory:
+        page-items:
+          - E
+        page-resolver: ENCHANT_CATEGORIES
+        structure:
+          - x x x x x x x x x
+          - E E E E E E E E E
+          - x x x x E x x x x
+        mapping:
+          x: background
+          E: enchant-item
+        items:
+          background:
+            material: GRAY_STAINED_GLASS_PANE
+          enchant-item:
+            material: ENCHANTED_BOOK
+            name: '%enchant_name% уровень %enchant_level%'
+            on-click:
+              left:
+                callback: APPLY_ENCHANT
+
+    item-amount:
+      title: '<gold>Количество для %item_name%'
+      inventory:
+        page-items:
+          - A
+        page-resolver: AMOUNT_OPTIONS
+        structure:
+          - x x x x x x x x x
+          - A A A A A A A A A
+          - x x x x x x x x x
+        mapping:
+          x: background
+          A: amount-option
+        items:
+          background:
+            material: GRAY_STAINED_GLASS_PANE
+          amount-option:
+            material: '%item_material%'
+            amount: '%amount%'
+            name: '<yellow>Выбрать %amount% шт.'
+            on-click:
+              callback: SET_AMOUNT
+
+    duel-choice-kit:
+      title: '<red>Выбор кита для дуэли'
+      inventory:
+        structure:
+          - x x x x x x x x x
+          - C S K A N . . . x
+          - x x x x E F x x x
+        mapping:
+          x: background
+          C: custom-kit
+          S: server-kit
+          K: kit-select
+          A: arena-select
+          N: num-games
+          E: exit
+          F: fight
+        items:
+          background:
+            material: RED_STAINED_GLASS_PANE
+          custom-kit:
+            material: BOOK
+            name: '<green>Кастомный кит'
+            on-click:
+              callback: SELECT_CUSTOM_KIT
+          server-kit:
+            material: IRON_SWORD
+            name: '<blue>Серверный кит'
+            on-click:
+              callback: SELECT_SERVER_KIT
+          kit-select:
+            material: CHEST
+            name: '<yellow>Выбрать кит'
+            on-click:
+              callback: DUEL_REQUEST_KIT_OPTION
+          arena-select:
+            material: MAP
+            name: '<yellow>Выбор арены'
+            on-click:
+              callback: DUEL_REQUEST_ARENA_OPTION
+          num-games:
+            material: CLOCK
+            name: '<yellow>Количество игр'
+            on-click:
+              callback: DUEL_REQUEST_NUM_GAMES_OPTION
+          fight:
+            material: DIAMOND_SWORD
+            name: '<red>Отправить заявку на дуэль'
+            on-click:
+              callback: REQUEST_FIGHT
+          exit:
+            material: BARRIER
+            name: '<red>Выход'
+            on-click:
+              callback: EXIT_MENU
+
+    duel-request:
+      title: '<red>Настройки дуэли: %option_type%'
+      inventory:
+        page-items:
+          - '*'
+        page-resolver: REQUEST_OPTIONS
+        structure:
+          - x x x x x x x x x
+          - "* * * * * * * * *"
+          - x x x x E x x x x
+        mapping:
+          x: background
+          E: exit
+          '*': request-option
+        items:
+          background:
+            material: RED_STAINED_GLASS_PANE
+          exit:
+            material: BARRIER
+            name: '<red>Выход'
+            on-click:
+              callback: EXIT_MENU
+          request-option:
+            material: '%option_material%'
+            name: '%option_name%'
+            on-click:
+              callback: SELECT_OPTION
+
+    party-fight:
+      title: '<gold>Партийные бои'
+      inventory:
+        page-items:
+          - P
+        page-resolver: PARTY_LIST
+        structure:
+          - x x x x x x x x x
+          - P P P P P P P P P
+          - x x x x E x x x x
+        mapping:
+          x: background
+          E: exit
+          P: party-item
+        items:
+          background:
+            material: GRAY_STAINED_GLASS_PANE
+          exit:
+            material: BARRIER
+            name: '<red>Выход'
+            on-click:
+              callback: EXIT_MENU
+          party-item:
+            material: PLAYER_HEAD
+            name: '<yellow>Партия %party_owner%'
+            lore:
+              - '<white>Игроки: %player_list%'
+              - '%fight_status%'
+            on-click:
+              callback: CHALLENGE_PARTY
+
+  notification:
+    sounds:
+      select-kit: 'BLOCK_NOTE_BLOCK_PLING'
+      edit-item: 'UI_BUTTON_CLICK'
+      remove-item: 'ENTITY_ITEM_BREAK'
+      set-amount: 'ENTITY_EXPERIENCE_ORB_PICKUP'
+      select-option: 'BLOCK_LEVER_CLICK'
+      challenge-party: 'ENTITY_VILLAGER_YES'
+      exit: 'BLOCK_NOTE_BLOCK_BASS'
+  format:
+    decimal-format: '0'
+
+  create-settings:
+    categories:
+      - material: "DIAMOND_SWORD"
+        name: "Мечи"
+        items:
+          - material: "DIAMOND_SWORD"
+            name: "Алмазный меч"
+          - material: "STONE_SWORD"
+            name: "Каменный меч"
+      - material: "TOTEM_OF_UNDYING"
+        name: "Вспомогательные предметы"
+        items:
+          - material: "TOTEM_OF_UNDYING"
+            name: "Тотем"
+          - material: "SHIELD"
+            name: "Щит"
+      - material: "DIAMOND_HELMET"
+        name: "Шлемы"
+        id: "HELMET"
+        items:
+          - material: "DIAMOND_HELMET"
+            name: "<cyan>Алмазный шлем"
+          - material: "IRON_HELMET"
+            name: "<gray>Железный шлем"
+
+    kits:
+      - display-name: "Кит #1"
+        invisible: false
+      - display-name: "Кит #2"
+        invisible: false
+      - display-name: "Кит #3"
+        invisible: false
+      - display-name: "Кит #4"
+        permission: "custom.kit.4"
+        invisible: true
+
+messages:
+  serializer: MINI_MESSAGE
+  kit-selected: '<green>Кит выбран: %kit_name%'
+  item-removed: '<red>Предмет удален из слота %slot%'
+  amount-set: '<green>Установлено количество: %amount%'
+  enchant-applied: '<green>Зачарование применено: %enchant_name%'
+  option-selected: '<green>Выбрано: %option_name%'
+  challenge-sent: '<yellow>Вызов партии %party_owner% отправлен'
+  no-permission: '<red>Нет прав!'
+  no-item: '<red>Нет предмета в слоте'
+  exit-menu: '<gray>Меню закрыто'
+  placeholder:
+    is-selected:
+      enabled: '<green>Да'
+      disabled: '<red>Нет'
+    has-permission:
+      yes: '<green>Есть'
+      no: '<red>Нет'
+    fight-status:
+      free: '<green>Свободна'
+      fighting: '<red>В бою'

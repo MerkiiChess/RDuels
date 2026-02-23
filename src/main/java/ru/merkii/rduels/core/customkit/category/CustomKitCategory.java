@@ -2,21 +2,16 @@ package ru.merkii.rduels.core.customkit.category;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.bukkit.Material;
-import ru.merkii.rduels.builder.ItemBuilder;
-import java.util.Map;
+import ru.merkii.rduels.config.menu.settings.gui.InventoryItem;
 
+import java.util.List;
+
+@Getter
 @AllArgsConstructor
 public class CustomKitCategory {
 
-    private ItemBuilder item;
-    private Map<Integer, ItemBuilder> items;
+    private String id;
+    private InventoryItem item;
+    private List<InventoryItem> items;
 
-    public ItemBuilder getItem() {
-        return item;
-    }
-
-    public Map<Integer, ItemBuilder> getItems() {
-        return items;
-    }
 }

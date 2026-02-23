@@ -1,33 +1,11 @@
 package ru.merkii.rduels.model;
 
 import com.google.common.base.Preconditions;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.util.Vector;
 
 public interface Position extends Cloneable, Comparable<Position> {
-
-    default void setWorld(World world) {
-        this.setWorld(world.getName());
-    }
-
-    default World getWorld() {
-        return Bukkit.getWorld(this.getWorldName());
-    }
-
-    default Vector toVector() {
-        return new Vector(this.getX(), this.getY(), this.getZ());
-    }
-
-    default double[] toDoubleArray() {
-        return new double[]{this.getX(), this.getY(), this.getZ()};
-    }
-
-    default int[] toIntArray() {
-        return new int[]{this.getBlockX(), this.getBlockY(), this.getBlockZ()};
-    }
 
     static int locToBlock(double num) {
         int floor = (int)num;
@@ -71,6 +49,10 @@ public interface Position extends Cloneable, Comparable<Position> {
     String getWorldName();
 
     Location toLocation();
+
+    World getWorld();
+
+    void setWorld(World world);
 
     Block toBlock();
 }

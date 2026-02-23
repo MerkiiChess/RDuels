@@ -1,0 +1,27 @@
+categories-menu:
+  item-stacks:
+    1:
+      material: "NULL"
+      display-name: "1 штука"
+      slot: 13
+      amount: 1
+    8:
+      material: "NULL"
+      display-name: "8 штук"
+      slot: 14
+      amount: 8
+    16:
+      material: "NULL"
+      display-name: "16 штук"
+      slot: 15
+      amount: 16
+    32:
+      material: "NULL"
+      display-name: "32 штуки"
+      slot: 16
+      amount: 32
+    64:
+      material: "NULL"
+      display-name: "64 штуки"
+      slot: 17
+      amount: 64

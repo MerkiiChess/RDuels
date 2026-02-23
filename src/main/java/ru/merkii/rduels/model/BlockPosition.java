@@ -10,6 +10,7 @@ import org.bukkit.entity.Entity;
 import java.util.Objects;
 
 public class BlockPosition implements Position{
+
     private String world;
     private int x;
     private int y;

@@ -6,7 +6,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.api.DuelPlayer;
+import ru.merkii.rduels.adapter.DuelPlayer;
 import ru.merkii.rduels.core.duel.model.DuelFightModel;
 
 public class DuelKillPlayerEvent extends Event implements Cancellable {
@@ -23,7 +23,7 @@ public class DuelKillPlayerEvent extends Event implements Cancellable {
     public DuelKillPlayerEvent(DuelPlayer killer, DuelPlayer victim) {
         this.killer = killer;
         this.victim = victim;
-        this.duelFightModel = killer.getDuelFightModel();
+        this.duelFightModel = killer.getDuelFightModel().get();
         this.cancelled = false;
     }
 

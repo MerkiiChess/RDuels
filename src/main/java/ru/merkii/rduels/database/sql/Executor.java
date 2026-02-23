@@ -1,145 +1,120 @@
 package ru.merkii.rduels.database.sql;
 
-import org.bukkit.entity.Player;
-import ru.merkii.rduels.database.Query;
+import io.ebean.Database;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import org.jetbrains.annotations.Nullable;
 import ru.merkii.rduels.model.UserModel;
 
-import java.sql.SQLException;
+import java.util.UUID;
 
-public class Executor extends Query {
+@Singleton
+public class Executor {
+
+    private final Database database;
+
+    @Inject
+    public Executor(Database database) {
+        this.database = database;
+    }
 
     public void insert(UserModel userModel) {
-        try {
-            getBlackDataDao().create(userModel);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        database.save(userModel);
     }
 
-    public void addKill(Player player) {
-        try {
-            UserModel userModel = getUserModel(player.getUniqueId().toString());
-            userModel.setKills(userModel.getKills() + 1);
-            getBlackDataDao().update(userModel);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+    public void addKill(UUID uuid) {
+        UserModel userModel = getUserModel(uuid.toString());
+        userModel.setKills(userModel.getKills() + 1);
+        database.update(userModel);
     }
 
-    public void setDay(Player player) {
-        try {
-            UserModel userModel = getUserModel(player.getUniqueId().toString());
-            userModel.setDay(true);
-            userModel.setNight(false);
-            getBlackDataDao().update(userModel);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+    public void setDay(UUID uuid) {
+        UserModel userModel = getUserModel(uuid.toString());
+        userModel.setDay(true);
+        userModel.setNight(false);
+        database.update(userModel);
     }
 
-    public void setNight(Player player) {
-        try {
-            UserModel userModel = getUserModel(player.getUniqueId().toString());
-            userModel.setNight(true);
-            userModel.setDay(false);
-            getBlackDataDao().update(userModel);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+    public void setNight(UUID uuid) {
+        UserModel userModel = getUserModel(uuid.toString());
+        userModel.setNight(true);
+        userModel.setDay(false);
+        database.update(userModel);
     }
 
-    public void addDeath(Player player) {
-        try {
-            UserModel userModel = getUserModel(player);
-            userModel.setDeath(userModel.getDeath() + 1);
-            getBlackDataDao().update(userModel);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+    public void addDeath(UUID uuid) {
+        UserModel userModel = getUserModel(uuid.toString());
+        userModel.setDeath(userModel.getDeath() + 1);
+        database.update(userModel);
     }
 
-    public void addWinRound(Player player) {
-        try {
-             UserModel userModel = getUserModel(player);
-             userModel.setWinRounds(userModel.getWinRounds() + 1);
-             getBlackDataDao().update(userModel);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+    public void addWinRound(UUID uuid) {
+        UserModel userModel = getUserModel(uuid.toString());
+        userModel.setWinRounds(userModel.getWinRounds() + 1);
+        database.update(userModel);
     }
 
-    public void addAllRounds(Player player) {
-        try {
-            UserModel userModel = getUserModel(player);
-            userModel.setAllRounds(userModel.getAllRounds() + 1);
-            getBlackDataDao().update(userModel);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+    public void addAllRounds(UUID uuid) {
+        UserModel userModel = getUserModel(uuid.toString());
+        userModel.setAllRounds(userModel.getAllRounds() + 1);
+        database.update(userModel);
     }
 
-    public int getKills(Player player) {
-        if (!this.isTableExists(player.getUniqueId().toString())) {
-            this.insert(UserModel.create(player.getUniqueId().toString(), 0, 0, 0, 0));
+    public int getKills(UUID uuid) {
+        if (!this.isTableExists(uuid.toString())) {
+            this.insert(UserModel.create(uuid.toString()));
         }
-        return getUserModel(player).getKills();
+        return getUserModel(uuid.toString()).getKills();
     }
 
-    public int getDeaths(Player player) {
-        if (!this.isTableExists(player.getUniqueId().toString())) {
-            this.insert(UserModel.create(player.getUniqueId().toString(), 0, 0, 0, 0));
+    public int getDeaths(UUID uuid) {
+        if (!this.isTableExists(uuid.toString())) {
+            this.insert(UserModel.create(uuid.toString()));
         }
-        return getUserModel(player).getDeath();
+        return getUserModel(uuid.toString()).getDeath();
     }
 
-    public int getWinRounds(Player player) {
-        if (!this.isTableExists(player.getUniqueId().toString())) {
-            this.insert(UserModel.create(player.getUniqueId().toString(), 0, 0, 0, 0));
+    public int getWinRounds(UUID uuid) {
+        if (!this.isTableExists(uuid.toString())) {
+            this.insert(UserModel.create(uuid.toString()));
         }
-        return getUserModel(player).getWinRounds();
+        return getUserModel(uuid.toString()).getWinRounds();
     }
 
-    public int getAllRounds(Player player) {
-        if (!this.isTableExists(player.getUniqueId().toString())) {
-            this.insert(UserModel.create(player.getUniqueId().toString(), 0, 0, 0, 0));
+    public int getAllRounds(UUID uuid) {
+        if (!this.isTableExists(uuid.toString())) {
+            this.insert(UserModel.create(uuid.toString()));
         }
-        return getUserModel(player).getAllRounds();
+        return getUserModel(uuid.toString()).getAllRounds();
     }
 
-    public boolean isDay(Player player) {
-        if (!this.isTableExists(player.getUniqueId().toString())) {
-            this.insert(UserModel.create(player.getUniqueId().toString(), 0, 0, 0, 0));
+    public boolean isDay(UUID uuid) {
+        if (!this.isTableExists(uuid.toString())) {
+            this.insert(UserModel.create(uuid.toString()));
         }
-        return getUserModel(player).isDay();
+        return getUserModel(uuid.toString()).isDay();
     }
 
-    public boolean isNight(Player player) {
-        if (!this.isTableExists(player.getUniqueId().toString())) {
-            this.insert(UserModel.create(player.getUniqueId().toString(), 0, 0, 0, 0));
+    public boolean isNight(UUID uuid) {
+        if (!this.isTableExists(uuid.toString())) {
+            this.insert(UserModel.create(uuid.toString()));
         }
-        return getUserModel(player).isNight();
+        return getUserModel(uuid.toString()).isNight();
     }
 
     public boolean isTableExists(String UUID) {
-        try {
-            return !getBlackDataDao().queryForAll().isEmpty() && !getBlackDataDao().queryForEq("UUID", UUID).isEmpty();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        return database.find(UserModel.class)
+                .where()
+                .eq("UUID", UUID)
+                .findCount() > 0;
     }
 
-    public UserModel getUserModel(Player player) {
-        return getUserModel(player.getUniqueId().toString());
-    }
-
+    @Nullable
     public UserModel getUserModel(String UUID) {
-        try {
-            return getBlackDataDao().queryForEq("UUID", UUID).get(0);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        UserModel model = database.find(UserModel.class)
+                .where()
+                .eq("UUID", UUID)
+                .findOne();
+        return model;
     }
-
-
-
 }

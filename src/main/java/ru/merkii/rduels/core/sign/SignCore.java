@@ -1,8 +1,12 @@
 package ru.merkii.rduels.core.sign;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.Getter;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
+import revxrsal.commands.Lamp;
+import revxrsal.commands.bukkit.actor.BukkitCommandActor;
 import ru.merkii.rduels.RDuels;
 import ru.merkii.rduels.core.Core;
 import ru.merkii.rduels.core.sign.api.SignAPI;
@@ -15,21 +19,25 @@ import ru.merkii.rduels.core.sign.util.SignUtil;
 import ru.merkii.rduels.model.BlockPosition;
 
 @Getter
+@Singleton
 public class SignCore implements Core {
 
-    public static SignCore INSTANCE;
-    private SignStorage signStorage;
     private SignAPI signAPI;
+    private SignStorage signStorage;
+    private final Lamp<BukkitCommandActor> lamp;
+
+    @Inject
+    public SignCore(Lamp<BukkitCommandActor> lamp) {
+        this.lamp = lamp;
+    }
 
     @Override
     public void enable(RDuels plugin) {
-        INSTANCE = this;
-        this.signStorage = plugin.loadSettings("signStorage.json", SignStorage.class);
-        reloadConfig(plugin);
-        signAPI = new SignAPIProvider();
-        plugin.registerListeners(new SignListener());
-        plugin.registerCommands(new QueueCommand());
-        for (SignModel signModel : this.signStorage.getSigns()) {
+        this.signAPI = RDuels.beanScope().get(SignAPI.class);
+        this.signStorage = RDuels.beanScope().get(SignStorage.class);
+        plugin.registerListeners(SignListener.class);
+        lamp.register(RDuels.beanScope().get(QueueCommand.class));
+        for (SignModel signModel : signStorage.getSigns()) {
             BlockPosition blockPosition = signModel.getBlockPosition();
             try {
                 Block block = blockPosition.getBlock();
@@ -57,6 +65,5 @@ public class SignCore implements Core {
 
     @Override
     public void reloadConfig(RDuels plugin) {
-        signStorage = plugin.loadSettings("signStorage.json", SignStorage.class);
     }
 }

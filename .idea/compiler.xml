@@ -2,14 +2,25 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <annotationProcessing>
-      <profile name="Maven default annotation processors profile" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+      <profile name="Gradle Imported" enabled="true">
         <outputRelativeToContentRoot value="true" />
-        <module name="RDuels" />
+        <processorPath useClasspath="false">
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.projectlombok/lombok/1.18.30/f195ee86e6c896ea47a1d39defbe20eb59cd149d/lombok-1.18.30.jar" />
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.avaje/avaje-inject-generator/10.3/90212badc56b8b7ae780a044ee7765ae8c47e4a9/avaje-inject-generator-10.3.jar" />
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.ebean/querybean-generator/15.5.0/ec87b0771d162ead934e3f11b92c2cf1d829c64d/querybean-generator-15.5.0.jar" />
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.avaje/avaje-inject/10.3/7d3d1517352e30a32adbf6a88a6d5297dfc58df6/avaje-inject-10.3.jar" />
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.avaje/avaje-spi-service/2.4/2ce86185135f6881b52e06aa902285e725833ca8/avaje-spi-service-2.4.jar" />
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jspecify/jspecify/1.0.0/7425a601c1c7ec76645a78d22b8c6a627edee507/jspecify-1.0.0.jar" />
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/jakarta.inject/jakarta.inject-api/2.0.1/4c28afe1991a941d7702fe1362c365f0a8641d1e/jakarta.inject-api-2.0.1.jar" />
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.avaje/avaje-inject-aop/10.3/c281b68e485989fedb008a43590766a7f9cf74e/avaje-inject-aop-10.3.jar" />
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.avaje/avaje-applog/1.0/6f15c997d344f5aaf4ecd77ef7a8d3875d37fb33/avaje-applog-1.0.jar" />
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.avaje/avaje-inject-events/10.3/5b3f8c7255a0aad2653ebaa67325460cffca5f7f/avaje-inject-events-10.3.jar" />
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.avaje/avaje-spi-core/2.4/64f53ad47a2369da95384cf028874f4701442dad/avaje-spi-core-2.4.jar" />
+        </processorPath>
+        <module name="RDuels.main" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
+    <bytecodeTargetLevel target="21">
       <module name="untitled" target="1.8" />
     </bytecodeTargetLevel>
   </component>

@@ -1,5 +1,6 @@
 package ru.merkii.rduels.core.sign.bucket;
 
+import jakarta.inject.Singleton;
 import lombok.Getter;
 import ru.merkii.rduels.core.sign.model.SignModel;
 
@@ -7,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
+@Singleton
 public class SignFightBucket {
 
     private final List<SignModel> fightSigns = new ArrayList<>();

@@ -5,6 +5,8 @@ import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import ru.merkii.rduels.RDuels;
+import ru.merkii.rduels.adapter.DuelPlayer;
+import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
 import ru.merkii.rduels.core.duel.model.DuelFightModel;
 
 public class DuelStopFightEvent extends Event {
@@ -23,6 +25,14 @@ public class DuelStopFightEvent extends Event {
         this.winner = winner;
         this.loser = loser;
         this.duelFightModel = duelFightModel;
+    }
+
+    public static DuelStopFightEvent create(DuelPlayer sender, DuelPlayer receiver, DuelPlayer winner, DuelPlayer loser, DuelFightModel duelFightModel) {
+        Player bukkitSender = BukkitAdapter.adapt(sender);
+        Player bukkitReceiver = BukkitAdapter.adapt(receiver);
+        Player bukkitWinner = BukkitAdapter.adapt(winner);
+        Player bukkitLoser = BukkitAdapter.adapt(loser);
+        return create(bukkitSender, bukkitReceiver, bukkitWinner, bukkitLoser, duelFightModel);
     }
 
     public static DuelStopFightEvent create(Player sender, Player receiver, Player winner, Player loser, DuelFightModel duelFightModel) {

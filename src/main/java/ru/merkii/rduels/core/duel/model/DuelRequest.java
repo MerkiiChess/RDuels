@@ -2,9 +2,10 @@ package ru.merkii.rduels.core.duel.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import ru.merkii.rduels.RDuels;
+import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
+import ru.merkii.rduels.adapter.DuelPlayer;
+import ru.merkii.rduels.config.settings.SettingsConfiguration;
 import ru.merkii.rduels.core.arena.model.ArenaModel;
 import ru.merkii.rduels.core.party.model.PartyModel;
 import ru.merkii.rduels.core.sign.model.SignModel;
@@ -17,9 +18,9 @@ import java.util.concurrent.TimeUnit;
 public class DuelRequest {
 
     @Setter
-    private Player sender;
+    private DuelPlayer sender;
     @Setter
-    private Player receiver;
+    private DuelPlayer receiver;
     private final long time;
     private final PartyModel senderParty;
     private final PartyModel receiverParty;
@@ -36,7 +37,7 @@ public class DuelRequest {
     @Setter
     private ArenaModel arena;
 
-    public DuelRequest(Player sender, Player receiver, long time, PartyModel senderParty, PartyModel receiverParty) {
+    public DuelRequest(DuelPlayer sender, DuelPlayer receiver, long time, PartyModel senderParty, PartyModel receiverParty) {
         this.sender = sender;
         this.receiver = receiver;
         this.time = time;
@@ -44,11 +45,13 @@ public class DuelRequest {
         this.receiverParty = receiverParty;
     }
 
-    public static DuelRequest create(Player player, Player receiver) {
-        return new DuelRequest(player, receiver, System.currentTimeMillis() + TimeUtil.parseTime(RDuels.getInstance().getSettings().getDurationRequest(), TimeUnit.MINUTES), null, null);
+    public static DuelRequest create(DuelPlayer player, DuelPlayer receiver) {
+        SettingsConfiguration settingsConfiguration = RDuels.beanScope().get(SettingsConfiguration.class);
+        return new DuelRequest(player, receiver, System.currentTimeMillis() + TimeUtil.parseTime(settingsConfiguration.durationRequest(), TimeUnit.MINUTES), null, null);
     }
 
     public static DuelRequest create(PartyModel senderParty, PartyModel receiverParty) {
-        return new DuelRequest(Bukkit.getPlayer(senderParty.getOwner()), Bukkit.getPlayer(receiverParty.getOwner()), System.currentTimeMillis() + TimeUtil.parseTime(RDuels.getInstance().getSettings().getDurationRequest(), TimeUnit.MINUTES), senderParty, receiverParty);
+        SettingsConfiguration settingsConfiguration = RDuels.beanScope().get(SettingsConfiguration.class);
+        return new DuelRequest(BukkitAdapter.getPlayer(senderParty.getOwner()), BukkitAdapter.getPlayer(receiverParty.getOwner()), System.currentTimeMillis() + TimeUtil.parseTime(settingsConfiguration.durationRequest(), TimeUnit.MINUTES), senderParty, receiverParty);
     }
 }

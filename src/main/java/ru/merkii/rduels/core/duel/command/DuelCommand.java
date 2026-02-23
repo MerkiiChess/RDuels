@@ -1,147 +1,129 @@
 package ru.merkii.rduels.core.duel.command;
 
-import co.aikar.commands.BaseCommand;
-import co.aikar.commands.annotation.*;
-import org.bukkit.Bukkit;
-import org.bukkit.command.CommandSender;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.bukkit.entity.Player;
-import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.config.messages.MessageConfiguration;
-import ru.merkii.rduels.core.duel.DuelCore;
+import revxrsal.commands.annotation.*;
+import revxrsal.commands.bukkit.actor.BukkitCommandActor;
+import ru.merkii.rduels.adapter.DuelPlayer;
+import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
+import ru.merkii.rduels.config.Placeholder;
+import ru.merkii.rduels.config.messages.MessageConfig;
 import ru.merkii.rduels.core.duel.api.DuelAPI;
 import ru.merkii.rduels.core.duel.menu.DuelChoiceKitMenu;
 import ru.merkii.rduels.core.duel.model.DuelRequest;
-import ru.merkii.rduels.util.ColorUtil;
+import ru.merkii.rduels.lamp.suggestion.AllPlayers;
 import ru.merkii.rduels.util.TimeUtil;
 
 import java.util.List;
 
-@CommandAlias("duel")
-public class DuelCommand extends BaseCommand {
+@Command("duel")
+@Singleton
+public class DuelCommand {
 
-    private final RDuels plugin = RDuels.getInstance();
-    private final MessageConfiguration messageConfiguration = plugin.getPluginMessage();
-    private final DuelCore duelCore = DuelCore.INSTANCE;
-    private final DuelAPI duelAPI = duelCore.getDuelAPI();
+    private final MessageConfig config;
+    private final DuelAPI duelAPI;
 
-    @Default
-    @Syntax("<игрок>")
-    @CommandCompletion("@allplayers")
+    @Inject
+    public DuelCommand(DuelAPI duelAPI, MessageConfig config) {
+        this.config = config;
+        this.duelAPI = duelAPI;
+    }
+
+    @Command("duel")
     @Description("Вызвать игрока на дуэль.")
-    public void onDuel(CommandSender sender, @Name("игрок") String receiverName) {
-        if (!(sender instanceof Player senderPlayer)) {
-            sender.sendMessage("Эта команда доступна только в игре.");
+    public void onDuel(BukkitCommandActor actor, @SuggestWith(AllPlayers.class) DuelPlayer receiver) {
+        Player senderPlayerBukkit = actor.asPlayer();
+        DuelPlayer senderPlayer = BukkitAdapter.adapt(senderPlayerBukkit);
+
+        if (senderPlayer.getUUID().equals(receiver.getUUID())) {
+            config.sendTo(senderPlayer, "duel-you");
             return;
         }
 
-        Player receiver = Bukkit.getPlayerExact(receiverName);
-
-        if (receiver == null) {
-            senderPlayer.sendMessage(this.messageConfiguration.getMessage("duelOffline").replace("(player)", receiverName));
-            return;
-        }
-
-        if (senderPlayer.getUniqueId().equals(receiver.getUniqueId())) {
-            sender.sendMessage(messageConfiguration.getMessage("duelYou"));
-            return;
-        }
+        String receiverName = receiver.getName();
 
         if (duelAPI.isFightPlayer(receiver)) {
-            sender.sendMessage(messageConfiguration.getMessage("duelAlreadyFighting").replace("(player)", receiver.getName()));
+            config.sendTo(senderPlayer, Placeholder.wrapped("(player)", receiverName), "duel-already-fight");
             return;
         }
 
         DuelRequest duelRequest = duelAPI.getRequestFromSender(senderPlayer, receiver);
         if (duelRequest != null && duelRequest.getTime() > System.currentTimeMillis()) {
-            sender.sendMessage(messageConfiguration.getMessage("duelAlreadyRequest").replace("(time)", TimeUtil.getTimeInMaxUnit(duelRequest.getTime() - System.currentTimeMillis())));
+            config.sendTo(
+                    senderPlayer,
+                    Placeholder.wrapped("(time)", TimeUtil.getTimeInMaxUnit(duelRequest.getTime() - System.currentTimeMillis())),
+                    "duel-already-request"
+            );
             duelAPI.removeRequest(duelRequest);
         }
 
-        new DuelChoiceKitMenu(DuelRequest.create(senderPlayer, receiver), false).open(senderPlayer);
+        new DuelChoiceKitMenu().open(BukkitAdapter.adapt(senderPlayer), DuelRequest.create(senderPlayer, receiver), false);
     }
 
-    @Subcommand("yes")
-    @Syntax("<игрок>")
-    @CommandCompletion("@allplayers")
+    @Command("duel yes")
     @Description("Принять вызов на дуэль.")
-    public void onYes(CommandSender sender, @Name("игрок") String senderName) {
-        if (!(sender instanceof Player receiver)) {
-            sender.sendMessage("Эта команда доступна только в игре.");
-            return;
-        }
+    public void onYes(BukkitCommandActor actor, @SuggestWith(AllPlayers.class) DuelPlayer sender) {
+        Player receiverBukkit = actor.asPlayer();
+        DuelPlayer receiver = BukkitAdapter.adapt(receiverBukkit);
 
         List<DuelRequest> requests = duelAPI.getRequestsFromReceiver(receiver);
         if (requests == null || requests.isEmpty()) {
-            sender.sendMessage(messageConfiguration.getMessage("duelRequestEmpty"));
+            config.sendTo(receiver, "duel-request-empty");
             return;
         }
+        DuelRequest request = requests.stream().filter(duelRequest -> duelRequest.getSender().getUUID().equals(sender.getUUID())).findFirst().orElse(null);
 
-        Player senderPlayer = Bukkit.getPlayerExact(senderName);
-
-        if (senderPlayer == null) {
-            sender.sendMessage(messageConfiguration.getMessage("duelOffline").replace("(player)", senderName));
-            return;
-        }
-        DuelRequest request = requests.stream().filter(duelRequest -> duelRequest.getSender().getUniqueId().equals(senderPlayer.getUniqueId())).findFirst().orElse(null);
+        String senderName = sender.getName();
 
         if (request == null) {
-            sender.sendMessage(messageConfiguration.getMessage("duelPlayerNotRequest").replace("(player)", senderPlayer.getName()));
+            config.sendTo(receiver, Placeholder.wrapped("(player)", senderName), "duel-player-not-request");
             return;
         }
 
         duelAPI.removeRequest(request);
 
-        if (duelAPI.isFightPlayer(senderPlayer)) {
-            sender.sendMessage(messageConfiguration.getMessage("duelAlreadyFighting").replace("(player)", senderPlayer.getName()));
+        if (duelAPI.isFightPlayer(sender)) {
+            config.sendTo(sender, Placeholder.wrapped("(player)", senderName), "duel-already-fight");
             return;
         }
 
         if (request.getTime() < System.currentTimeMillis()) {
-            sender.sendMessage(messageConfiguration.getMessage("duelAlreadyFighting").replace("(player)", senderPlayer.getName()));
+            config.sendTo(receiver, Placeholder.wrapped("(player)", senderName), "duel-player-not-request");
             return;
         }
 
         duelAPI.startFight(request);
     }
 
-    @Subcommand("no")
-    @Syntax("<игрок>")
-    @CommandCompletion("@allplayers")
+    @Command("duel no")
     @Description("Отклонить вызов на дуэль.")
-    public void onNo(CommandSender sender, @Name("игрок") String senderName) {
-        if (!(sender instanceof Player receiver)) {
-            sender.sendMessage("Эта команда доступна только в игре.");
-            return;
-        }
+    public void onNo(BukkitCommandActor actor, @SuggestWith(AllPlayers.class) DuelPlayer sender) {
+        Player receiverBukkit = actor.asPlayer();
+        DuelPlayer receiver = BukkitAdapter.adapt(receiverBukkit);
 
         List<DuelRequest> requests = duelAPI.getRequestsFromReceiver(receiver);
         if (requests == null || requests.isEmpty()) {
-            sender.sendMessage(messageConfiguration.getMessage("duelRequestEmpty"));
+            config.sendTo(receiver, "duel-request-empty");
             return;
         }
+        DuelRequest request = requests.stream().filter(duelRequest -> duelRequest.getSender().getUUID().equals(sender.getUUID())).findFirst().orElse(null);
 
-        Player senderPlayer = Bukkit.getPlayerExact(senderName);
-
-        if (senderPlayer == null) {
-            sender.sendMessage(messageConfiguration.getMessage("duelOffline").replace("(player)", senderName));
-            return;
-        }
-        DuelRequest request = requests.stream().filter(duelRequest -> duelRequest.getSender().getUniqueId().equals(senderPlayer.getUniqueId())).findFirst().orElse(null);
+        String senderName = sender.getName();
 
         if (request == null) {
-            sender.sendMessage(messageConfiguration.getMessage("duelPlayerNotRequest").replace("(player)", senderPlayer.getName()));
+            config.sendTo(receiver, Placeholder.wrapped("(player)", senderName), "duel-player-not-request");
             return;
         }
 
         duelAPI.removeRequest(request);
 
         if (request.getTime() < System.currentTimeMillis()) {
-            sender.sendMessage(messageConfiguration.getMessage("duelRequestTime"));
+            config.sendTo(receiver, "duel-request-time");
             return;
         }
-
-        sender.sendMessage(messageConfiguration.getMessage("duelNo"));
-        senderPlayer.sendMessage(ColorUtil.color(messageConfiguration.getMessage("duelNoSender").replace("(player)", receiver.getName())));
+        config.sendTo(receiver, "duel-no");
+        config.sendTo(sender, Placeholder.wrapped("(player)", receiver.getName()), "duel-no-sender");
     }
 
 }

@@ -3,11 +3,13 @@ package ru.merkii.rduels.core.duel.api;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
+import ru.merkii.rduels.adapter.DuelPlayer;
 import ru.merkii.rduels.core.arena.model.ArenaModel;
 import ru.merkii.rduels.core.duel.model.DuelFightModel;
 import ru.merkii.rduels.core.duel.model.DuelRequest;
 import ru.merkii.rduels.core.duel.schedualer.DuelTeleportScheduler;
 import ru.merkii.rduels.core.party.model.PartyModel;
+import ru.merkii.rduels.model.EntityPosition;
 import ru.merkii.rduels.model.KitModel;
 
 import java.util.List;
@@ -30,7 +32,7 @@ public interface DuelAPI {
      * @param player The player to check.
      * @return True if the player is involved in a fight, false otherwise.
      */
-    boolean isFightPlayer(Player player);
+    boolean isFightPlayer(DuelPlayer player);
 
     /**
      * Retrieves the DuelFightModel associated with the given player.
@@ -39,7 +41,7 @@ public interface DuelAPI {
      * @return The DuelFightModel associated with the player, or null if not found.
      */
     @Nullable
-    DuelFightModel getFightModelFromPlayer(Player player);
+    DuelFightModel getFightModelFromPlayer(DuelPlayer player);
 
     /**
      * Adds a duel request to the system.
@@ -62,7 +64,7 @@ public interface DuelAPI {
      */
     void startFight(DuelRequest duelRequest);
 
-    void startFightFour(Player player, Player player2, Player player3, Player player4, DuelRequest duelRequest);
+    void startFightFour(DuelPlayer player, DuelPlayer player2, DuelPlayer player3, DuelPlayer player4, DuelRequest duelRequest);
 
     /**
      * Moves to the next round of the ongoing fight.
@@ -78,27 +80,7 @@ public interface DuelAPI {
      * @param winner         The player who won the fight.
      * @param loser          The player who lost the fight.
      */
-    void stopFight(DuelFightModel duelFightModel, Player winner, Player loser);
-
-    /**
-     * Retrieves a free arena available for a fight.
-     *
-     * @return A free ArenaModel for a fight, or null if none is available.
-     */
-    @Nullable
-    ArenaModel getFreeArena();
-
-    /**
-     * Retrieves a free arena with the specified name.
-     *
-     * @param name The name of the arena to retrieve.
-     * @return A free ArenaModel with the specified name, or null if none is available.
-     */
-    @Nullable
-    ArenaModel getFreeArenaName(String name);
-
-    @Nullable
-    ArenaModel getFreeArenaFFA();
+    void stopFight(DuelFightModel duelFightModel, DuelPlayer winner, DuelPlayer loser);
 
     /**
      * Retrieves a list of duel requests received by the specified player.
@@ -107,7 +89,7 @@ public interface DuelAPI {
      * @return A list of DuelRequest objects received by the player.
      */
     @Nullable
-    List<DuelRequest> getRequestsFromReceiver(Player receiver);
+    List<DuelRequest> getRequestsFromReceiver(DuelPlayer receiver);
 
 
     /**
@@ -117,7 +99,7 @@ public interface DuelAPI {
      * @param loser          The player who lost the fight.
      * @return The winner of the fight.
      */
-    Player getWinnerFromFight(DuelFightModel duelFightModel, Player loser);
+    DuelPlayer getWinnerFromFight(DuelFightModel duelFightModel, DuelPlayer loser);
 
     /**
      * Retrieves the loser of a fight based on the provided DuelFightModel and winner.
@@ -126,7 +108,7 @@ public interface DuelAPI {
      * @param winner         The player who won the fight.
      * @return The loser of the fight.
      */
-    Player getLoserFromFight(DuelFightModel duelFightModel, Player winner);
+    DuelPlayer getLoserFromFight(DuelFightModel duelFightModel, DuelPlayer winner);
 
     /**
      * Retrieves the opponent of a player in the provided DuelFightModel.
@@ -135,7 +117,7 @@ public interface DuelAPI {
      * @param player         The player for whom to retrieve the opponent.
      * @return The opponent of the player in the fight.
      */
-    Player getOpponentFromFight(DuelFightModel duelFightModel, Player player);
+    DuelPlayer getOpponentFromFight(DuelFightModel duelFightModel, DuelPlayer player);
 
     /**
      * Retrieves the opponent of a player in the ongoing fight.
@@ -144,7 +126,7 @@ public interface DuelAPI {
      * @return The opponent of the player in the ongoing fight.
      */
     @Nullable
-    Player getOpponentFromFight(Player player);
+    DuelPlayer getOpponentFromFight(DuelPlayer player);
 
     /**
      * Retrieves a duel request sent by the specified sender to the specified receiver.
@@ -154,7 +136,7 @@ public interface DuelAPI {
      * @return The DuelRequest sent by the sender to the receiver, if found; otherwise, null.
      */
     @Nullable
-    DuelRequest getRequestFromSender(Player sender, Player receiver);
+    DuelRequest getRequestFromSender(DuelPlayer sender, DuelPlayer receiver);
 
     /**
      * Saves a custom kit for the specified player.
@@ -162,7 +144,7 @@ public interface DuelAPI {
      * @param player  The player saving the kit.
      * @param kitName The name of the kit to save.
      */
-    void saveKitServer(Player player, String kitName);
+    void saveKitServer(DuelPlayer player, String kitName);
 
     /**
      * Checks if a kit with the specified name exists.
@@ -182,16 +164,16 @@ public interface DuelAPI {
     /**
      * Retrieves a random spawn location.
      *
-     * @return A random Location object representing a spawn location.
+     * @return A random EntityPosition object representing a spawn position.
      */
-    Location getRandomSpawn();
+    EntityPosition getRandomSpawn();
 
     /**
      * Gives starting items to the specified player.
      *
      * @param player The player to whom to give starting items.
      */
-    void giveStartItems(Player player);
+    void giveStartItems(DuelPlayer player);
 
     /**
      * Retrieves a random KitModel from the available kits.
@@ -205,14 +187,14 @@ public interface DuelAPI {
      *
      * @param player The player to add.
      */
-    void addNoMove(Player player);
+    void addNoMove(DuelPlayer player);
 
     /**
      * Removes the specified player from the list of players who cannot move during a fight.
      *
      * @param player The player to remove.
      */
-    void removeNoMove(Player player);
+    void removeNoMove(DuelPlayer player);
 
     /**
      * Checks if the specified player is restricted from moving during a fight.
@@ -220,7 +202,7 @@ public interface DuelAPI {
      * @param player The player to check.
      * @return True if the player is restricted from moving, otherwise false.
      */
-    boolean isNoMovePlayer(Player player);
+    boolean isNoMovePlayer(DuelPlayer player);
 
     /**
      * Adds the specified player as a spectator in the provided duel fight.
@@ -228,7 +210,7 @@ public interface DuelAPI {
      * @param player       The player to add as a spectator.
      * @param duelFightModel The DuelFightModel representing the ongoing fight.
      */
-    void addSpectate(Player player, DuelFightModel duelFightModel);
+    void addSpectate(DuelPlayer player, DuelFightModel duelFightModel);
 
     /**
      * Removes the specified player from being a spectator in the provided duel fight.
@@ -237,7 +219,7 @@ public interface DuelAPI {
      * @param duelFightModel The DuelFightModel representing the ongoing fight.
      * @param fighting     True if the players are currently fighting, otherwise false.
      */
-    void removeSpectate(Player player, DuelFightModel duelFightModel, boolean fighting);
+    void removeSpectate(DuelPlayer player, DuelFightModel duelFightModel, boolean fighting);
 
     /**
      * Checks if the specified player is currently a spectator in any ongoing fight.
@@ -245,7 +227,7 @@ public interface DuelAPI {
      * @param player The player to check.
      * @return True if the player is a spectator, otherwise false.
      */
-    boolean isSpectate(Player player);
+    boolean isSpectate(DuelPlayer player);
 
     /**
      * Retrieves the DuelFightModel associated with the specified spectator player.
@@ -254,21 +236,21 @@ public interface DuelAPI {
      * @return The DuelFightModel associated with the spectator player, or null if not spectating.
      */
     @Nullable
-    DuelFightModel getDuelFightModelFromSpectator(Player player);
+    DuelFightModel getDuelFightModelFromSpectator(DuelPlayer player);
 
     /**
      * Prepares a list of players for a fight by setting their game modes, clearing effects, and healing them.
      *
      * @param players The list of players to prepare for the fight.
      */
-    void preparationToFight(List<Player> players);
+    void preparationToFight(List<DuelPlayer> players);
 
     /**
      * Prepares a group of players for a fight by setting their game modes, clearing effects, and healing them.
      *
      * @param players The group of players to prepare for the fight.
      */
-    void preparationToFight(Player... players);
+    void preparationToFight(DuelPlayer... players);
 
     /**
      * Prepares two party models for a fight by setting their game modes, clearing effects, and healing them.

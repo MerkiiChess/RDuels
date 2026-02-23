@@ -1,0 +1,49 @@
+create-settings:
+  kits: {}
+  categories: {}
+  custom-enchants: {}
+duration-fight: "10m"
+duration-request: "2m"
+duration-to-start: "5s"
+next-round-time: 3
+stop-fight-time: 4
+day-ticks: 1000
+night-ticks: 16000
+create-custom-kit:
+  material: "BOOK"
+  display-name: "Создать кит"
+  lore:
+    - "Создание своих китов"
+  slot: 0
+  amount: 1
+fight-party:
+  material: "BOOK"
+  display-name: "Бой FFA"
+  lore:
+    - "Кинуть бой другим игрокам"
+  slot: 0
+  amount: 1
+leave-party:
+  material: "BARRIER"
+  display-name: "Выйти с пати"
+  slot: 8
+  amount: 1
+black-commands:
+  - "fly"
+black-commands-spectator:
+  - "setspawn"
+  - "duel"
+spawns: []
+debug: true
+item-open-custom-kit: true
+my-sql:
+  # Возможные значения: mysql, mariadb, postgres, sqlite, h2
+  driver-name: sqlite
+
+  # Для MySQL / MariaDB / PostgreSQL / H2
+  url: "jdbc:mysql://localhost:3306/rduels?autoreconnect=true&useSSL=false&serverTimezone=UTC"
+  user: "root"
+  password: ""
+
+  # Только для SQLite (игнорируется для остальных)
+  file: "rduels.db"        # файл будет в папке плагина

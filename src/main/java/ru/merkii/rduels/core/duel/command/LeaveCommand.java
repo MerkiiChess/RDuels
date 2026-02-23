@@ -1,45 +1,51 @@
 package ru.merkii.rduels.core.duel.command;
 
-import co.aikar.commands.BaseCommand;
-import co.aikar.commands.annotation.CommandAlias;
-import co.aikar.commands.annotation.Default;
-import co.aikar.commands.annotation.Description;
-import org.bukkit.GameMode;
-import org.bukkit.entity.Player;
-import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.api.Duel;
-import ru.merkii.rduels.config.messages.MessageConfiguration;
-import ru.merkii.rduels.core.duel.DuelCore;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import revxrsal.commands.annotation.Command;
+import revxrsal.commands.annotation.Description;
+import revxrsal.commands.bukkit.actor.BukkitCommandActor;
+import ru.merkii.rduels.adapter.DuelPlayer;
+import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
+import ru.merkii.rduels.adapter.bukkit.GameMode;
+import ru.merkii.rduels.config.messages.MessageConfig;
 import ru.merkii.rduels.core.duel.api.DuelAPI;
 import ru.merkii.rduels.core.duel.model.DuelFightModel;
 
-@CommandAlias("leave")
-public class LeaveCommand extends BaseCommand {
+@Singleton
+public class LeaveCommand {
 
-    private final DuelAPI duelAPI = DuelCore.INSTANCE.getDuelAPI();
-    private final MessageConfiguration messageConfiguration = RDuels.getInstance().getPluginMessage();
+    private final DuelAPI duelAPI;
+    private final MessageConfig config;
 
-    @Default
+    @Inject
+    public LeaveCommand(DuelAPI duelAPI, MessageConfig messageConfig) {
+        this.duelAPI = duelAPI;
+        this.config = messageConfig;
+    }
+
+    @Command("leave")
     @Description("Выйти с дуэли")
-    public void onLeave(Player player) {
+    public void onLeave(BukkitCommandActor actor) {
+        DuelPlayer player = BukkitAdapter.adapt(actor.requirePlayer());
         DuelFightModel fightModel = this.duelAPI.getFightModelFromPlayer(player);
         if (!this.duelAPI.isFightPlayer(player) || fightModel == null) {
-            player.sendMessage(this.messageConfiguration.getMessage("duelNoFighting"));
+            config.sendTo(player, "duel-no-fighting");
             return;
         }
         if (player.getGameMode() == GameMode.SPECTATOR || fightModel.isEnd()) {
-            player.sendMessage(this.messageConfiguration.getMessage("noStopFight"));
+            config.sendTo(player, "no-stop-fight");
             return;
         }
         if (fightModel.getPlayer2() != null || fightModel.getPlayer4() != null) {
             deleteFromFight(player, fightModel);
             return;
         }
-        Player winner = this.duelAPI.getWinnerFromFight(fightModel, player);
+        DuelPlayer winner = this.duelAPI.getWinnerFromFight(fightModel, player);
         this.duelAPI.stopFight(fightModel, winner, this.duelAPI.getLoserFromFight(fightModel, winner));
     }
 
-    private void deleteFromFight(Player player, DuelFightModel fightModel) {
+    private void deleteFromFight(DuelPlayer player, DuelFightModel fightModel) {
         if (fightModel.getSender() != null && fightModel.getSender().equals(player)) {
             fightModel.setSender(null);
         } else if (fightModel.getReceiver() != null && fightModel.getReceiver().equals(player)) {
@@ -49,15 +55,15 @@ public class LeaveCommand extends BaseCommand {
         } else if (fightModel.getPlayer4() != null && fightModel.getPlayer4().equals(player)) {
             fightModel.setPlayer4(null);
         }
-        Duel.getDuelAPI().giveStartItems(player);
-        player.teleport(Duel.getDuelAPI().getRandomSpawn());
+        duelAPI.giveStartItems(player);
+        player.teleport(duelAPI.getRandomSpawn());
         if (fightModel.getSender() == null && fightModel.getPlayer2() == null) {
-            Player winner = fightModel.getReceiver() == null ? fightModel.getPlayer4() : fightModel.getReceiver();
+            DuelPlayer winner = fightModel.getReceiver() == null ? fightModel.getPlayer4() : fightModel.getReceiver();
             this.duelAPI.stopFight(fightModel, winner, this.duelAPI.getLoserFromFight(fightModel, winner));
             return;
         }
         if (fightModel.getReceiver() == null && fightModel.getPlayer4() == null) {
-            Player winner = fightModel.getSender() == null ? fightModel.getPlayer2() : fightModel.getSender();
+            DuelPlayer winner = fightModel.getSender() == null ? fightModel.getPlayer2() : fightModel.getSender();
             this.duelAPI.stopFight(fightModel, winner, this.duelAPI.getLoserFromFight(fightModel, winner));
         }
     }

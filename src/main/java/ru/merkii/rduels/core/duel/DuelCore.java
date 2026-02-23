@@ -1,50 +1,65 @@
 package ru.merkii.rduels.core.duel;
 
+import io.avaje.inject.BeanScope;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.Getter;
+import revxrsal.commands.Lamp;
+import revxrsal.commands.bukkit.actor.BukkitCommandActor;
 import ru.merkii.rduels.RDuels;
+import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
 import ru.merkii.rduels.core.Core;
 import ru.merkii.rduels.core.duel.api.DuelAPI;
-import ru.merkii.rduels.core.duel.api.provider.DuelAPIProvider;
-import ru.merkii.rduels.core.duel.bucket.DuelFightBucket;
-import ru.merkii.rduels.core.duel.bucket.DuelRequestsBucket;
 import ru.merkii.rduels.core.duel.command.DuelCommand;
 import ru.merkii.rduels.core.duel.command.LeaveCommand;
 import ru.merkii.rduels.core.duel.command.RDuelCommand;
 import ru.merkii.rduels.core.duel.command.SpectatorCommand;
-import ru.merkii.rduels.core.duel.config.DuelConfig;
 import ru.merkii.rduels.core.duel.listener.DuelListener;
 import ru.merkii.rduels.core.duel.schedualer.DuelSpectatorScheduler;
 
 @Getter
+@Singleton
 public class DuelCore implements Core {
 
-    public static DuelCore INSTANCE;
-    private DuelAPI duelAPI;
-    private DuelRequestsBucket duelRequestsBucket;
-    private DuelFightBucket duelFightBucket;
-    private DuelConfig duelConfig;
     private DuelSpectatorScheduler duelSpectatorScheduler;
+    private final Lamp<BukkitCommandActor> lamp;
+
+    @Inject
+    public DuelCore(Lamp<BukkitCommandActor> lamp) {
+        this.lamp = lamp;
+    }
 
     @Override
     public void enable(RDuels plugin) {
-        INSTANCE = this;
         reloadConfig(plugin);
-        this.duelFightBucket = new DuelFightBucket();
-        this.duelRequestsBucket = new DuelRequestsBucket();
-        this.duelAPI = new DuelAPIProvider();
-        plugin.registerListeners(new DuelListener());
-        plugin.registerCommands(new DuelCommand(), new SpectatorCommand(), new RDuelCommand(), new LeaveCommand());
+        plugin.registerListeners(DuelListener.class);
+        BeanScope beanScope = RDuels.beanScope();
+        registerCommands(
+                beanScope.get(DuelCommand.class),
+                beanScope.get(LeaveCommand.class),
+                beanScope.get(RDuelCommand.class),
+                beanScope.get(SpectatorCommand.class)
+        );
         this.duelSpectatorScheduler = DuelSpectatorScheduler.start();
     }
 
     @Override
     public void disable(RDuels plugin) {
-        plugin.getServer().getOnlinePlayers().stream().filter(player -> this.duelAPI.isFightPlayer(player)).forEach(player -> this.duelAPI.stopFight(this.duelAPI.getFightModelFromPlayer(player), null, null));
+        DuelAPI duelAPI = RDuels.beanScope().get(DuelAPI.class);
+        plugin.getServer().getOnlinePlayers().stream()
+                .map(BukkitAdapter::adapt)
+                .filter(duelAPI::isFightPlayer)
+                .forEach(player -> duelAPI.stopFight(duelAPI.getFightModelFromPlayer(player), null, null));
         this.duelSpectatorScheduler.stop();
     }
 
     @Override
     public void reloadConfig(RDuels plugin) {
-        this.duelConfig = plugin.loadSettings("duelConfig.json", DuelConfig.class);
+    }
+
+    private void registerCommands(Object... objects) {
+        for (Object object : objects) {
+            lamp.register(object);
+        }
     }
 }

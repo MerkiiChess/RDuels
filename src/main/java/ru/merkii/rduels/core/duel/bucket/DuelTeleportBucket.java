@@ -1,5 +1,6 @@
 package ru.merkii.rduels.core.duel.bucket;
 
+import jakarta.inject.Singleton;
 import lombok.Getter;
 import ru.merkii.rduels.core.duel.model.DuelFightModel;
 import ru.merkii.rduels.core.duel.schedualer.DuelTeleportScheduler;
@@ -9,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Getter
+@Singleton
 public class DuelTeleportBucket {
 
     private final List<DuelTeleportScheduler> duelTeleportSchedulerList = new ArrayList<>();

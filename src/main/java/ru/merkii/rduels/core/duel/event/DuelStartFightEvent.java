@@ -8,6 +8,8 @@ import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.merkii.rduels.RDuels;
+import ru.merkii.rduels.adapter.DuelPlayer;
+import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
 import ru.merkii.rduels.core.duel.model.DuelFightModel;
 import ru.merkii.rduels.core.party.model.PartyModel;
 
@@ -30,6 +32,12 @@ public class DuelStartFightEvent extends Event {
         this.duelFightModel = duelFightModel;
         this.senderParty = senderParty;
         this.receiverParty = receiverParty;
+    }
+
+    public static DuelStartFightEvent create(DuelPlayer sender, DuelPlayer receiver, DuelFightModel duelFightModel) {
+        Player bukkitSender = BukkitAdapter.adapt(sender);
+        Player bukkitReceiver = BukkitAdapter.adapt(receiver);
+        return create(bukkitSender, bukkitReceiver, duelFightModel);
     }
 
     public static DuelStartFightEvent create(Player sender, Player receiver, DuelFightModel duelFightModel) {

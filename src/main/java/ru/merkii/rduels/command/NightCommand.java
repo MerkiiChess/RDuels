@@ -1,30 +1,32 @@
 package ru.merkii.rduels.command;
 
-import co.aikar.commands.BaseCommand;
-import co.aikar.commands.annotation.*;
-import org.bukkit.command.CommandSender;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.bukkit.entity.Player;
-import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.config.messages.MessageConfiguration;
+import revxrsal.commands.annotation.Command;
+import ru.merkii.rduels.config.messages.MessageConfig;
+import ru.merkii.rduels.config.settings.SettingsConfiguration;
+import ru.merkii.rduels.manager.DatabaseManager;
 
-@CommandAlias("night")
-public class NightCommand extends BaseCommand {
+@Singleton
+public class NightCommand {
 
-    private final RDuels plugin = RDuels.getInstance();
-    private final MessageConfiguration messageConfiguration = plugin.getPluginMessage();
+    private final DatabaseManager databaseManager;
+    private final SettingsConfiguration settingsConfiguration;
+    private final MessageConfig config;
 
-    @Default
-    @CommandPermission("duel.night")
-    @Description("Включить ночь")
-    public void onNight(Player player) {
-        this.plugin.getDatabaseManager().setNight(player).join();
-        player.setPlayerTime(this.plugin.getSettings().getNightTicks(), false);
-        player.sendMessage(this.messageConfiguration.getMessage("night"));
+    @Inject
+    public NightCommand(DatabaseManager databaseManager, SettingsConfiguration settingsConfiguration, MessageConfig config) {
+        this.databaseManager = databaseManager;
+        this.settingsConfiguration = settingsConfiguration;
+        this.config = config;
     }
 
-    @CatchUnknown
-    public void noPermission(CommandSender sender) {
-        sender.sendMessage(this.plugin.getPluginMessage().getMessage("noPermission"));
+    @Command("night")
+    public void onNight(Player player) {
+        databaseManager.setNight(player.getUniqueId()).join();
+        player.setPlayerTime(settingsConfiguration.nightTicks(), false);
+        config.sendTo(player, "night");
     }
 
 }

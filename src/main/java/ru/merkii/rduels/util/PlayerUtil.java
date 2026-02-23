@@ -4,7 +4,8 @@ import lombok.experimental.UtilityClass;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
+import ru.merkii.rduels.adapter.DuelPlayer;
+import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
 
 import java.util.Arrays;
 import java.util.List;
@@ -38,11 +39,8 @@ public class PlayerUtil {
         return uuids.stream().map(Bukkit::getPlayer).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
-    public void setGameModeAndFly(Player... players) {
-        Arrays.asList(players).forEach(player -> {
-            player.setGameMode(GameMode.SURVIVAL);
-            player.setFlying(false);
-        });
+    public static List<DuelPlayer> duelPlayersConvertListUUID(List<UUID> uuids) {
+        return uuids.stream().map(BukkitAdapter::getPlayer).toList();
     }
 
 }

@@ -2,12 +2,12 @@ package ru.merkii.rduels.builder;
 
 import lombok.Getter;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
@@ -17,17 +17,15 @@ import ru.merkii.rduels.util.ColorUtil;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Getter
 public class ItemBuilder implements Cloneable {
 
     private String material;
-    private int data;
     private String basePotionEffect;
     private List<String> potionEffect;
-    @Getter
     private int amount;
     private String displayName;
     private List<String> lore;
-    @Getter
     private int slot;
     private ItemFlag[] itemFlags;
     private Map<String, Integer> enchants;
@@ -86,6 +84,13 @@ public class ItemBuilder implements Cloneable {
         return this;
     }
 
+    public ItemBuilder addItemFlags(List<String> itemFlags) {
+        this.itemFlags = itemFlags.stream()
+                .map(ItemFlag::valueOf)
+                .toArray(ItemFlag[]::new);
+        return this;
+    }
+
     public ItemBuilder replaceDisplayName(String old, String replace) {
         if (this.displayName != null) {
             this.displayName = this.displayName.replace(old, replace);
@@ -104,39 +109,40 @@ public class ItemBuilder implements Cloneable {
         return this.replaceLore(old, String.valueOf(replace));
     }
 
-    public ItemBuilder addEnchant(String nameEnchant, int lvl) {
+    public ItemBuilder addEnchant(String keyEnchant, int lvl) {
         if (this.enchants == null) enchants = new HashMap<>();
-        this.enchants.put(nameEnchant, lvl);
+        this.enchants.put(keyEnchant.toLowerCase(), lvl);
         return this;
     }
 
-    public ItemBuilder setData(int data) {
-        this.data = data;
+    public ItemBuilder setPotionEffect(String potionEffect) {
+        this.basePotionEffect = potionEffect;
         return this;
     }
 
-    public ItemBuilder setPotionEffect(String potionEffect, boolean extended, boolean upgraded) {
-        this.basePotionEffect = potionEffect + ":" + extended + ":" + upgraded;
+    public ItemBuilder setPotionEffects(List<String> potionEffects) {
+        this.potionEffect = potionEffects;
         return this;
     }
 
     public ItemBuilder fromItemStack(ItemStack itemStack) {
         this.material = itemStack.getType().name();
-        this.data = itemStack.getData().getData();
         this.amount = itemStack.getAmount();
         ItemMeta meta = itemStack.getItemMeta();
         if (meta == null) {
             return this;
         }
-        if ((itemStack.getType() == Material.POTION || itemStack.getType() == Material.SPLASH_POTION || itemStack.getType() == Material.ARROW || itemStack.getType() == Material.TIPPED_ARROW) && meta instanceof PotionMeta) {
-            PotionMeta potionMeta = (PotionMeta) meta;
+        if ((itemStack.getType() == Material.POTION || itemStack.getType() == Material.SPLASH_POTION || itemStack.getType() == Material.TIPPED_ARROW) && meta instanceof PotionMeta potionMeta) {
 
             // Обработка базового эффекта зелья
-            PotionData potionData = potionMeta.getBasePotionData();
-            PotionType potionType = potionData.getType();
-            boolean extended = potionData.isExtended();
-            boolean upgraded = potionData.isUpgraded();
-            this.basePotionEffect = potionType.name() + ":" + extended + ":" + upgraded;
+            PotionType potionType = potionMeta.getBasePotionType();
+            if (potionType != null) {
+                String name = potionType.name();
+                boolean extended = name.startsWith("LONG_");
+                boolean upgraded = name.startsWith("STRONG_");
+                String baseType = name.replace("LONG_", "").replace("STRONG_", "");
+                this.basePotionEffect = baseType + ":" + extended + ":" + upgraded;
+            }
 
             // Обработка кастомных эффектов зелья
             if (potionMeta.hasCustomEffects()) {
@@ -160,8 +166,13 @@ public class ItemBuilder implements Cloneable {
         }
         if (meta.hasEnchants()) {
             this.enchants = new HashMap<>();
-            meta.getEnchants().forEach((key, value) -> this.enchants.put(key.getName(), value));
+            meta.getEnchants().forEach((key, value) -> this.enchants.put(key.getKey().getKey(), value));
         }
+        return this;
+    }
+
+    public ItemBuilder setEnchants(Map<String, Integer> enchants) {
+        this.enchants = enchants;
         return this;
     }
 
@@ -173,12 +184,23 @@ public class ItemBuilder implements Cloneable {
         if (material == null) {
             material = Material.SKELETON_SKULL;
         }
-        ItemStack itemStack = new ItemStack(material, this.amount <= 0 ? 1 : this.amount, (byte) this.data);
+        ItemStack itemStack = new ItemStack(material, this.amount <= 0 ? 1 : this.amount);
         if (material == Material.POTION || material == Material.SPLASH_POTION || material == Material.TIPPED_ARROW) {
             PotionMeta potionMeta = (PotionMeta) itemStack.getItemMeta();
             if (this.basePotionEffect != null) {
                 String[] baseEffect = this.basePotionEffect.split(":");
-                potionMeta.setBasePotionData(new PotionData(PotionType.valueOf(baseEffect[0]), Boolean.parseBoolean(baseEffect[1]), Boolean.parseBoolean(baseEffect[2])));
+                String type = baseEffect[0];
+                boolean extended = Boolean.parseBoolean(baseEffect[1]);
+                boolean upgraded = Boolean.parseBoolean(baseEffect[2]);
+                String enumName = type;
+                if (extended) {
+                    enumName = "LONG_" + enumName;
+                }
+                if (upgraded) {
+                    enumName = "STRONG_" + enumName;
+                }
+                PotionType potionType = PotionType.valueOf(enumName);
+                potionMeta.setBasePotionType(potionType);
             }
             if (this.potionEffect != null && !this.potionEffect.isEmpty()) {
                 this.potionEffect.stream().map(effect -> effect.split(":")).forEach(potionEffect -> potionMeta.addCustomEffect(new PotionEffect(PotionEffectType.getByName(potionEffect[0]), Integer.parseInt(potionEffect[2]), Integer.parseInt(potionEffect[1])), false));
@@ -196,7 +218,12 @@ public class ItemBuilder implements Cloneable {
             meta.addItemFlags(this.itemFlags);
         }
         if (this.enchants != null && !this.enchants.isEmpty()) {
-            this.enchants.forEach((key, value) -> meta.addEnchant(Objects.requireNonNull(Enchantment.getByName(key)), value, false));
+            this.enchants.forEach((key, value) -> {
+                Enchantment ench = Enchantment.getByKey(NamespacedKey.minecraft(key));
+                if (ench != null) {
+                    meta.addEnchant(ench, value, true);
+                }
+            });
         }
         itemStack.setItemMeta(meta);
         return itemStack;

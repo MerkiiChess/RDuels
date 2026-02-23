@@ -1,5 +1,6 @@
 package ru.merkii.rduels.core.duel.bucket;
 
+import jakarta.inject.Singleton;
 import lombok.Getter;
 import ru.merkii.rduels.core.duel.model.DuelFightModel;
 
@@ -7,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
+@Singleton
 public class DuelFightBucket {
 
     private final List<DuelFightModel> duelFights = new ArrayList<>();

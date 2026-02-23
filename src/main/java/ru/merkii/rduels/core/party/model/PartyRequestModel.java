@@ -17,7 +17,7 @@ public class PartyRequestModel {
     private final long endDurationRequest;
 
     public static PartyRequestModel create(PartyModel invitedParty, UUID invitedPlayer) {
-        return new PartyRequestModel(invitedParty, invitedPlayer, System.currentTimeMillis() + TimeUtil.parseTime(PartyCore.INSTANCE.getPartyConfig().getDuration(), TimeUnit.MINUTES));
+        return new PartyRequestModel(invitedParty, invitedPlayer, System.currentTimeMillis() + TimeUtil.parseTime("1m", TimeUnit.MINUTES));
     }
 
 }

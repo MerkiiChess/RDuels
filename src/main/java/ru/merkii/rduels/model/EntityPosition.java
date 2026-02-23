@@ -1,6 +1,7 @@
 package ru.merkii.rduels.model;
 
 import com.google.common.base.Preconditions;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -10,6 +11,7 @@ import java.util.Objects;
 
 public class EntityPosition implements Position {
 
+    private World bukkitWorld;
     private String world;
     private double x;
     private double y;
@@ -40,7 +42,22 @@ public class EntityPosition implements Position {
 
     @Override
     public Location toLocation() {
-        return new Location(this.getWorld(), this.x, this.y, this.z, this.yaw, this.pitch);
+        return new Location(Bukkit.getWorld(this.getWorldName()), this.x, this.y, this.z, this.yaw, this.pitch);
+    }
+
+    @Override
+    public World getWorld() {
+        return Bukkit.getWorld(world);
+    }
+
+    @Override
+    public void setWorld(World world) {
+        this.bukkitWorld = world;
+    }
+
+    @Override
+    public Block toBlock() {
+        return null;
     }
 
     public float getPitch() {
@@ -62,18 +79,8 @@ public class EntityPosition implements Position {
         return this.z;
     }
 
-    @Override
-    public Block toBlock() {
-        return this.getBlock();
-    }
-
     public float getYaw() {
         return this.yaw;
-    }
-
-
-    public Block getBlock() {
-        return this.toLocation().getBlock();
     }
 
     @Override
@@ -109,12 +116,6 @@ public class EntityPosition implements Position {
     public void setWorld(String world) {
         Preconditions.checkNotNull(world);
         this.world = world;
-    }
-
-    @Override
-    public void setWorld(World world) {
-        Preconditions.checkNotNull(world);
-        this.world = world.getName();
     }
 
     @Override

@@ -3,26 +3,27 @@ package ru.merkii.rduels.core.sign.model;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.entity.Player;
+import ru.merkii.rduels.adapter.DuelPlayer;
 
 @Getter
 public class SignQueueModel {
 
     private final SignModel signModel;
     @Setter
-    private Player sender;
+    private DuelPlayer sender;
     @Setter
-    private Player senderHelper;
+    private DuelPlayer senderHelper;
     @Setter
-    private Player receiver;
+    private DuelPlayer receiver;
     @Setter
-    private Player receiverHelper;
+    private DuelPlayer receiverHelper;
 
-    public SignQueueModel(SignModel signModel, Player sender) {
+    public SignQueueModel(SignModel signModel, DuelPlayer sender) {
         this.signModel = signModel;
         this.sender = sender;
     }
 
-    public static SignQueueModel create(SignModel signModel, Player sender) {
+    public static SignQueueModel create(SignModel signModel, DuelPlayer sender) {
         return new SignQueueModel(signModel, sender);
     }
 
@@ -33,10 +34,10 @@ public class SignQueueModel {
     public static class SignQueueModelBuilder {
 
         private SignModel signModel;
-        private Player sender;
-        private Player senderHelper;
-        private Player receiver;
-        private Player receiverHelper;
+        private DuelPlayer sender;
+        private DuelPlayer senderHelper;
+        private DuelPlayer receiver;
+        private DuelPlayer receiverHelper;
 
         public SignQueueModelBuilder() {
         }
@@ -46,22 +47,22 @@ public class SignQueueModel {
             return this;
         }
 
-        public SignQueueModelBuilder sender(Player sender) {
+        public SignQueueModelBuilder sender(DuelPlayer sender) {
             this.sender = sender;
             return this;
         }
 
-        public SignQueueModelBuilder senderHelper(Player senderHelper) {
+        public SignQueueModelBuilder senderHelper(DuelPlayer senderHelper) {
             this.senderHelper = senderHelper;
             return this;
         }
 
-        public SignQueueModelBuilder receiver(Player receiver) {
+        public SignQueueModelBuilder receiver(DuelPlayer receiver) {
             this.receiver = receiver;
             return this;
         }
 
-        public SignQueueModelBuilder receiverHelper(Player receiverHelper) {
+        public SignQueueModelBuilder receiverHelper(DuelPlayer receiverHelper) {
             this.receiverHelper = receiverHelper;
             return this;
         }

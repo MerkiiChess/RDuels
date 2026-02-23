@@ -1,116 +1,168 @@
 package ru.merkii.rduels.core.party.api.provider;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.PlayerInventory;
 import org.jetbrains.annotations.Nullable;
-import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.config.messages.MessageConfiguration;
-import ru.merkii.rduels.config.settings.Settings;
+import ru.merkii.rduels.adapter.DuelPlayer;
+import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
+import ru.merkii.rduels.adapter.bukkit.GameMode;
+import ru.merkii.rduels.config.Placeholder;
+import ru.merkii.rduels.config.messages.MessageConfig;
+import ru.merkii.rduels.config.settings.SettingsConfiguration;
 import ru.merkii.rduels.core.arena.model.ArenaModel;
-import ru.merkii.rduels.core.duel.DuelCore;
+import ru.merkii.rduels.core.duel.api.DuelAPI;
 import ru.merkii.rduels.core.duel.model.DuelFightModel;
 import ru.merkii.rduels.core.duel.model.DuelRequest;
-import ru.merkii.rduels.core.party.PartyCore;
 import ru.merkii.rduels.core.party.api.PartyAPI;
 import ru.merkii.rduels.core.party.bucket.PartyBucket;
 import ru.merkii.rduels.core.party.bucket.PartyFightBucket;
 import ru.merkii.rduels.core.party.bucket.PartyRequestBucket;
+import ru.merkii.rduels.core.party.config.PartyConfiguration;
 import ru.merkii.rduels.core.party.model.PartyModel;
 import ru.merkii.rduels.core.party.model.PartyRequestModel;
+import ru.merkii.rduels.model.EntityPosition;
 import ru.merkii.rduels.util.PlayerUtil;
-
 import java.util.*;
-import java.util.stream.Collectors;
 
+@Singleton
 public class PartyAPIProvider implements PartyAPI {
 
-    private final PartyBucket partyBucket = new PartyBucket();
-    private final Settings settings = RDuels.getInstance().getSettings();
-    private final PartyFightBucket partyFightBucket = new PartyFightBucket();
-    private final PartyRequestBucket partyRequestBucket = new PartyRequestBucket();
-    private final MessageConfiguration messageConfiguration = RDuels.getInstance().getPluginMessage();
+    private final PartyConfiguration partyConfiguration;
+    private final PartyBucket partyBucket;
+    private final SettingsConfiguration settings ;
+    private final PartyFightBucket partyFightBucket;
+    private final PartyRequestBucket partyRequestBucket;
+    private final MessageConfig messageConfig;
+    @Inject
+    public DuelAPI duelAPI;
+
+    @Inject
+    public PartyAPIProvider(PartyConfiguration partyConfiguration, PartyBucket partyBucket, SettingsConfiguration settings, PartyFightBucket partyFightBucket, PartyRequestBucket partyRequestBucket, MessageConfig messageConfig) {
+        this.partyConfiguration = partyConfiguration;
+        this.partyBucket = partyBucket;
+        this.settings = settings;
+        this.partyFightBucket = partyFightBucket;
+        this.partyRequestBucket = partyRequestBucket;
+        this.messageConfig = messageConfig;
+    }
 
     @Override
-    public void createParty(Player player) {
+    public void createParty(DuelPlayer player) {
         this.partyBucket.add(PartyModel.create(player, new ArrayList<>()));
         this.giveStartItems(player);
     }
 
     @Override
-    public void leaveParty(Player player) {
+    public void leaveParty(DuelPlayer player) {
         this.leaveParty(player, true);
     }
 
     @Override
-    public void leaveParty(Player player, boolean text) {
+    public void leaveParty(DuelPlayer player, boolean sendMessages) {
         PartyModel partyModel = this.getPartyModelFromPlayer(player);
         if (partyModel == null) {
             return;
         }
-        PartyModel fightParty = partyModel.clone();
-        if (partyModel.getOwner().equals(player.getUniqueId())) {
-            player.getInventory().clear();
-            player.getInventory().setArmorContents(null);
-            if (this.settings.isItemOpenCustomKit()) {
-                player.getInventory().setItem(this.settings.getCreateCustomKit().getSlot(), this.settings.getCreateCustomKit().build());
-            }
-            player.updateInventory();
-            if (partyModel.getPlayers().isEmpty()) {
-                this.partyBucket.remove(partyModel);
-                DuelCore.INSTANCE.getDuelAPI().giveStartItems(player);
-                return;
-            }
-            Player newOwner = Bukkit.getPlayer(partyModel.getPlayers().get(0));
-            assert (newOwner != null);
-            partyModel.setOwner(newOwner.getUniqueId());
-            partyModel.getPlayers().remove(0);
-            newOwner.sendMessage(this.messageConfiguration.getMessage("partyNewOwner"));
+
+        boolean isOwner = partyModel.getOwner().equals(player.getUUID());
+        boolean wasFighting = this.isFightParty(partyModel);
+
+        if (isOwner) {
+            handleOwnerLeave(partyModel, player);
         } else {
-            partyModel.getPlayers().remove(player.getUniqueId());
+            partyModel.getPlayers().remove(player.getUUID());
         }
-        if (this.isFightParty(fightParty)) {
-            this.partyFightBucket.remove(fightParty);
-            this.partyFightBucket.add(partyModel);
+
+        if (wasFighting) {
+            this.partyFightBucket.remove(partyModel);
         }
-        player.sendMessage(this.messageConfiguration.getMessage("partyYouLeave"));
-        if (DuelCore.INSTANCE.getDuelAPI().isFightPlayer(player)) {
-            player.teleport(DuelCore.INSTANCE.getDuelAPI().getRandomSpawn());
-            if (player.getGameMode() != GameMode.SURVIVAL) {
-                player.setGameMode(GameMode.SURVIVAL);
-            }
+
+        resetPlayerInventory(player);
+        if (duelAPI.isFightPlayer(player)) {
+            player.teleport(duelAPI.getRandomSpawn());
+            player.setGameMode(GameMode.SURVIVAL);
         }
-        DuelCore.INSTANCE.getDuelAPI().giveStartItems(player);
-        if (text) {
-            String message = this.messageConfiguration.getMessage("partyLeave").replace("(player)", player.getName());
-            PlayerUtil.convertListUUID(partyModel.getPlayers()).forEach(player1 -> player1.sendMessage(message));
-            Objects.requireNonNull(Bukkit.getPlayer(partyModel.getOwner())).sendMessage(message);
+        duelAPI.giveStartItems(player);
+
+        messageConfig.sendTo(player, "party-you-leave");
+
+        if (sendMessages) {
+            Component message = messageConfig.message(Placeholder.wrapped("(player)", player.getName()), "party-leave");
+            getAllPlayersInParty(partyModel).forEach(member -> member.sendMessage(message));
         }
     }
 
-    @Override
-    public void inviteParty(PartyModel partyModel, Player player) {
-        this.addRequest(PartyRequestModel.create(partyModel, player.getUniqueId()));
-        Player owner = Bukkit.getPlayer(partyModel.getOwner());
-        this.messageConfiguration.getMessages("partyInvited").stream().map(str -> str.replace("(player)", owner.getName())).forEach(arg_0 -> player.sendMessage(arg_0));
-        Component accept = Component.text(this.messageConfiguration.getMessage("acceptButton")).clickEvent(ClickEvent.runCommand("/party yes " + owner.getName()));
-        Component decline = Component.text(this.messageConfiguration.getMessage("declineButton")).clickEvent(ClickEvent.runCommand("/party no " + owner.getName()));
-        player.sendMessage(((TextComponent.Builder)((Object)((TextComponent.Builder)((Object)Component.text().append(accept))).append(Component.text(" ")))).append(decline));
+    private void handleOwnerLeave(PartyModel partyModel, DuelPlayer player) {
+        resetPlayerInventory(player);
+
+        if (partyModel.getPlayers().isEmpty()) {
+            this.partyBucket.remove(partyModel);
+            return;
+        }
+
+        Player newOwner = Bukkit.getPlayer(partyModel.getPlayers().get(0));
+        if (newOwner == null) {
+            disbandParty(partyModel);
+            return;
+        }
+
+        partyModel.setOwner(newOwner.getUniqueId());
+        partyModel.getPlayers().remove(0);
+        messageConfig.sendTo(newOwner, "party-new-owner");
+    }
+
+    private void disbandParty(PartyModel partyModel) {
+        getAllPlayersInParty(partyModel).forEach(this::resetPlayerInventory);
+        this.partyBucket.remove(partyModel);
+    }
+
+    private void resetPlayerInventory(DuelPlayer player) {
+        Player bukkitPlayer = BukkitAdapter.adapt(player);
+        bukkitPlayer.getInventory().clear();
+        bukkitPlayer.getInventory().setArmorContents(null);
+        if (this.settings.itemOpenCustomKit()) {
+            bukkitPlayer.getInventory().setItem(this.settings.createCustomKit().slot(), this.settings.createCustomKit().build());
+        }
+        bukkitPlayer.updateInventory();
     }
 
     @Override
-    public void joinParty(PartyModel partyModel, Player player) {
-        partyModel.getPlayers().add(player.getUniqueId());
+    public void inviteParty(PartyModel partyModel, DuelPlayer player) {
+        this.addRequest(PartyRequestModel.create(partyModel, player.getUUID()));
+        DuelPlayer owner = BukkitAdapter.getPlayer(partyModel.getOwner());
+
+        messageConfig.sendTo(player, Placeholder.wrapped("(player)", owner.getName()), "party-invited");
+
+        Component accept = messageConfig.message("accept-button")
+                .clickEvent(ClickEvent.runCommand("/party yes " + owner.getName()));
+        Component decline = messageConfig.message("decline-button")
+                .clickEvent(ClickEvent.runCommand("/party no " + owner.getName()));
+        player.sendMessage(accept.append(Component.space()).append(decline));
+    }
+
+    @Override
+    public void joinParty(PartyModel partyModel, DuelPlayer player) {
+        partyModel.getPlayers().add(player.getUUID());
         this.giveStartItems(player);
-        player.sendMessage(this.messageConfiguration.getMessage("partyJoin"));
-        Bukkit.getPlayer(partyModel.getOwner()).sendMessage(this.messageConfiguration.getMessage("partyJoin"));
-        PlayerUtil.convertListUUID(partyModel.getPlayers()).forEach(players -> players.sendMessage(this.messageConfiguration.getMessage("partyJoinAll").replace("(player)", player.getName())));
+
+        Component joinMessage = messageConfig.message("party-join");
+        player.sendMessage(joinMessage);
+
+        DuelPlayer owner = BukkitAdapter.getPlayer(partyModel.getOwner());
+        owner.sendMessage(joinMessage);
+        Component message = messageConfig.message(Placeholder.wrapped("(player)", player.getName()), "party-join-all");
+        PlayerUtil.convertListUUID(partyModel.getPlayers()).forEach(member -> member.sendMessage(message));
+
         if (this.isFightParty(partyModel)) {
-            DuelCore.INSTANCE.getDuelAPI().addSpectate(player, DuelCore.INSTANCE.getDuelAPI().getFightModelFromPlayer(Bukkit.getPlayer(partyModel.getOwner())));
+            DuelFightModel fightModel = duelAPI.getFightModelFromPlayer(owner);
+            if (fightModel != null) {
+                duelAPI.addSpectate(player, fightModel);
+            }
         }
     }
 
@@ -126,27 +178,29 @@ public class PartyAPIProvider implements PartyAPI {
 
     @Override
     @Nullable
-    public PartyRequestModel getPartyRequestModel(Player sender, Player receiver) {
-        for (PartyRequestModel requestModel : this.partyRequestBucket.getPartyRequestModels()) {
-            if (!requestModel.getInvitedParty().getOwner().equals(sender.getUniqueId()) || !requestModel.getInvitedPlayer().equals(receiver.getUniqueId())) continue;
-            if (requestModel.getEndDurationRequest() < System.currentTimeMillis()) {
-                this.partyRequestBucket.removeRequest(requestModel);
-                return null;
+    public PartyRequestModel getPartyRequestModel(DuelPlayer sender, DuelPlayer receiver) {
+        UUID senderUUID = sender.getUUID();
+        UUID receiverUUID = receiver.getUUID();
+        Iterator<PartyRequestModel> iterator = this.partyRequestBucket.getPartyRequestModels().iterator();
+        while (iterator.hasNext()) {
+            PartyRequestModel requestModel = iterator.next();
+            if (requestModel.getInvitedParty().getOwner().equals(senderUUID) && requestModel.getInvitedPlayer().equals(receiverUUID)) {
+                if (requestModel.getEndDurationRequest() < System.currentTimeMillis()) {
+                    iterator.remove();
+                    continue;
+                }
+                return requestModel;
             }
-            return requestModel;
         }
         return null;
     }
 
     @Override
     @Nullable
-    public PartyModel getPartyModelFromPlayer(Player player) {
+    public PartyModel getPartyModelFromPlayer(DuelPlayer player) {
+        UUID playerUUID = player.getUUID();
         for (PartyModel partyModel : this.partyBucket.getPartyModels()) {
-            if (partyModel.getOwner().equals(player.getUniqueId())) {
-                return partyModel;
-            }
-            for (Player player1 : partyModel.getPlayers().stream().map(Bukkit::getPlayer).collect(Collectors.toList())) {
-                if (!player1.getUniqueId().equals(player.getUniqueId())) continue;
+            if (partyModel.getOwner().equals(playerUUID) || partyModel.getPlayers().contains(playerUUID)) {
                 return partyModel;
             }
         }
@@ -154,23 +208,24 @@ public class PartyAPIProvider implements PartyAPI {
     }
 
     @Override
-    public boolean isPartyPlayer(Player player) {
+    public boolean isPartyPlayer(DuelPlayer player) {
         return this.getPartyModelFromPlayer(player) != null;
     }
 
     @Override
-    public void addFightParty(PartyModel ... partyModels) {
+    public void addFightParty(PartyModel... partyModels) {
         Arrays.asList(partyModels).forEach(this.partyFightBucket::add);
     }
 
     @Override
-    public void removeFightParty(PartyModel ... partyModels) {
+    public void removeFightParty(PartyModel... partyModels) {
         Arrays.asList(partyModels).forEach(this.partyFightBucket::remove);
     }
 
     @Override
     public boolean isFightParty(PartyModel partyModel) {
-        return this.partyFightBucket.getFightParty().stream().anyMatch(fightParty -> fightParty.getOwner().equals(partyModel.getOwner()));
+        return this.partyFightBucket.getFightParty().stream()
+                .anyMatch(fightParty -> fightParty.getOwner().equals(partyModel.getOwner()));
     }
 
     @Override
@@ -180,54 +235,61 @@ public class PartyAPIProvider implements PartyAPI {
 
     @Override
     public void teleportToArena(DuelRequest duelRequest) {
-        PartyModel receiverParty = duelRequest.getReceiverParty();
-        PartyModel senderParty = duelRequest.getSenderParty();
-        this.teleportToArena(senderParty, receiverParty, duelRequest.getArena());
+        if (duelRequest.getSenderParty() == null || duelRequest.getReceiverParty() == null) {
+            return;
+        }
+        this.teleportToArena(duelRequest.getSenderParty(), duelRequest.getReceiverParty(), duelRequest.getArena());
     }
 
     @Override
     public void teleportToArena(DuelFightModel duelFightModel) {
-        assert (duelFightModel.getSenderParty() != null);
-        assert (duelFightModel.getReceiverParty() != null);
+        if (duelFightModel.getSenderParty() == null || duelFightModel.getReceiverParty() == null) {
+            return;
+        }
         this.teleportToArena(duelFightModel.getSenderParty(), duelFightModel.getReceiverParty(), duelFightModel.getArenaModel());
     }
 
     @Override
     public void teleportToArena(PartyModel senderParty, PartyModel receiverParty, ArenaModel arenaModel) {
-        Player sender = Bukkit.getPlayer(senderParty.getOwner());
-        Player receiver = Bukkit.getPlayer(receiverParty.getOwner());
-        assert (sender != null);
-        sender.teleport(arenaModel.getFfaPositions().get(1).toLocation());
-        if (!senderParty.getPlayers().isEmpty()) {
-            for (int i = 0; i <= senderParty.getPlayers().size(); ++i) {
-                Player player = Bukkit.getPlayer(senderParty.getPlayers().get(i));
-                assert (player != null);
-                player.teleport(arenaModel.getFfaPositions().get(i + 2).toLocation());
-            }
+        Map<Integer, EntityPosition> positions = arenaModel.getFfaPositions();
+
+        DuelPlayer senderOwner = BukkitAdapter.getPlayer(senderParty.getOwner());
+        senderOwner.teleport(positions.get(1));
+
+        List<UUID> senderMembers = senderParty.getPlayers();
+        for (int i = 0; i < senderMembers.size(); i++) {
+            DuelPlayer member = BukkitAdapter.getPlayer(senderMembers.get(i));
+            member.teleport(positions.get(i + 2));
         }
-        assert (receiver != null);
-        int add = PartyCore.INSTANCE.getPartyConfig().getMaxPartySize() + 1;
-        receiver.teleport(arenaModel.getFfaPositions().get(add).toLocation());
-        if (!receiverParty.getPlayers().isEmpty()) {
-            for (int i = 0; i <= receiverParty.getPlayers().size(); ++i) {
-                Player player = Bukkit.getPlayer(senderParty.getPlayers().get(i));
-                assert (player != null);
-                player.teleport(arenaModel.getFfaPositions().get(i + add + 1).toLocation());
-            }
+
+        int offset = partyConfiguration.maxPartySize() + 1;
+        DuelPlayer receiverOwner = BukkitAdapter.getPlayer(receiverParty.getOwner());
+        receiverOwner.teleport(positions.get(offset));
+
+        List<UUID> receiverMembers = receiverParty.getPlayers();
+        for (int i = 0; i < receiverMembers.size(); i++) {
+            DuelPlayer member = BukkitAdapter.getPlayer(receiverMembers.get(i));
+            member.teleport(positions.get(offset + i + 1));
         }
     }
 
     @Override
-    public void giveStartItems(Player ... players) {
+    public void giveStartItems(DuelPlayer... players) {
         Arrays.asList(players).forEach(player -> {
-            PlayerInventory inventory = player.getInventory();
+            Player bukkitPlayer = BukkitAdapter.adapt(player);
+            PlayerInventory inventory = bukkitPlayer.getInventory();
             inventory.setArmorContents(null);
             inventory.clear();
-            inventory.setItem(this.settings.getFightParty().getSlot(), this.settings.getFightParty().build());
-            inventory.setItem(this.settings.getLeaveParty().getSlot(), this.settings.getLeaveParty().build());
-            player.updateInventory();
+            inventory.setItem(this.settings.fightParty().slot(), this.settings.fightParty().build());
+            inventory.setItem(this.settings.leaveParty().slot(), this.settings.leaveParty().build());
+            bukkitPlayer.updateInventory();
         });
     }
 
-
+    private List<DuelPlayer> getAllPlayersInParty(PartyModel partyModel) {
+        List<DuelPlayer> players = new ArrayList<>(PlayerUtil.duelPlayersConvertListUUID(partyModel.getPlayers()));
+        DuelPlayer owner = BukkitAdapter.getPlayer(partyModel.getOwner());
+        players.add(owner);
+        return players;
+    }
 }

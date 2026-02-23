@@ -1,39 +1,51 @@
 package ru.merkii.rduels.model;
 
-import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.table.DatabaseTable;
+import io.ebean.annotation.WhenCreated;
+import io.ebean.annotation.WhenModified;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import org.bukkit.Bukkit;
 
+import java.time.Instant;
 import java.util.UUID;
 
-@DatabaseTable(tableName = "rduels")
+@Entity
+@Table(name = "rduels")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter
 @Setter
 public class UserModel {
 
-    @DatabaseField(generatedId = true)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
-    @DatabaseField
+
+    @Column(name = "UUID", unique = true, nullable = false)
     String UUID;
-    @DatabaseField
+
     String name;
-    @DatabaseField
+
     int winRounds;
-    @DatabaseField
     int allRounds;
-    @DatabaseField
     int kills;
-    @DatabaseField
     int death;
-    @DatabaseField
+
     boolean day;
-    @DatabaseField
     boolean night;
+
+    @WhenCreated
+    Instant whenCreated;
+
+    @WhenModified
+    Instant whenModified;
 
     public UserModel() {}
 
@@ -44,10 +56,13 @@ public class UserModel {
         this.allRounds = allRounds;
         this.kills = kills;
         this.death = death;
+        this.night = night;
+        this.day = day;
     }
 
-    public static UserModel create(String UUID, int winRounds, int allRounds, int kills, int death) {
-        return new UserModel(UUID, Bukkit.getOfflinePlayer(java.util.UUID.fromString(UUID)).getName(), winRounds, allRounds, kills, death, false, false);
+    public static UserModel create(String UUID) {
+        String playerName = Bukkit.getOfflinePlayer(java.util.UUID.fromString(UUID)).getName();
+        if (playerName == null) playerName = "Unknown";
+        return new UserModel(UUID, playerName, 0, 0, 0, 0, false, false);
     }
-
 }

@@ -1,37 +1,33 @@
 package ru.merkii.rduels.core.sign.command;
 
-import co.aikar.commands.BaseCommand;
-import co.aikar.commands.annotation.CommandAlias;
-import co.aikar.commands.annotation.Default;
-import co.aikar.commands.annotation.Subcommand;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.bukkit.entity.Player;
-import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.config.messages.MessageConfiguration;
-import ru.merkii.rduels.core.sign.SignCore;
+import revxrsal.commands.annotation.Command;
+import ru.merkii.rduels.adapter.DuelPlayer;
+import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
+import ru.merkii.rduels.config.messages.MessageConfig;
 import ru.merkii.rduels.core.sign.api.SignAPI;
 
-@CommandAlias(value="queue")
-public class QueueCommand
-        extends BaseCommand {
-    private final SignAPI signAPI = SignCore.INSTANCE.getSignAPI();
-    private final MessageConfiguration messageConfiguration = RDuels.getInstance().getPluginMessage();
+@Singleton
+public class QueueCommand {
+    private final SignAPI signAPI;
+    private final MessageConfig config;
 
-    @Default
-    public void queue(Player player) {
-        leavee(player);
+    @Inject
+    public QueueCommand(SignAPI signAPI, MessageConfig config) {
+        this.signAPI = signAPI;
+        this.config = config;
     }
 
-    @Subcommand(value = "leave")
-    public void leave(Player player) {
-        leavee(player);
-    }
-
-    private void leavee(Player player) {
+    @Command("queue")
+    private void leavee(Player bukkitPlayer) {
+        DuelPlayer player = BukkitAdapter.adapt(bukkitPlayer);
         if (this.signAPI.isQueuePlayer(player)) {
             this.signAPI.removePlayerQueueSign(player);
-            player.sendMessage(this.messageConfiguration.getMessage("signStopQueue"));
+            config.sendTo(player, "sign-stop-queue");
             return;
         }
-        player.sendMessage(this.messageConfiguration.getMessage("signNoQueue"));
+        config.sendTo(player, "sign-no-queue");
     }
 }

@@ -10,6 +10,25 @@ import java.util.Optional;
 public interface ArenaAPI {
 
     /**
+     * Retrieves a free arena available for a fight.
+     *
+     * @return A free ArenaModel for a fight, or null if none is available.
+     */
+    @Nullable
+    ArenaModel getFreeArena();
+
+    /**
+     * Retrieves a free arena with the specified name.
+     *
+     * @param name The name of the arena to retrieve.
+     * @return A free ArenaModel with the specified name, or null if none is available.
+     */
+    @Nullable
+    ArenaModel getFreeArenaName(String name);
+
+    @Nullable
+    ArenaModel getFreeArenaFFA();
+    /**
      * Retrieves the arena with the specified name.
      *
      * @param name The name of the arena to retrieve.
