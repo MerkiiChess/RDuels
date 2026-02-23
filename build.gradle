@@ -1,0 +1,104 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '8.3.6'
+    id 'io.ebean' version '15.5.0'
+}
+
+group = 'ru.merkii'
+version = '2.0-BETA'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url 'https://oss.sonatype.org/content/groups/public/' }
+    maven { url 'https://maven.enginehub.org/repo/' }
+    maven { url 'https://repo.extendedclip.com/content/repositories/placeholderapi/' }
+    maven { url 'https://jitpack.io' }
+    maven { url 'https://repo.xenondevs.xyz/releases' }
+}
+
+def relocationPackage = "ru.merkii.rduels.lib"
+
+dependencies {
+    // API
+    compileOnly 'io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT'
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+    // WE
+    compileOnly 'com.sk89q.worldedit:worldedit-core:7.3.9'
+    compileOnly 'com.sk89q.worldedit:worldedit-bukkit:7.3.9'
+
+    // Placeholder
+    compileOnly 'me.clip:placeholderapi:2.12.2'
+
+    // Commands
+    implementation 'io.github.revxrsal:lamp.common:4.0.0-rc.14'
+    implementation 'io.github.revxrsal:lamp.bukkit:4.0.0-rc.14'
+
+    // Config
+    implementation 'org.spongepowered:configurate-yaml:4.0.0'
+    implementation 'com.github.bivashy.ProximateConfigurate:common:0.0.0-M4'
+
+    // Avaje Inject
+    implementation 'io.avaje:avaje-inject:10.3'
+    annotationProcessor 'io.avaje:avaje-inject-generator:10.3'
+
+    // Ebean
+    implementation('io.ebean:ebean:15.5.0') {
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+    }
+    implementation 'io.ebean:ebean-migration:14.2.0'
+    implementation 'io.ebean:ebean-ddl-generator:15.5.0'
+    annotationProcessor 'io.ebean:querybean-generator:15.5.0'
+
+    // InvUI
+    implementation 'xyz.xenondevs.invui:invui:1.36'
+
+    testImplementation 'io.ebean:ebean-test:15.5.0'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+shadowJar {
+    archiveClassifier.set('')
+
+    // Релокации
+    relocate 'io.ebean', "${relocationPackage}.io.ebean"
+    relocate 'io.ebeaninternal', "${relocationPackage}.io.ebeaninternal"
+    relocate 'jakarta.inject', "${relocationPackage}.jakarta.inject"
+    relocate 'io.avaje', "${relocationPackage}.io.avaje"
+    relocate 'jakarta.persistence', "${relocationPackage}.jakarta.persistence"
+    relocate 'xyz.xenondevs', "${relocationPackage}.xyz.xenondevs"
+
+    mergeServiceFiles()
+
+    exclude 'META-INF/license/**'
+    exclude 'META-INF/maven/**'
+    exclude 'LICENSE'
+    exclude 'NOTICE'
+}
+
+processResources {
+    def props = [version: project.version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
+
+// Заставляем обычный build делать shadowJar
+build.dependsOn shadowJar
+
+ebean {
+    debugLevel = 1
+}
