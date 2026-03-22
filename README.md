@@ -1,15 +1,14 @@
-# ⚔️ RDuels - Продвинутая система дуэлей для Minecraft 1.16.5
+# ⚔️ RDuels - Продвинутая система дуэлей для Minecraft 1.21
 
-![Minecraft](https://img.shields.io/badge/Minecraft-1.16.5-green?style=for-the-badge&logo=minecraft)
+![Minecraft](https://img.shields.io/badge/Minecraft-1.21-green?style=for-the-badge&logo=minecraft)
 ![Java](https://img.shields.io/badge/Java-8%2B-orange?style=for-the-badge&logo=openjdk)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
-![Spigot](https://img.shields.io/badge/Spigot-1.16.5-yellow?style=for-the-badge)
 ![Paper](https://img.shields.io/badge/Paper-Supported-red?style=for-the-badge)
 [![Discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/DmxBGHCagv)
 
 
 **Мощный, гибкий и полностью настраиваемый плагин для дуэлей на вашем сервере.**  
-DuelCore предоставляет полный набор инструментов для создания соревновательной PvP-среды с уникальными возможностями для игроков и администраторов.
+RDuels предоставляет полный набор инструментов для создания соревновательной PvP-среды с уникальными возможностями для игроков и администраторов.
 
 ---
 
@@ -63,27 +62,30 @@ DuelCore предоставляет полный набор инструмент
 | `/r-duel arena create` | `r.duel.arena.create` | Создать арену |
 | `/r-duel sign create` | `r.duel.sign.create` | Создать дуэльную табличку |
 | `/r-duel savekit <название>` | `r.duel.savekit` | Сохранить набор |
+| `/r-duel category` | `r.duel.category` | Контроль над категориями каастом китов |
+| `/r-duel setlobby` | `r.duel.setlobby` | Установка лобби |
 
 ---
 
 ## 🔌 API для разработчиков
 
-DuelCore предоставляет мощное API для интеграции с другими плагинами.
+RDuels предоставляет мощное API для интеграции с другими плагинами.
 
 ### Быстрый старт
 
 ```java
-import ru.merkii.rduels.api.Duel;
+import ru.merkii.rduels;
+import ru.merkii.rduels.core.duel.api;
 import ru.merkii.rduels.api.DuelPlayer;
 
 // Получение API модулей
-DuelAPI duelAPI = Duel.getDuelAPI();
-PartyAPI partyAPI = Duel.getPartyAPI();
-ArenaAPI arenaAPI = Duel.getArenaAPI();
+DuelAPI duelAPI = RDuels.beanScope().get(DuelAPI.class);
+PartyAPI partyAPI = RDuels.beanScope().get(PartyAPI.class);
+ArenaAPI arenaAPI = RDuels.beanScope().get(ArenaAPI.class);
 
 // Работа с игроком
 Player player = event.getPlayer();
-DuelPlayer duelPlayer = Duel.getDuelPlayer(player);
+DuelPlayer duelPlayer = BukkitAdapter.adapt(player);
 
 if (duelPlayer != null) {
     // Проверка состояния
@@ -96,17 +98,17 @@ if (duelPlayer != null) {
 }
 
 // Доступ ко всем модулям
-DuelAPI duelAPI = Duel.getDuelAPI();      // Система дуэлей
-PartyAPI partyAPI = Duel.getPartyAPI();    // Система отрядов
-SignAPI signAPI = Duel.getSignAPI();       // Система табличек
-ArenaAPI arenaAPI = Duel.getArenaAPI();    // Система арен
-CustomKitAPI kitAPI = Duel.getCustomKitAPI(); // Кастомные наборы
+DuelAPI duelAPI = RDuels.beanScope().get(DuelAPI.class);          // Система дуэлей
+PartyAPI partyAPI = RDuels.beanScope().get(PartyAPI.class);       // Система отрядов
+SignAPI signAPI = RDuels.beanScope().get(SignAPI.class);          // Система табличек
+ArenaAPI arenaAPI = RDuels.beanScope().get(ArenaAPI.class);       // Система арен
+CustomKitAPI kitAPI = RDuels.beanScope().get(CustomKitAPI.class); // Кастомные наборы
 
 // Пример статистики
 
 public class StatsDisplay {
     public void showStats(Player player) {
-        DuelPlayer duelPlayer = Duel.getDuelPlayer(player);
+        DuelPlayer duelPlayer = BukkitAdapter.adapt(player);
         if (duelPlayer == null) return;
         
         double kdr = duelPlayer.getDeath() > 0 
@@ -120,6 +122,6 @@ public class StatsDisplay {
 
 ```
 API:
-[WIKI - DuelAPI](https://github.com/MerkiiChess/docs/DuelCoreAPI.md).
-[WIKI - CustomKit](https://github.com/MerkiiChess/docs/CustomKit.md).
-[WIKI - ArenaAPI](https://github.com/MerkiiChess/docs/ArenaAPI.md).
+[WIKI - DuelAPI](https://github.com/MerkiiChess/RDuels/docs/DuelCoreAPI.md).
+[WIKI - CustomKit](https://github.com/MerkiiChess/RDuels/docs/CustomKit.md).
+[WIKI - ArenaAPI](https://github.com/MerkiiChess/RDuels/docs/ArenaAPI.md).
