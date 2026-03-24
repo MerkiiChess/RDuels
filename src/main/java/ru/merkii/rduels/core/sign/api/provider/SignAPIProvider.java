@@ -1,12 +1,16 @@
 package ru.merkii.rduels.core.sign.api.provider;
 
+import jakarta.inject.Singleton;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import net.kyori.adventure.text.Component;
 import org.bukkit.block.Sign;
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
-import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.config.messages.MessageConfiguration;
+import ru.merkii.rduels.adapter.DuelPlayer;
+import ru.merkii.rduels.config.Placeholder;
+import ru.merkii.rduels.config.messages.MessageConfig;
 import ru.merkii.rduels.core.duel.model.DuelKitType;
-import ru.merkii.rduels.core.sign.SignCore;
 import ru.merkii.rduels.core.sign.api.SignAPI;
 import ru.merkii.rduels.core.sign.bucket.SignFightBucket;
 import ru.merkii.rduels.core.sign.bucket.SignQueueBucket;
@@ -15,20 +19,20 @@ import ru.merkii.rduels.core.sign.storage.SignStorage;
 import ru.merkii.rduels.core.sign.model.SignModel;
 import ru.merkii.rduels.core.sign.util.SignUtil;
 import ru.merkii.rduels.model.BlockPosition;
-import ru.merkii.rduels.util.ColorUtil;
 
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
+@Singleton
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor
 public class SignAPIProvider implements SignAPI {
 
-    private final MessageConfiguration messageConfiguration = RDuels.getInstance().getPluginMessage();
-    private final SignCore signCore = SignCore.INSTANCE;
-    private final SignStorage signStorage = signCore.getSignStorage();
-    private final SignQueueBucket signQueue = new SignQueueBucket();
-    private final SignFightBucket signFight = new SignFightBucket();
+    MessageConfig messageConfig;
+    SignStorage signStorage;
+    SignQueueBucket signQueue;
+    SignFightBucket signFight;
 
     @Override
     public void addSign(SignModel signModel) {
@@ -100,7 +104,7 @@ public class SignAPIProvider implements SignAPI {
     }
 
     @Override
-    public boolean isQueuePlayer(Player player) {
+    public boolean isQueuePlayer(DuelPlayer player) {
         for (SignQueueModel signQueueModel : this.signQueue.getQueues()) {
             if ((signQueueModel.getSender() != null && signQueueModel.getSender().equals(player)) || (signQueueModel.getSenderHelper() != null && signQueueModel.getSenderHelper().equals(player)) || (signQueueModel.getReceiver() != null && signQueueModel.getReceiver().equals(player)) || (signQueueModel.getReceiverHelper() != null && signQueueModel.getReceiverHelper().equals(player))) return true;
         }
@@ -108,7 +112,7 @@ public class SignAPIProvider implements SignAPI {
     }
 
     @Override
-    public Optional<SignQueueModel> getQueueFromPlayer(Player player) {
+    public Optional<SignQueueModel> getQueueFromPlayer(DuelPlayer player) {
         for (SignQueueModel signQueueModel : this.signQueue.getQueues()) {
             if ((signQueueModel.getSender() != null && signQueueModel.getSender().equals(player)) || (signQueueModel.getSenderHelper() != null && signQueueModel.getSenderHelper().equals(player)) || (signQueueModel.getReceiver() != null && signQueueModel.getReceiver().equals(player)) || (signQueueModel.getReceiverHelper() != null && signQueueModel.getReceiverHelper().equals(player))) return Optional.of(signQueueModel);
         }
@@ -116,37 +120,47 @@ public class SignAPIProvider implements SignAPI {
     }
 
     @Override
-    public boolean isClickedSignQueuePlayer(Player player, SignModel signModel) {
+    public boolean isClickedSignQueuePlayer(DuelPlayer player, SignModel signModel) {
         return this.isQueuePlayer(player) && this.getQueueInSignModel(signModel) != null && this.signQueue.getQueues().stream().anyMatch(Objects.requireNonNull(this.getQueueInSignModel(signModel))::equals);
     }
 
     @Override
     public void setSignWait(Sign sign, int players, int size, DuelKitType duelKitType, String kitName) {
         SignUtil.clearSignsLines(sign);
-        SignUtil.setLines(sign, this.messageConfiguration.getMessages("signTextWait")
-                .stream()
-                .map(str -> str.replace("(players)", String.valueOf(players)))
-                .map(str -> str.replace("(playersMaxSize)", String.valueOf(size)))
-                .map(str -> str.replace("(type)", duelKitType == DuelKitType.CUSTOM ? this.messageConfiguration.getMessage("signCustomReplacer") : this.messageConfiguration.getMessage("signServerReplacer")))
-                .map(str -> str.replace("(kitName)", ColorUtil.color(kitName)))
-                .collect(Collectors.toList())
+
+        String typeValue = duelKitType == DuelKitType.CUSTOM
+                ? messageConfig.plainMessage("sign-custom-replacer")
+                : messageConfig.plainMessage("sign-server-replacer").replace("(kit)", kitName);
+
+        Placeholder.Placeholders placeholders = Placeholder.Placeholders.of(
+                Placeholder.of("(players)", String.valueOf(players)),
+                Placeholder.of("(playersMaxSize)", String.valueOf(size)),
+                Placeholder.of("(kitName)", kitName),
+                Placeholder.of("(type)", typeValue)
         );
+        Component message = messageConfig.message(placeholders, "sign-text-wait");
+        SignUtil.setLines(sign, message);
     }
 
     @Override
-    public void setSignActive(Sign sign, Player sender, Player receiver, DuelKitType duelKitType) {
+    public void setSignActive(Sign sign, DuelPlayer sender, DuelPlayer receiver, DuelKitType duelKitType) {
         SignUtil.clearSignsLines(sign);
-        SignUtil.setLines(sign, this.messageConfiguration.getMessages("signTextActivate")
-                .stream()
-                .map(str -> str.replace("(player)", sender.getName()))
-                .map(str -> str.replace("(player2)", receiver.getName()))
-                .map(str -> str.replace("(type)", duelKitType == DuelKitType.CUSTOM ? this.messageConfiguration.getMessage("signCustomReplacer") : this.messageConfiguration.getMessage("signServerReplacer")))
-                .collect(Collectors.toList())
+        BlockPosition blockPosition = new BlockPosition(sign.getBlock());
+        SignModel signModel = this.getModelInBlockPosition(blockPosition);
+        String kitName = signModel != null && signModel.getKitModel() != null ? signModel.getKitModel().getDisplayName() : "";
+        String typeValue = duelKitType == DuelKitType.CUSTOM
+                ? messageConfig.plainMessage("sign-custom-replacer")
+                : messageConfig.plainMessage("sign-server-replacer").replace("(kit)", kitName);
+        Placeholder.Placeholders placeholders = Placeholder.Placeholders.of(
+                Placeholder.of("(player)", sender.getName()),
+                Placeholder.of("(player2)", receiver.getName()),
+                Placeholder.of("(type)", typeValue)
         );
+        SignUtil.setLines(sign, messageConfig.message(placeholders, "sign-text-active"));
     }
 
     @Override
-    public void removePlayerQueueSign(Player player) {
+    public void removePlayerQueueSign(DuelPlayer player) {
         this.getQueueFromPlayer(player).ifPresent(queue -> {
             if (queue.getSender() != null && queue.getSender().equals(player)) {
                 queue.setSender(null);
@@ -163,12 +177,12 @@ public class SignAPIProvider implements SignAPI {
             if (queue.getReceiver() != null) size++;
             if (queue.getReceiverHelper() != null) size++;
             Sign sign = (Sign) queue.getSignModel().getBlockPosition().getBlock().getState();
-            this.setSignWait(sign, queue.getSignModel().getDuelType().getSize(), size, queue.getSignModel().getDuelKit(), queue.getSignModel().getKitModel().getDisplayName());
+            this.setSignWait(sign, size, queue.getSignModel().getDuelType().getSize(), queue.getSignModel().getDuelKit(), queue.getSignModel().getKitModel().getDisplayName());
         });
     }
 
     @Override
-    public void removePlayerQueueSign(Player... players) {
+    public void removePlayerQueueSign(DuelPlayer... players) {
         Arrays.asList(players).forEach(this::removePlayerQueueSign);
     }
 

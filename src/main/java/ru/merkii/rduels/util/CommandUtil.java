@@ -2,37 +2,19 @@ package ru.merkii.rduels.util;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
-import org.bukkit.command.SimpleCommandMap;
-
-import java.lang.reflect.Field;
+import org.jetbrains.annotations.NotNull;
 
 public class CommandUtil {
 
-    public static String getOriginalCommand(String fullCmd) {
-        String first = fullCmd.toLowerCase().split(" ")[0];
-        if (first.contains(":")) {
-            first = first.split(":")[1];
+    public static String getOriginalCommand(@NotNull String fullCmd) {
+        if (fullCmd.length() < 2) return fullCmd;
+        String input = fullCmd.startsWith("/") ? fullCmd.substring(1) : fullCmd;
+        String label = input.split(" ")[0].toLowerCase();
+        int colonIndex = label.indexOf(':');
+        if (colonIndex != -1) {
+            label = label.substring(colonIndex + 1);
         }
-        Command command = null;
-        try {
-            SimpleCommandMap scm = (SimpleCommandMap)getFromField(Bukkit.getServer(), "commandMap");
-            command = scm.getCommand(first.substring(1));
-        } catch (ReflectiveOperationException e) {
-            e.printStackTrace();
-        }
-        if (command != null) {
-            return command.getName().replace("/", "");
-        }
-        if (fullCmd.length() < 2) {
-            return fullCmd;
-        }
-        return fullCmd.substring(2);
+        Command command = Bukkit.getCommandMap().getCommand(label);
+        return (command != null) ? command.getName() : label;
     }
-
-    public static Object getFromField(Object instance, String field) throws ReflectiveOperationException {
-        Field f = instance.getClass().getDeclaredField(field);
-        f.setAccessible(true);
-        return f.get(instance);
-    }
-
 }

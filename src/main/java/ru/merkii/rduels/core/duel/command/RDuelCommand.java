@@ -1,302 +1,263 @@
 package ru.merkii.rduels.core.duel.command;
 
-import co.aikar.commands.BaseCommand;
-import co.aikar.commands.annotation.*;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.config.settings.Settings;
-import ru.merkii.rduels.core.arena.ArenaCore;
+import revxrsal.commands.annotation.*;
+import revxrsal.commands.bukkit.actor.BukkitCommandActor;
+import revxrsal.commands.bukkit.annotation.CommandPermission;
+import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
+import ru.merkii.rduels.builder.ItemBuilder;
+import ru.merkii.rduels.config.Placeholder;
+import ru.merkii.rduels.config.ResourceConfiguration;
+import ru.merkii.rduels.config.category.CategoryItemConfiguration;
+import ru.merkii.rduels.config.messages.MessageConfig;
+import ru.merkii.rduels.config.settings.KitConfiguration;
+import ru.merkii.rduels.config.settings.SettingsConfiguration;
 import ru.merkii.rduels.core.arena.api.ArenaAPI;
-import ru.merkii.rduels.core.arena.config.ArenaSettings;
+import ru.merkii.rduels.core.arena.config.ArenaConfiguration;
 import ru.merkii.rduels.core.arena.model.ArenaModel;
-import ru.merkii.rduels.core.duel.DuelCore;
+import ru.merkii.rduels.core.customkit.category.CustomKitCategory;
 import ru.merkii.rduels.core.duel.api.DuelAPI;
 import ru.merkii.rduels.core.duel.model.DuelKitType;
 import ru.merkii.rduels.core.duel.model.DuelType;
-import ru.merkii.rduels.core.sign.SignCore;
 import ru.merkii.rduels.core.sign.api.SignAPI;
 import ru.merkii.rduels.core.sign.model.SignModel;
+import ru.merkii.rduels.lamp.suggestion.Arenas;
+import ru.merkii.rduels.lamp.suggestion.DuelKits;
 import ru.merkii.rduels.model.BlockPosition;
 import ru.merkii.rduels.model.EntityPosition;
-import ru.merkii.rduels.util.TimeUtil;
-import java.util.HashMap;
 
-@CommandAlias("r-duel|r-duels")
-public class RDuelCommand extends BaseCommand {
+import java.io.IOException;
+import java.util.*;
+import java.util.Optional;
 
-    private final RDuels plugin = RDuels.getInstance();
-    private final Settings settings = this.plugin.getSettings();
-    private final ArenaSettings arenas = ArenaCore.INSTANCE.getArenas();
-    private final ArenaAPI arenaAPI = ArenaCore.INSTANCE.getArenaAPI();
-    private final DuelAPI duelAPI = DuelCore.INSTANCE.getDuelAPI();
+@Singleton
+@Command({"r-duel", "r-duels"})
+@CommandPermission("r.duel")
+@RequiredArgsConstructor(onConstructor_ = @Inject)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+public class RDuelCommand {
 
-    @Default
-    @CommandPermission(value="r.duel")
-    @Description(value="Основная команда R-Duel")
-    @CommandCompletion(value="setlobby|arena|sign|savekit")
-    public void rDuel(CommandSender sender) {
-        sender.sendMessage("§e/r-duel setlobby - Поставить лобби");
-        sender.sendMessage("§e/r-duel arena - Создание арен");
-        sender.sendMessage("§e/r-duel sign - создание табличек");
-        sender.sendMessage("§e/r-duel savekit <название> - сохранить серверный кит");
+    ResourceConfiguration resourceConfiguration;
+    KitConfiguration kitConfiguration;
+    SettingsConfiguration settings;
+    ArenaConfiguration arenaConfiguration;
+    CategoryItemConfiguration categoryItemConfiguration;
+    MessageConfig messageConfig;
+    ArenaAPI arenaAPI;
+    DuelAPI duelAPI;
+    SignAPI signAPI;
+
+    @Subcommand("help")
+    @Description("Показать список всех команд")
+    public void help(BukkitCommandActor actor) {
+        messageConfig.send(actor, "admin-help");
     }
 
-    @Subcommand(value="setlobby")
-    @CommandPermission(value="r-duel.setlobby")
-    @Description(value="Поставить точку спавна")
-    public void setLobby(Player player) {
-        this.settings.getSpawns().add(new EntityPosition(player));
-        this.settings.save();
-        player.sendMessage("Успешно поставлена новая точка спавна");
+    @Subcommand("setlobby")
+    @CommandPermission("r.duel.setlobby")
+    public void setLobby(BukkitCommandActor actor) {
+        Player player = actor.requirePlayer();
+        settings.spawns().add(new EntityPosition(player));
+        saveResource("settings.yml", SettingsConfiguration.class, settings);
+        messageConfig.send(actor, "admin-setlobby-success");
     }
 
-    @Subcommand(value="arena")
-    @CommandPermission(value="r-duel.arena")
-    @Description(value="Управление аренами")
-    @CommandCompletion(value="create|setspawn")
-    public void arena(CommandSender sender) {
-        sender.sendMessage("/r-duels arena create [название_арены] [тип_боя] - создать новую арену");
-        sender.sendMessage("r-duels arena setspawn [название_арены] [позиция_игрока] - создать/заменить позицию на арене");
+    @Subcommand("reload")
+    @CommandPermission("r.duel.reload")
+    public void reload(BukkitCommandActor actor) {
+        try {
+            resourceConfiguration.reloadAll();
+            messageConfig.send(actor, "admin-reload-success");
+        } catch (IOException e) {
+            messageConfig.send(actor, "admin-reload-error");
+            e.printStackTrace();
+        }
     }
 
-    @Subcommand(value="arena create")
-    @CommandPermission(value="r-duel.arena.create")
-    @Description(value="Создание новой арены")
-    @CommandCompletion(value="<название_в_конфиге> <название_которое_видят_игроки> @materials")
-    public void arenaCreate(CommandSender sender, String name, String displayName, Material material) {
-        if (material == null) {
-            sender.sendMessage("Материал не найден");
+    @Subcommand("savekit")
+    @CommandPermission("r.duel.savekit")
+    public void saveK(BukkitCommandActor actor) {
+        messageConfig.send(actor, "admin-savekit-args");
+    }
+
+    @Subcommand("savekit")
+    @CommandPermission("r.duel.savekit")
+    public void saveKit(BukkitCommandActor actor, String kitName) {
+        if (duelAPI.isKitNameContains(kitName)) {
+            messageConfig.send(actor, "admin-savekit-error");
             return;
         }
-        if (this.arenaAPI.isContainsArena(name)) {
-            sender.sendMessage("Такая арена уже существует");
+        Player player = actor.requirePlayer();
+        duelAPI.saveKitServer(BukkitAdapter.adapt(player), kitName);
+        messageConfig.send(actor, "admin-savekit-server");
+    }
+
+    // --- ARENA ---
+
+    @Subcommand({"arena help", "arena", "arena create", "arena setspawn"})
+    @CommandPermission("r.duel.arena")
+    public void arenaHelp(BukkitCommandActor actor) {
+        messageConfig.send(actor, "arena-help");
+    }
+
+    @Subcommand("arena create")
+    @CommandPermission("r.duel.arena.create")
+    public void create(BukkitCommandActor actor, String name, String displayName, Material material) {
+        if (arenaAPI.isContainsArena(name)) {
+            messageConfig.send(actor, "arena-already-exists");
             return;
         }
-        this.arenas.getArenas().add(ArenaModel.builder().material(material).arenaName(name).displayName(displayName).breaking(false).schematic("no").build());
-        this.arenas.save();
-        sender.sendMessage("Создана арена: " + name);
+
+        ArenaModel model = ArenaModel.builder()
+                .arenaName(name).displayName(displayName)
+                .material(material).breaking(false).schematic("no")
+                .build();
+        arenaConfiguration.arenas().put(model, ItemBuilder.builder().setMaterial(material).setDisplayName(displayName));
+        saveResource("arenas.yml", ArenaConfiguration.class, arenaConfiguration);
+        messageConfig.send(actor, Placeholder.wrapped("(name)", name), "arena-created");
     }
 
-    @Subcommand(value="sign")
-    @CommandPermission(value="r-duel.sign")
-    @Description(value="Управление табличками")
-    @CommandCompletion(value="set|remove")
-    public void sign(CommandSender sender) {
-        sender.sendMessage("§e/r-duel sign set {1v1/2v2} {server/custom}");
-        sender.sendMessage("§e/r-duel sign remove");
+    @Subcommand("arena setspawn")
+    @CommandPermission("r.duel.arena.setspawn")
+    public void setSpawn(BukkitCommandActor actor, @SuggestWith(Arenas.class) String name, @Suggest({"1", "2", "spec", "schematic"}) String posLabel) {
+        arenaAPI.getArenaFromName(name).ifPresentOrElse(arena -> {
+            EntityPosition pos = new EntityPosition(actor.requirePlayer());
+            switch (posLabel.toLowerCase()) {
+                case "schematic" -> arena.setSchematicPosition(pos);
+                case "spec", "spectator" -> arena.setSpectatorPosition(pos);
+                case "1" -> arena.setOnePosition(pos);
+                case "2" -> arena.setTwoPosition(pos);
+                default -> {
+                    try {
+                        int ffaIndex = Integer.parseInt(posLabel);
+                        if (arena.getFfaPositions() == null) arena.setFfaPositions(new HashMap<>());
+                        arena.getFfaPositions().put(ffaIndex, pos);
+                    } catch (NumberFormatException e) {
+                        actor.reply("§cИспользуйте 1, 2, spec или номер позиции для FFA.");
+                        return;
+                    }
+                }
+            }
+            saveResource("arenas.yml", ArenaConfiguration.class, arenaConfiguration);
+            messageConfig.send(
+                    actor,
+                    Placeholder.Placeholders.of(
+                            Placeholder.of("(pos)", posLabel),
+                            Placeholder.of("(name)", name)
+                    ),
+                    "arena-spawn-set");
+            }, () -> messageConfig.send(actor, Placeholder.wrapped("(name)", name), "arena-not-found"));
     }
 
-    @Subcommand(value="sign remove")
-    @CommandPermission(value="r-duel.sign.remove")
-    @Description(value="Удаление таблички")
-    public void signRemove(Player player) {
-        Block block = player.getTargetBlock(6);
-        if (block == null || !(block.getState() instanceof Sign)) {
-            player.sendMessage("Смотрите на табличку");
-            return;
-        }
-        BlockPosition blockPosition = new BlockPosition(block.getLocation());
-        if (!SignCore.INSTANCE.getSignAPI().removeSign(blockPosition)) {
-            player.sendMessage("Табличка не найдена в файлах!");
-            return;
-        }
-        player.sendMessage("Табличка удалена");
+    @Subcommand({"sign help", "sign set"})
+    @CommandPermission("r.duel.sign")
+    public void signHelp(BukkitCommandActor actor) {
+        messageConfig.send(actor, "sign-help");
     }
 
-    @Subcommand(value="sign set 1v1")
-    @CommandPermission(value="r-duel.sign.set")
-    @Description(value="Установка таблички боя 1в1")
-    @CommandCompletion(value="server|custom")
-    public void signSetOne(Player player) {
-        player.sendMessage("/r-duel sign set 1v1 server - серверный кит");
-        player.sendMessage("/r-duel sign set 1v1 custom - кастомный кит");
+    @Subcommand("sign remove")
+    @CommandPermission("r.duel.sign.remove")
+    public void remove(BukkitCommandActor actor) {
+        getTargetSign(actor).ifPresent(block -> {
+            if (signAPI.removeSign(new BlockPosition(block.getLocation()))) {
+                messageConfig.send(actor, "sign-removed");
+            } else {
+                messageConfig.send(actor, "sign-not-found");
+            }
+        });
     }
 
-    @Subcommand(value="sign set 2v2")
-    @CommandPermission(value="r-duel.sign.set")
-    @Description(value="Установить таблички боя 2в2")
-    @CommandCompletion(value="server|custom")
-    public void signSetTwo(Player player) {
-        player.sendMessage("/r-duel sign set 2v2 server - серверный кит");
-        player.sendMessage("/r-duel sign set 2v2 custom - кастомный кит");
-    }
+    @Subcommand("sign set")
+    @CommandPermission("r.duel.sign.set")
+    public void set(BukkitCommandActor actor, DuelType type, DuelKitType kitType, @SuggestWith(DuelKits.class) String kitName) {
+        getTargetSign(actor).ifPresent(block -> {
+            Sign sign = (Sign) block.getState();
 
-    @Subcommand(value="sign set 1v1 server")
-    @CommandPermission(value="r-duel.sign.set")
-    @Description(value="Установка таблички боя 1в1 кастом кита")
-    @CommandCompletion(value="@duelkits")
-    public void signSetOneServer(Player player, String kitName) {
-        Block block = player.getTargetBlock(6);
-        if (block == null || !(block.getState() instanceof Sign sign)) {
-            player.sendMessage("Нужно смотреть на табличку");
-            return;
-        }
-        if (!this.isKitName(kitName)) {
-            player.sendMessage("Укажите название кита для серверного выбора");
-            return;
-        }
-        SignAPI signAPI = SignCore.INSTANCE.getSignAPI();
-        DuelType duelType = DuelType.ONE;
-        DuelKitType duelKitType = DuelKitType.SERVER;
-        SignModel signModel = new SignModel(new BlockPosition(block.getLocation()), duelType, duelKitType, DuelCore.INSTANCE.getDuelAPI().getKitFromName(kitName));
-        signAPI.addSign(signModel);
-        signAPI.setSignWait(sign, 0, duelType.getSize(), duelKitType, kitName);
-        player.sendMessage("Успешно поставлена");
-    }
-
-    @Subcommand(value="sign set 1v1 custom")
-    @CommandPermission(value="r-duel.sign.set")
-    @Description(value="Установка таблички боя 1в1 кастом кита")
-    public void signSetOneCustom(Player player) {
-        Block block = player.getTargetBlock(6);
-        if (block == null || !(block.getState() instanceof Sign)) {
-            player.sendMessage("Нужно смотреть на табличку");
-            return;
-        }
-        SignAPI signAPI = SignCore.INSTANCE.getSignAPI();
-        Sign sign = (Sign) block.getState();
-        DuelType duelType = DuelType.ONE;
-        DuelKitType duelKitType = DuelKitType.CUSTOM;
-        SignModel signModel = new SignModel(new BlockPosition(block.getLocation()), duelType, duelKitType, null);
-        signAPI.addSign(signModel);
-        signAPI.setSignWait(sign, 0, duelType.getSize(), duelKitType, "");
-        player.sendMessage("Успешно поставлена");
-    }
-
-    @Subcommand(value="sign set 2v2 server")
-    @CommandPermission(value="r-duel.sign.set")
-    @Description(value="Установка таблички боя 1в1 кастом кита")
-    @CommandCompletion(value="@duelkits")
-    public void signSetTwoServer(Player player, String kitName) {
-        Block block = player.getTargetBlock(6);
-        if (block == null || !(block.getState() instanceof Sign sign)) {
-            player.sendMessage("Нужно смотреть на табличку");
-            return;
-        }
-        if (!this.isKitName(kitName)) {
-            player.sendMessage("Укажите название кита для серверного выбора");
-            return;
-        }
-        SignAPI signAPI = SignCore.INSTANCE.getSignAPI();
-        DuelType duelType = DuelType.TWO;
-        DuelKitType duelKitType = DuelKitType.SERVER;
-        SignModel signModel = new SignModel(new BlockPosition(block.getLocation()), duelType, duelKitType, DuelCore.INSTANCE.getDuelAPI().getKitFromName(kitName));
-        signAPI.addSign(signModel);
-        signAPI.setSignWait(sign, 0, duelType.getSize(), duelKitType, kitName);
-        player.sendMessage("Успешно поставлена");
-    }
-
-    @Subcommand(value="sign set 2v2 custom")
-    @CommandPermission(value="r-duel.sign.set")
-    @Description(value="Установка таблички боя 2в2 кастом кита")
-    public void signSetTwoCustom(Player player) {
-        Block block = player.getTargetBlock(6);
-        if (block == null || !(block.getState() instanceof Sign sign)) {
-            player.sendMessage("Нужно смотреть на табличку");
-            return;
-        }
-        SignAPI signAPI = SignCore.INSTANCE.getSignAPI();
-        DuelType duelType = DuelType.TWO;
-        DuelKitType duelKitType = DuelKitType.CUSTOM;
-        SignModel signModel = new SignModel(new BlockPosition(block.getLocation()), duelType, duelKitType, null);
-        signAPI.addSign(signModel);
-        signAPI.setSignWait(sign, 0, duelType.getSize(), duelKitType, "");
-        player.sendMessage("Успешно поставлена");
-    }
-
-    @Subcommand(value="sign set")
-    @CommandPermission(value="r-duel.sign.set")
-    @Description(value="Установка таблички")
-    @CommandCompletion(value="1v1|2v2")
-    public void signSet(Player player) {
-        player.sendMessage("/r-duel sign set 1v1 - установить табличку 1 на 1");
-        player.sendMessage("/r-duel sign set 1v1 - установить табличку 2 на 2");
-    }
-
-    private boolean isKitName(String kitName) {
-        return this.plugin.getKitConfig().getKits().stream().anyMatch(model -> model.getDisplayName().equalsIgnoreCase(kitName));
-    }
-
-    @Subcommand(value="arena setspawn")
-    @CommandPermission(value="r-duel.arena.setspawn")
-    @Description(value="Установка точки спавна на арене")
-    @CommandCompletion(value="@arenas <позиция>")
-    public void arenaSetSpawn(CommandSender sender, String name, String position) {
-        ArenaModel arenaModel = this.arenaAPI.getArenaFromName(name);
-        if (arenaModel == null) {
-            sender.sendMessage("Такой арены не существует");
-            return;
-        }
-        Player player = (Player) sender;
-        EntityPosition pos = new EntityPosition(player);
-        if (position.equalsIgnoreCase("schematic")) {
-            arenaModel.setSchematicPosition(pos);
-        } else if (position.equalsIgnoreCase("spectate") || position.equalsIgnoreCase("spec") || position.equalsIgnoreCase("spectator")) {
-            arenaModel.setSpectatorPosition(pos);
-        } else if (arenaModel.isFfa()) {
-            if (!TimeUtil.isInt(position)) {
-                sender.sendMessage("Укажите или позицию ффа или spectate");
+            if (kitType == DuelKitType.SERVER && (kitName == null || !isKitValid(kitName))) {
+                messageConfig.send(actor, "sign-invalid-kit");
                 return;
             }
-            int posNum = Integer.parseInt(position);
-            if (arenaModel.getFfaPositions() == null) {
-                arenaModel.setFfaPositions(new HashMap<>());
-            }
-            arenaModel.getFfaPositions().put(posNum, pos);
-        } else {
-            if (!TimeUtil.isInt(position)) {
-                sender.sendMessage("Позиция должна быть числом");
-                return;
-            }
-            switch (Integer.parseInt(position)) {
-                case 1: {
-                    arenaModel.setOnePosition(pos);
-                    break;
-                }
-                case 2: {
-                    arenaModel.setTwoPosition(pos);
-                    break;
-                }
-                default: {
-                    sender.sendMessage("Позиция должна быть от 1 до 2");
-                    return;
-                }
-            }
-        }
-        this.arenas.getArenas().remove(arenaModel);
-        this.arenas.getArenas().add(arenaModel);
-        this.arenas.save();
-        sender.sendMessage("Локация добавлена");
+            SignModel model = new SignModel(
+                    new BlockPosition(block.getLocation()),
+                    type, kitType,
+                    kitType == DuelKitType.SERVER ? duelAPI.getKitFromName(kitName) : null
+            );
+            signAPI.addSign(model);
+            signAPI.setSignWait(sign, 0, type.getSize(), kitType, kitType == DuelKitType.SERVER ? kitName : "");
+            messageConfig.send(actor, "sign-set-success");
+        });
     }
 
-    @Subcommand(value="reload")
-    @CommandPermission(value="r.duel.reload")
-    @Description(value="Перезагрузка конфигурации")
-    public void reload(CommandSender sender) {
-        this.plugin.reloadConfigs();
-        sender.sendMessage("Конфиги перезагружены");
+    // --- CATEGORY ---
+
+    @Subcommand({"category help", "category create", "category addmaterial"})
+    @CommandPermission("r.duel.category")
+    public void categoryHelp(BukkitCommandActor actor) {
+        messageConfig.send(actor, "category-help");
     }
 
-    @Subcommand(value="savekit")
-    @CommandPermission(value="r.duel.savekit")
-    @Description(value="Сохранение кита")
-    @CommandCompletion(value="<название>")
-    public void saveKit(CommandSender sender, String kitName) {
-        if (this.duelAPI.isKitNameContains(kitName)) {
-            sender.sendMessage("Такое название уже существует");
+    @Subcommand("category create")
+    @CommandPermission("r.duel.category.create")
+    public void create(BukkitCommandActor actor, Material material, String id) {
+        if (categoryItemConfiguration.categories().containsKey(id)) {
+            messageConfig.send(actor, "category-already-exists");
             return;
         }
-        this.duelAPI.saveKitServer((Player) sender, kitName);
-        this.plugin.reloadConfigs();
+        CustomKitCategory category = new CustomKitCategory(id, id, material, new ArrayList<>());
+        categoryItemConfiguration.categories().put(id, category);
+        saveResource("category-items.yml", CategoryItemConfiguration.class, categoryItemConfiguration);
+        messageConfig.send(actor, Placeholder.wrapped("(id)", id), "category-created");
     }
 
-    @CatchUnknown
-    public void noPermission(CommandSender sender) {
-        sender.sendMessage(this.plugin.getPluginMessage().getMessage("noPermission"));
+    @Subcommand("category addmaterial")
+    @CommandPermission("r.duel.category.addmaterial")
+    public void addMaterial(BukkitCommandActor actor, String id, Material material) {
+        Optional.ofNullable(categoryItemConfiguration.categories().get(id)).ifPresentOrElse(cat -> {
+            if (cat.getItems().contains(material)) {
+                messageConfig.send(actor,
+                        Placeholder.wrapped("(material)", material.name()),
+                        "category-material-already-exists");
+                return;
+            }
+            cat.getItems().add(material);
+            saveResource("category-items.yml", CategoryItemConfiguration.class, categoryItemConfiguration);
+            messageConfig.send(
+                    actor,
+                    Placeholder.Placeholders.of(
+                            Placeholder.of("(id)", id),
+                            Placeholder.of("(material)", material.name())
+                    ),
+                    "category-material-added");
+            }, () -> messageConfig.send(actor, Placeholder.wrapped("(id)", id), "category-not-found"));
     }
 
+    private <T> void saveResource(String fileName, Class<T> tClass, T config) {
+        try {
+            resourceConfiguration.updateAndSave(fileName, tClass, config);
+        } catch (IOException e) {
+            throw new RuntimeException("Не удалось сохранить " + fileName, e);
+        }
+    }
+
+    private Optional<Block> getTargetSign(BukkitCommandActor actor) {
+        Block block = actor.requirePlayer().getTargetBlockExact(6);
+        if (block == null || !(block.getState() instanceof Sign)) {
+            messageConfig.send(actor, "sign-not-found");
+            return Optional.empty();
+        }
+        return Optional.of(block);
+    }
+
+    private boolean isKitValid(String name) {
+        return kitConfiguration.kits().keySet().stream()
+                .anyMatch(k -> k.getDisplayName().equalsIgnoreCase(name));
+    }
 }

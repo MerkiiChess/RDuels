@@ -1,19 +1,17 @@
 package ru.merkii.rduels.core.customkit.model;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.experimental.FieldDefaults;
 
 @AllArgsConstructor
 @Getter
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class CustomKitModel {
 
-    private String displayName;
-    private int slot;
-    private String permission;
-    private boolean invisible;
-
-    public static CustomKitModel create(String displayName, int slot, String permission, boolean invisible) {
-        return new CustomKitModel(displayName, slot, permission, invisible);
-    }
+    String displayName;
+    String permission;
+    boolean invisible;
 
 }

@@ -1,7 +1,9 @@
 package ru.merkii.rduels.model;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.experimental.FieldDefaults;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.PlayerInventory;
@@ -14,15 +16,16 @@ import java.util.Map;
 
 @Getter
 @AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class KitModel {
 
-    private final String displayName;
-    private final int slot;
-    private final List<String> lore;
-    private final Material displayMaterial;
-    private final Map<Integer, ItemBuilder> items;
-    private final boolean bindingArena;
-    private final List<String> arenasName;
+    String displayName;
+    int slot;
+    List<String> lore;
+    Material displayMaterial;
+    Map<Integer, ItemBuilder> items;
+    boolean bindingArena;
+    List<String> arenasName;
 
     public static KitModel create(String displayName, int slot, List<String> lore, Material displayMaterial, Map<Integer, ItemBuilder> items) {
         return new KitModel(displayName, slot, lore, displayMaterial, items, false, new ArrayList<String>());

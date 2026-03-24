@@ -1,81 +1,115 @@
 package ru.merkii.rduels.manager;
 
-import com.j256.ormlite.table.TableUtils;
-import org.bukkit.entity.Player;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import ru.merkii.rduels.database.sql.Executor;
 import ru.merkii.rduels.model.UserModel;
 
-import java.sql.SQLException;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
+@Singleton
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class DatabaseManager {
 
-    private final Executor executor = new Executor();
+    Map<UUID, UserModel> userCache = new ConcurrentHashMap<>();
+    Executor executor;
 
     public CompletableFuture<Void> createTable() {
+        return CompletableFuture.completedFuture(null);
+    }
+    public CompletableFuture<Void> loadUserData(UUID uuid) {
         return CompletableFuture.runAsync(() -> {
-            try {
-                TableUtils.createTableIfNotExists(executor.getConnectionSource(), UserModel.class);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
+            UserModel model = executor.getUserModel(uuid.toString());
+            if (model == null) {
+                model = UserModel.create(uuid.toString());
+                executor.insert(model);
             }
+            userCache.put(uuid, model);
         });
     }
 
-    public CompletableFuture<Void> insert(UserModel userModel) {
-        return CompletableFuture.runAsync(() -> this.executor.insert(userModel));
+    public void unloadUserData(UUID uuid) {
+        userCache.remove(uuid);
     }
 
-    public CompletableFuture<Void> setDay(Player player) {
-        return CompletableFuture.runAsync(() -> this.executor.setDay(player));
+    public UserModel getCachedUser(UUID uuid) {
+        return userCache.getOrDefault(uuid, UserModel.create(uuid.toString()));
     }
 
-    public CompletableFuture<Void> setNight(Player player) {
-        return CompletableFuture.runAsync(() -> this.executor.setNight(player));
+    public void addKill(UUID uuid) {
+        UserModel model = userCache.get(uuid);
+        if (model != null) model.setKills(model.getKills() + 1);
+        CompletableFuture.runAsync(() -> executor.addKill(uuid));
     }
 
-    public CompletableFuture<Void> addKill(Player player) {
-        return CompletableFuture.runAsync(() -> this.executor.addKill(player));
+    public void setDay(UUID uuid) {
+        UserModel model = userCache.get(uuid);
+        if (model != null) model.setDay(true);
+        CompletableFuture.runAsync(() -> executor.setDay(uuid));
     }
 
-    public CompletableFuture<Void> addDeath(Player player) {
-        return CompletableFuture.runAsync(() -> this.executor.addDeath(player));
+    public void setNight(UUID uuid) {
+        UserModel model = userCache.get(uuid);
+        if (model != null) model.setNight(true);
+        CompletableFuture.runAsync(() -> executor.setNight(uuid));
     }
 
-    public CompletableFuture<Void> addWinRound(Player player) {
-        return CompletableFuture.runAsync(() -> this.executor.addWinRound(player));
+    public void addDeath(UUID uuid) {
+        UserModel model = userCache.get(uuid);
+        if (model != null) model.setDeath(model.getDeath() + 1);
+        CompletableFuture.runAsync(() -> executor.addDeath(uuid));
     }
 
-    public CompletableFuture<Void> addAllRound(Player player) {
-        return CompletableFuture.runAsync(() -> this.executor.addAllRounds(player));
+    public void addWinRound(UUID uuid) {
+        UserModel model = userCache.get(uuid);
+        if (model != null) model.setWinRounds(model.getWinRounds() + 1);
+        CompletableFuture.runAsync(() -> executor.addWinRound(uuid));
     }
 
-    public CompletableFuture<Integer> getKills(Player player) {
-        return CompletableFuture.supplyAsync(() -> this.executor.getKills(player));
+    public void addAllRound(UUID uuid) {
+        UserModel model = userCache.get(uuid);
+        if (model != null) model.setAllRounds(model.getAllRounds() + 1);
+        CompletableFuture.runAsync(() -> executor.addAllRounds(uuid));
     }
 
-    public CompletableFuture<Integer> getDeaths(Player player) {
-        return CompletableFuture.supplyAsync(() -> this.executor.getDeaths(player));
+    public int getKills(UUID uuid) {
+        UserModel model = userCache.get(uuid);
+        return model == null ? 0 : model.getKills();
     }
 
-    public CompletableFuture<Integer> getWinRounds(Player player) {
-        return CompletableFuture.supplyAsync(() -> this.executor.getWinRounds(player));
+    public int getDeaths(UUID uuid) {
+        UserModel model = userCache.get(uuid);
+        return model == null ? 0 : model.getDeath();
     }
 
-    public CompletableFuture<Integer> getAllRounds(Player player) {
-        return CompletableFuture.supplyAsync(() -> this.executor.getAllRounds(player));
+    public int getWinRounds(UUID uuid) {
+        UserModel model = userCache.get(uuid);
+        return model == null ? 0 : model.getWinRounds();
     }
 
-    public CompletableFuture<Boolean> isDay(Player player) {
-        return CompletableFuture.supplyAsync(() -> this.executor.isDay(player));
+    public int getAllRounds(UUID uuid) {
+        UserModel model = userCache.get(uuid);
+        return model == null ? 0 : model.getAllRounds();
     }
 
-    public CompletableFuture<Boolean> isNight(Player player) {
-        return CompletableFuture.supplyAsync(() -> this.executor.isNight(player));
+    public boolean isDay(UUID uuid) {
+        UserModel model = userCache.get(uuid);
+        return model == null || model.isDay();
     }
 
-    public CompletableFuture<Boolean> isTableExists(Player player) {
-        return CompletableFuture.supplyAsync(() -> this.executor.isTableExists(player.getUniqueId().toString()));
+    public boolean isNight(UUID uuid) {
+        UserModel model = userCache.get(uuid);
+        return model != null && model.isNight();
     }
 
+    public CompletableFuture<Boolean> isTableExists(UUID uuid) {
+        return CompletableFuture.supplyAsync(() -> this.executor.isTableExists(uuid.toString()));
+    }
 }

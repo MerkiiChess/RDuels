@@ -1,6 +1,6 @@
 package ru.merkii.rduels.core.party.api;
 
-import org.bukkit.entity.Player;
+import ru.merkii.rduels.adapter.DuelPlayer;
 import ru.merkii.rduels.core.arena.model.ArenaModel;
 import ru.merkii.rduels.core.duel.model.DuelFightModel;
 import ru.merkii.rduels.core.duel.model.DuelRequest;
@@ -17,7 +17,7 @@ public interface PartyAPI {
      *
      * @param player The player for whom the party is created.
      */
-    void createParty(Player player);
+    void createParty(DuelPlayer player);
 
     /**
      * Removes the specified player from their party, handles ownership changes if necessary, and sends appropriate messages.
@@ -25,9 +25,9 @@ public interface PartyAPI {
      *
      * @param player The player leaving the party.
      */
-    void leaveParty(Player player);
+    void leaveParty(DuelPlayer player);
 
-    void leaveParty(Player player, boolean text);
+    void leaveParty(DuelPlayer player, boolean text);
 
     /**
      * Invites a player to join the specified party, adds the invitation to the request bucket, and sends invitation messages.
@@ -35,7 +35,7 @@ public interface PartyAPI {
      * @param partyModel The party to which the player is invited.
      * @param player     The player being invited.
      */
-    void inviteParty(PartyModel partyModel, Player player);
+    void inviteParty(PartyModel partyModel, DuelPlayer player);
 
     /**
      * Allows a player to join the specified party, adds them to the party, gives start items, and notifies relevant players.
@@ -44,7 +44,7 @@ public interface PartyAPI {
      * @param partyModel The party the player is joining.
      * @param player     The player joining the party.
      */
-    void joinParty(PartyModel partyModel, Player player);
+    void joinParty(PartyModel partyModel, DuelPlayer player);
 
     /**
      * Adds a party request to the request bucket.
@@ -68,7 +68,7 @@ public interface PartyAPI {
      * @return The party request model if found and not expired, otherwise null.
      */
     @Nullable
-    PartyRequestModel getPartyRequestModel(Player sender, Player receiver);
+    PartyRequestModel getPartyRequestModel(DuelPlayer sender, DuelPlayer receiver);
 
     /**
      * Retrieves the party model associated with the specified player.
@@ -77,7 +77,7 @@ public interface PartyAPI {
      * @return The party model associated with the player, or null if not found.
      */
     @Nullable
-    PartyModel getPartyModelFromPlayer(Player player);
+    PartyModel getPartyModelFromPlayer(DuelPlayer player);
 
     /**
      * Checks if the specified player is a member of any party.
@@ -85,7 +85,7 @@ public interface PartyAPI {
      * @param player The player to check.
      * @return True if the player is in a party, otherwise false.
      */
-    boolean isPartyPlayer(Player player);
+    boolean isPartyPlayer(DuelPlayer player);
 
     /**
      * Adds one or more parties to the fight party bucket.
@@ -144,6 +144,6 @@ public interface PartyAPI {
      *
      * @param players The players to give start items.
      */
-    void giveStartItems(Player... players);
+    void giveStartItems(DuelPlayer... players);
 
 }

@@ -1,6 +1,5 @@
 package ru.merkii.rduels.core.arena.api;
 
-import org.jetbrains.annotations.Nullable;
 import ru.merkii.rduels.core.arena.model.ArenaModel;
 import ru.merkii.rduels.model.KitModel;
 
@@ -10,13 +9,28 @@ import java.util.Optional;
 public interface ArenaAPI {
 
     /**
+     * Retrieves a free arena available for a fight.
+     *
+     * @return A free ArenaModel for a fight, or null if none is available.
+     */
+    Optional<ArenaModel> getFreeArena();
+
+    /**
+     * Retrieves a free arena with the specified name.
+     *
+     * @param name The name of the arena to retrieve.
+     * @return A free ArenaModel with the specified name, or null if none is available.
+     */
+    Optional<ArenaModel> getFreeArenaName(String name);
+
+    Optional<ArenaModel> getFreeArenaFFA();
+    /**
      * Retrieves the arena with the specified name.
      *
      * @param name The name of the arena to retrieve.
      * @return The arena model with the specified name, or null if not found.
      */
-    @Nullable
-    ArenaModel getArenaFromName(String name);
+    Optional<ArenaModel> getArenaFromName(String name);
 
     /**
      * Retrieves the arena with the specified display name.
@@ -24,8 +38,7 @@ public interface ArenaAPI {
      * @param displayName The display name of the arena to retrieve.
      * @return The arena model with the specified display name, or null if not found.
      */
-    @Nullable
-    ArenaModel getArenaFromDisplayName(String displayName);
+    Optional<ArenaModel> getArenaFromDisplayName(String displayName);
 
     /**
      * Checks if the arena with the specified name exists.

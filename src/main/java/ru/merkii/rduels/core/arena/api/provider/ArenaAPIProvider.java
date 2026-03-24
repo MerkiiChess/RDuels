@@ -12,15 +12,21 @@ import com.sk89q.worldedit.function.operation.Operation;
 import com.sk89q.worldedit.function.operation.Operations;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.session.ClipboardHolder;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.jetbrains.annotations.Nullable;
 import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.core.arena.ArenaCore;
 import ru.merkii.rduels.core.arena.api.ArenaAPI;
 import ru.merkii.rduels.core.arena.bucket.ArenaBlockBuildBucket;
 import ru.merkii.rduels.core.arena.bucket.ArenaBusyBucket;
-import ru.merkii.rduels.core.arena.config.ArenaSettings;
+import ru.merkii.rduels.core.arena.config.ArenaConfiguration;
 import ru.merkii.rduels.core.arena.model.ArenaModel;
 import ru.merkii.rduels.model.EntityPosition;
 import ru.merkii.rduels.model.KitModel;
@@ -30,33 +36,73 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
+@Singleton
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class ArenaAPIProvider implements ArenaAPI {
 
-    private final ArenaCore arenaCore = ArenaCore.INSTANCE;
-    private final ArenaBlockBuildBucket arenaBlockBuildBucket = this.arenaCore.getArenaBlockBuildBucket();
-    private final ArenaSettings arenaSettings = this.arenaCore.getArenas();
-    private final ArenaBusyBucket arenaBusyBucket = this.arenaCore.getArenaBusyBucket();
+    ArenaBlockBuildBucket arenaBlockBuildBucket;
+    ArenaConfiguration arenaConfiguration;
+    ArenaBusyBucket arenaBusyBucket;
 
     @Override
-    public ArenaModel getArenaFromName(String name) {
-        return this.arenaSettings.getArenas().stream().filter(arenaModel -> arenaModel.getArenaName().equalsIgnoreCase(name)).findFirst().orElse(null);
+    public Optional<ArenaModel> getFreeArena() {
+        List<ArenaModel> availableArenas = arenaConfiguration.arenas().keySet().stream()
+                .filter(arena -> !arena.isFfa())
+                .filter(arena -> !arena.isCustomKits())
+                .filter(arena -> !arenaBusyBucket.getArenas().contains(arena))
+                .toList();
+        return Optional.ofNullable(availableArenas.get(ThreadLocalRandom.current().nextInt(availableArenas.size())));
     }
 
     @Override
-    public ArenaModel getArenaFromDisplayName(String displayName) {
-        return this.arenaSettings.getArenas().stream().filter(arenaModel -> arenaModel.getDisplayName().equalsIgnoreCase(displayName)).findFirst().orElse(null);
+    public Optional<ArenaModel> getFreeArenaName(String name) {
+        return getArenasFromName(name).stream()
+                .filter(arena -> !arenaBusyBucket.getArenas().contains(arena))
+                .findFirst();
+    }
+
+    @Override
+    public Optional<ArenaModel> getFreeArenaFFA() {
+        List<ArenaModel> availableArenas = this.arenaConfiguration.arenas().keySet().stream()
+                .filter(ArenaModel::isFfa)
+                .filter(arena -> !arenaBusyBucket.getArenas().contains(arena))
+                .toList();
+        return availableArenas.isEmpty() ? Optional.empty() : Optional.ofNullable(availableArenas.get(ThreadLocalRandom.current().nextInt(availableArenas.size())));
+    }
+
+    @Override
+    public Optional<ArenaModel> getArenaFromName(String name) {
+        return this.arenaConfiguration.arenas()
+                .keySet()
+                .stream()
+                .filter(arenaModel -> arenaModel.getArenaName().equalsIgnoreCase(name))
+                .findFirst();
+    }
+
+    @Override
+    public Optional<ArenaModel> getArenaFromDisplayName(String displayName) {
+        return this.arenaConfiguration.arenas()
+                .keySet()
+                .stream()
+                .filter(arenaModel -> arenaModel.getDisplayName().equalsIgnoreCase(displayName))
+                .findFirst();
     }
 
     @Override
     public boolean isContainsArena(String name) {
-        return this.arenaSettings.getArenas().stream().anyMatch(arenaModel -> arenaModel.getArenaName().equalsIgnoreCase(name));
+        return this.arenaConfiguration.arenas()
+                .keySet()
+                .stream()
+                .anyMatch(arenaModel -> arenaModel.getArenaName().equalsIgnoreCase(name));
     }
 
     @Override
     public List<ArenaModel> getArenasFromName(String name) {
-        return this.arenaSettings.getArenas().stream().filter(arenaModel -> arenaModel.getDisplayName().equalsIgnoreCase(name)).collect(Collectors.toList());
+        return this.arenaConfiguration.arenas().keySet().stream().filter(arenaModel -> arenaModel.getDisplayName().equalsIgnoreCase(name)).collect(Collectors.toList());
     }
 
     @Override
@@ -90,7 +136,7 @@ public class ArenaAPIProvider implements ArenaAPI {
                     blocks.clear();
                 }
             } catch (NullPointerException ignored) {
-                List<Block> blocks = ArenaCore.INSTANCE.getArenaBlockBuildBucket().getAllBlocks(arenaModel);
+                List<Block> blocks = arenaBlockBuildBucket.getAllBlocks(arenaModel);
                 if (blocks.isEmpty()) break block11;
                 blocks.stream().filter(Objects::nonNull).forEach(block -> block.setType(Material.AIR));
                 blocks.clear();
@@ -108,13 +154,12 @@ public class ArenaAPIProvider implements ArenaAPI {
         }
         File file = new File(RDuels.getInstance().getDataFolder() + "/schematic", arenaModel.getSchematic());
         if (!file.exists()) {
-            RDuels.getInstance().getLogger().warning("Схематика: " + arenaModel.getSchematic() + " не найдена!");
+            Bukkit.getLogger().warning("Схематика: " + arenaModel.getSchematic() + " не найдена!");
             return;
         }
         ClipboardFormat format = ClipboardFormats.findByFile(file);
         try {
             if (format == null) {
-                RDuels.getInstance().debug("ClipboardFormat exception: Not found file " + file.getName());
                 return;
             }
             ClipboardReader reader = format.getReader(Files.newInputStream(file.toPath()));
@@ -131,7 +176,7 @@ public class ArenaAPIProvider implements ArenaAPI {
 
     @Override
     public Optional<ArenaModel> getArenaFromKit(KitModel kitModel) {
-        return this.arenaSettings.getArenas().stream().filter(ArenaModel::isCustomKits).filter(Objects::nonNull).filter(arena -> arena.getCustomKitsName() != null).filter(arena -> !arena.getCustomKitsName().isEmpty()).filter(arena -> arena.getCustomKitsName().contains(kitModel.getDisplayName())).filter(arena -> !this.isBusyArena(arena)).findFirst();
+        return this.arenaConfiguration.arenas().keySet().stream().filter(ArenaModel::isCustomKits).filter(arena -> arena.getCustomKitsName() != null).filter(arena -> !arena.getCustomKitsName().isEmpty()).filter(arena -> arena.getCustomKitsName().contains(kitModel.getDisplayName())).filter(arena -> !this.isBusyArena(arena)).findFirst();
     }
 
 

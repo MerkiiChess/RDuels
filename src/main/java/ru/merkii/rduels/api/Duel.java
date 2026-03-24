@@ -1,21 +1,22 @@
 package ru.merkii.rduels.api;
 
+import io.avaje.inject.BeanScope;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
+import ru.merkii.rduels.RDuels;
+import ru.merkii.rduels.adapter.DuelPlayer;
 import ru.merkii.rduels.api.provider.DuelPlayerProvider;
-import ru.merkii.rduels.core.arena.ArenaCore;
 import ru.merkii.rduels.core.arena.api.ArenaAPI;
-import ru.merkii.rduels.core.customkit.CustomKitCore;
 import ru.merkii.rduels.core.customkit.api.CustomKitAPI;
-import ru.merkii.rduels.core.duel.DuelCore;
 import ru.merkii.rduels.core.duel.api.DuelAPI;
-import ru.merkii.rduels.core.party.PartyCore;
 import ru.merkii.rduels.core.party.api.PartyAPI;
-import ru.merkii.rduels.core.sign.SignCore;
 import ru.merkii.rduels.core.sign.api.SignAPI;
 
 public class Duel {
 
+    private static final BeanScope BEAN_SCOPE = RDuels.beanScope();
+
+    @Deprecated
     @Nullable
     public static DuelPlayer getDuelPlayer(Player player) {
         if (player == null) {
@@ -24,24 +25,29 @@ public class Duel {
         return new DuelPlayerProvider(player);
     }
 
+    @Deprecated
     public static DuelAPI getDuelAPI() {
-        return DuelCore.INSTANCE.getDuelAPI();
+        return BEAN_SCOPE.get(DuelAPI.class);
     }
 
+    @Deprecated
     public static PartyAPI getPartyAPI() {
-        return PartyCore.INSTANCE.getPartyAPI();
+        return BEAN_SCOPE.get(PartyAPI.class);
     }
 
+    @Deprecated
     public static SignAPI getSignAPI() {
-        return SignCore.INSTANCE.getSignAPI();
+        return BEAN_SCOPE.get(SignAPI.class);
     }
 
+    @Deprecated
     public static ArenaAPI getArenaAPI() {
-        return ArenaCore.INSTANCE.getArenaAPI();
+        return BEAN_SCOPE.get(ArenaAPI.class);
     }
 
+    @Deprecated
     public static CustomKitAPI getCustomKitAPI() {
-        return CustomKitCore.INSTANCE.getCustomKitAPI();
+        return BEAN_SCOPE.get(CustomKitAPI.class);
     }
 
 }

@@ -1,85 +1,91 @@
 package ru.merkii.rduels.core.customkit.storage;
 
-import org.bukkit.configuration.ConfigurationSection;
+import jakarta.inject.Singleton;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.core.customkit.category.CustomKitEnchantCategory;
+import ru.merkii.rduels.adapter.DuelPlayer;
+
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
+@Singleton
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CustomKitStorage {
 
-    public FileConfiguration getConfig(Player player) {
-        File file = new File(RDuels.getInstance().getDataFolder(), "/players/" + player.getUniqueId() + ".yml");
-        if (!file.exists()) {
-            try {
-                if (!file.createNewFile()) {
-                    RDuels.getInstance().getLogger().info("Error creating file: " + player.getUniqueId() + ".yml");
+    Map<UUID, Map<String, Map<Integer, ItemStack>>> kitCache = new ConcurrentHashMap<>();
+    Map<UUID, String> selectedKitCache = new ConcurrentHashMap<>();
+
+    public void loadKits(DuelPlayer player) {
+        File file = getFile(player);
+        if (!file.exists()) return;
+
+        FileConfiguration config = YamlConfiguration.loadConfiguration(file);
+
+        String selected = config.getString("selectedKit", "NULL");
+        selectedKitCache.put(player.getUUID(), selected);
+
+        Map<String, Map<Integer, ItemStack>> playerKits = new HashMap<>();
+
+        for (String kitName : config.getKeys(false)) {
+            Map<Integer, ItemStack> items = new HashMap<>();
+            var section = config.getConfigurationSection(kitName);
+            if (section != null) {
+                for (String slotKey : section.getKeys(false)) {
+                    items.put(Integer.parseInt(slotKey), section.getItemStack(slotKey));
                 }
-            } catch (IOException e) {
-                RDuels.getInstance().getLogger().warning("Error creating file: " + player.getUniqueId() + ".yml");
             }
+            playerKits.put(kitName, items);
         }
-        return YamlConfiguration.loadConfiguration(file);
+        kitCache.put(player.getUUID(), playerKits);
     }
 
-    public void setItemSlot(ItemStack itemStack, String kitName, int slot, Player player) {
-        FileConfiguration config = getConfig(player);
-        ConfigurationSection section = config.getConfigurationSection(kitName);
-        if (section == null) {
-            section = config.createSection(kitName);
-        }
-        section.set(String.valueOf(slot), itemStack);
-        save(config, player);
+    public Map<Integer, ItemStack> getAllItemsKit(DuelPlayer player, String kitName) {
+        return kitCache.computeIfAbsent(player.getUUID(), k -> new HashMap<>())
+                .getOrDefault(kitName, new HashMap<>());
     }
 
-    public void save(FileConfiguration config, Player player) {
-        try {
-            config.save(new File(RDuels.getInstance().getDataFolder(), "/players/" + player.getUniqueId() + ".yml"));
-        } catch (IOException ignored) {
-
-        }
+    public void setItemSlot(ItemStack item, String kitName, int slot, DuelPlayer player) {
+        kitCache.computeIfAbsent(player.getUUID(), k -> new HashMap<>())
+                .computeIfAbsent(kitName, k -> new HashMap<>())
+                .put(slot, item);
+        RDuels.getInstance().getServer().getScheduler().runTaskAsynchronously(RDuels.getInstance(), () -> {
+            FileConfiguration config = YamlConfiguration.loadConfiguration(getFile(player));
+            config.set(kitName + "." + slot, item);
+            try {
+                config.save(getFile(player));
+            } catch (IOException ignored) {}
+        });
     }
 
-    public Map<Integer, ItemStack> getAllItemsKit(Player player, String kitName) {
-        Map<Integer, ItemStack> itemStackMap = new HashMap<>();
-        FileConfiguration config = this.getConfig(player);
-        if (config.getConfigurationSection(kitName) == null) {
-            config.createSection(kitName);
-            save(config, player);
-        }
-        config = this.getConfig(player);
-        if (!config.getConfigurationSection(kitName).getKeys(false).isEmpty()) {
-            for (String key : config.getConfigurationSection(kitName).getKeys(false)) {
-                try {
-                    itemStackMap.put(Integer.parseInt(key), config.getConfigurationSection(kitName).getItemStack(key));
-                } catch (NumberFormatException ignored) {}
-            }
-        }
-        return itemStackMap;
+    private File getFile(DuelPlayer player) {
+        return new File(RDuels.getInstance().getDataFolder(), "players/" + player.getUUID() + ".yml");
     }
 
-    public ItemStack getItemFromSlot(int slot, String kitName, Player player) {
-       return this.getConfig(player).getConfigurationSection(kitName).getItemStack(String.valueOf(slot));
+    public void unload(UUID uuid) {
+        kitCache.remove(uuid);
     }
 
-    public ItemStack addEnchantItem(int slot, String kitName, Player player, CustomKitEnchantCategory enchantCategory) {
-        ItemStack itemStack = getItemFromSlot(slot, kitName, player);
-        if (itemStack == null) {
-            return null;
-        }
-        ItemMeta meta = itemStack.getItemMeta();
-        meta.addEnchant(Objects.requireNonNull(Enchantment.getByName(enchantCategory.getNameEnchant())), enchantCategory.getLvl(), false);
-        itemStack.setItemMeta(meta);
-        return itemStack;
+    public void setSelectedKit(DuelPlayer player, String kit) {
+        selectedKitCache.put(player.getUUID(), kit);
+
+        RDuels.getInstance().getServer().getScheduler().runTaskAsynchronously(RDuels.getInstance(), () -> {
+            File file = getFile(player);
+            FileConfiguration config = YamlConfiguration.loadConfiguration(file);
+            config.set("selectedKit", kit);
+            try {
+                config.save(file);
+            } catch (IOException ignored) {}
+        });
+    }
+
+    public String getSelectedKit(UUID uuid) {
+        return selectedKitCache.getOrDefault(uuid, "NULL");
     }
 
 }

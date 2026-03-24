@@ -1,0 +1,20 @@
+categories:
+  swords:
+    display-material: "DIAMOND_SWORD"
+    display-name: "Мечи"
+    items:
+      - DIAMOND_SWORD
+      - STONE_SWORD
+  other-items:
+    display-material: "TOTEM_OF_UNDYING"
+    display-name: "Вспомогательные предметы"
+    items:
+      - SHIELD
+      - TOTEM_OF_UNDYING
+  helmets:
+    display-material: "DIAMOND_HELMET"
+    display-name: "Шлемы"
+    id: "HELMET"
+    items:
+      - DIAMOND_HELMET
+      - IRON_HELMET

@@ -3,6 +3,7 @@ package ru.merkii.rduels.core.sign.api;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
+import ru.merkii.rduels.adapter.DuelPlayer;
 import ru.merkii.rduels.core.duel.model.DuelKitType;
 import ru.merkii.rduels.core.sign.model.SignModel;
 import ru.merkii.rduels.core.sign.model.SignQueueModel;
@@ -103,9 +104,9 @@ public interface SignAPI {
      * @param player The player to check.
      * @return True if the player is in a sign queue, otherwise false.
      */
-    boolean isQueuePlayer(Player player);
+    boolean isQueuePlayer(DuelPlayer player);
 
-    Optional<SignQueueModel> getQueueFromPlayer(Player player);
+    Optional<SignQueueModel> getQueueFromPlayer(DuelPlayer player);
 
     /**
      * Checks if the specified player clicked on a sign associated with the specified sign model.
@@ -114,7 +115,7 @@ public interface SignAPI {
      * @param signModel The sign model associated with the sign.
      * @return True if the player clicked on a sign associated with the specified sign model and is in a queue, otherwise false.
      */
-    boolean isClickedSignQueuePlayer(Player player, SignModel signModel);
+    boolean isClickedSignQueuePlayer(DuelPlayer player, SignModel signModel);
 
     /**
      * Sets the text on the specified sign to indicate waiting state with the provided information.
@@ -135,10 +136,10 @@ public interface SignAPI {
      * @param receiver    The receiver player.
      * @param duelKitType The type of duel kit.
      */
-    void setSignActive(Sign sign, Player sender, Player receiver, DuelKitType duelKitType);
+    void setSignActive(Sign sign, DuelPlayer sender, DuelPlayer receiver, DuelKitType duelKitType);
 
-    void removePlayerQueueSign(Player player);
+    void removePlayerQueueSign(DuelPlayer player);
 
-    void removePlayerQueueSign(Player... players);
+    void removePlayerQueueSign(DuelPlayer... players);
 
 }

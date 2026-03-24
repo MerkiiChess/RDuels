@@ -1,41 +1,36 @@
 package ru.merkii.rduels.core.customkit;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import revxrsal.commands.Lamp;
+import revxrsal.commands.bukkit.actor.BukkitCommandActor;
 import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.config.settings.Config;
 import ru.merkii.rduels.core.Core;
-import ru.merkii.rduels.core.customkit.api.CustomKitAPI;
-import ru.merkii.rduels.core.customkit.api.provider.CustomKitAPIProvider;
 import ru.merkii.rduels.core.customkit.command.CustomKitCommand;
-import ru.merkii.rduels.core.customkit.config.CustomKitConfig;
 import ru.merkii.rduels.core.customkit.listener.CustomKitListener;
-import ru.merkii.rduels.core.customkit.storage.CustomKitStorage;
 
 @Getter
+@Singleton
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class CustomKitCore implements Core {
 
-    public static CustomKitCore INSTANCE;
-    private CustomKitConfig customKitConfig;
-    private CustomKitStorage customKitStorage;
-    private CustomKitAPI customKitAPI;
+    Lamp<BukkitCommandActor> lamp;
 
     @Override
     public void enable(RDuels plugin) {
-        INSTANCE = this;
-        plugin.registerListeners(new CustomKitListener());
-        reloadConfig(plugin);
-        customKitStorage = new CustomKitStorage();
-        customKitAPI = new CustomKitAPIProvider();
-        plugin.registerCommands(new CustomKitCommand());
+        lamp.register(RDuels.beanScope().get(CustomKitCommand.class));
     }
 
     @Override
     public void disable(RDuels plugin) {
-        INSTANCE = null;
     }
 
     @Override
     public void reloadConfig(RDuels plugin) {
-        this.customKitConfig = Config.load(plugin, "customkitconfig.json", CustomKitConfig.class);
     }
 }

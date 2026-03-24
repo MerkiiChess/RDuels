@@ -1,19 +1,18 @@
 package ru.merkii.rduels.core.customkit.category;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.experimental.FieldDefaults;
+import java.util.List;
 
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @AllArgsConstructor
 @Getter
 public class CustomKitEnchantCategory {
 
-    private String nameEnchant;
-    private int lvl;
-    private int slot;
-    private CustomKitCategoryEnchantItemType enchantItemType;
-
-    public static CustomKitEnchantCategory create(String nameEnchant, int lvl, int slot, CustomKitCategoryEnchantItemType enchantItemType) {
-        return new CustomKitEnchantCategory(nameEnchant, lvl, slot, enchantItemType);
-    }
+    String nameEnchant;
+    int lvl;
+    List<String> materialsEnchanted;
 
 }

@@ -1,6 +1,8 @@
 package ru.merkii.rduels.model;
 
 import com.google.common.base.Preconditions;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -9,11 +11,13 @@ import org.bukkit.entity.Entity;
 
 import java.util.Objects;
 
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class BlockPosition implements Position{
-    private String world;
-    private int x;
-    private int y;
-    private int z;
+
+    String world;
+    int x;
+    int y;
+    int z;
 
     public BlockPosition(String world, int x, int y, int z) {
         this.world = world;
@@ -124,18 +128,22 @@ public class BlockPosition implements Position{
         return this.getBlock();
     }
 
+    @Override
     public BlockPosition clone() {
         return new BlockPosition(this.world, this.x, this.y, this.z);
     }
 
+    @Override
     public String toString() {
         return "BlockPosition{" + this.world + ", " + this.x + ", " + this.y + ", " + this.z + "}";
     }
 
+    @Override
     public int hashCode() {
         return Objects.hash(this.world, this.x, this.y, this.z);
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (obj == null) {
             return false;

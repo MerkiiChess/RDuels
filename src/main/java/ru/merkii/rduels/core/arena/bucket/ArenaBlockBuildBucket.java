@@ -1,5 +1,8 @@
 package ru.merkii.rduels.core.arena.bucket;
 
+import jakarta.inject.Singleton;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
 import org.bukkit.block.Block;
 import ru.merkii.rduels.core.arena.model.ArenaModel;
 
@@ -8,9 +11,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Singleton
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ArenaBlockBuildBucket {
 
-    private final Map<ArenaModel, List<Block>> blocksBuild = new HashMap<ArenaModel, List<Block>>();
+    Map<ArenaModel, List<Block>> blocksBuild = new HashMap<>();
 
     public void addBlock(ArenaModel arenaModel, Block block) {
         if (!this.blocksBuild.containsKey(arenaModel)) {

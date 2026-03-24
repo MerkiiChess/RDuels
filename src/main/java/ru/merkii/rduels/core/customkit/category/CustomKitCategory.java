@@ -1,22 +1,22 @@
 package ru.merkii.rduels.core.customkit.category;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.experimental.FieldDefaults;
 import org.bukkit.Material;
-import ru.merkii.rduels.builder.ItemBuilder;
-import java.util.Map;
+import ru.merkii.rduels.config.menu.settings.gui.InventoryItem;
 
+import java.util.List;
+
+@Getter
 @AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class CustomKitCategory {
 
-    private ItemBuilder item;
-    private Map<Integer, ItemBuilder> items;
+    String id;
+    String displayName;
+    Material displayMaterial;
+    List<Material> items;
 
-    public ItemBuilder getItem() {
-        return item;
-    }
-
-    public Map<Integer, ItemBuilder> getItems() {
-        return items;
-    }
 }

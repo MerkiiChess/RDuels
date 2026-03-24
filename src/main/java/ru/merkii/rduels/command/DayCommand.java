@@ -1,30 +1,30 @@
 package ru.merkii.rduels.command;
 
-import co.aikar.commands.BaseCommand;
-import co.aikar.commands.annotation.*;
-import org.bukkit.command.CommandSender;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.bukkit.entity.Player;
-import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.config.messages.MessageConfiguration;
+import revxrsal.commands.annotation.Command;
+import ru.merkii.rduels.config.messages.MessageConfig;
+import ru.merkii.rduels.config.settings.SettingsConfiguration;
+import ru.merkii.rduels.manager.DatabaseManager;
 
-@CommandAlias("day")
-public class DayCommand extends BaseCommand {
+@Singleton
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor(onConstructor_ = @Inject)
+public class DayCommand {
 
-    private final RDuels plugin = RDuels.getInstance();
-    private final MessageConfiguration messageConfiguration = plugin.getPluginMessage();
+    DatabaseManager databaseManager;
+    SettingsConfiguration settingsConfiguration;
+    MessageConfig config;
 
-    @Default
-    @CommandPermission("duel.day")
-    @Description("Включить день")
+    @Command("day")
     public void onDay(Player player) {
-        this.plugin.getDatabaseManager().setDay(player).join();
-        player.setPlayerTime(this.plugin.getSettings().getDayTicks(), false);
-        player.sendMessage(this.messageConfiguration.getMessage("day"));
-    }
-
-    @CatchUnknown
-    public void noPermission(CommandSender sender) {
-        sender.sendMessage(this.plugin.getPluginMessage().getMessage("noPermission"));
+        databaseManager.setDay(player.getUniqueId());
+        player.setPlayerTime(settingsConfiguration.dayTicks(), false);
+        config.sendTo(player, "day");
     }
 
 }

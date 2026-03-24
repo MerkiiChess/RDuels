@@ -1,65 +1,70 @@
 package ru.merkii.rduels.core.duel.command;
 
-import co.aikar.commands.BaseCommand;
-import co.aikar.commands.annotation.*;
-import org.bukkit.Bukkit;
-import org.bukkit.command.CommandSender;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.bukkit.entity.Player;
-import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.api.Duel;
-import ru.merkii.rduels.config.messages.MessageConfiguration;
-import ru.merkii.rduels.core.duel.DuelCore;
+import revxrsal.commands.annotation.Command;
+import revxrsal.commands.annotation.Description;
+import revxrsal.commands.annotation.SuggestWith;
+import revxrsal.commands.bukkit.actor.BukkitCommandActor;
+import ru.merkii.rduels.adapter.DuelPlayer;
+import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
+import ru.merkii.rduels.config.Placeholder;
+import ru.merkii.rduels.config.messages.MessageConfig;
 import ru.merkii.rduels.core.duel.api.DuelAPI;
 import ru.merkii.rduels.core.duel.model.DuelFightModel;
+import ru.merkii.rduels.lamp.suggestion.AllPlayers;
 
-@CommandAlias("spectator|spec")
-@Description("Позволяет игроку присоединиться к наблюдению за дуэлью.")
-public class SpectatorCommand extends BaseCommand {
+@Singleton
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor(onConstructor_ = @Inject)
+public class SpectatorCommand {
 
-    private final RDuels plugin = RDuels.getInstance();
-    private final DuelAPI duelAPI = DuelCore.INSTANCE.getDuelAPI();
-    private final MessageConfiguration messageConfiguration = this.plugin.getPluginMessage();
+    DuelAPI duelAPI;
+    MessageConfig config;
 
-    @Default
-    @CommandCompletion(value="@allplayers")
+    @Command({"spec", "spectator", "spec"})
+    public void spec(BukkitCommandActor actor) {
+        config.sendTo(actor.requirePlayer(), "duel-spec-args");
+    }
+
+    @Command({"spec", "spectator", "spec"})
     @Description(value="Присоединиться к наблюдению за дуэлью между игроками.")
-    public void onSpec(CommandSender sender, @Optional String targetName) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Эта команда доступна только в игре.");
+    public void onSpec(BukkitCommandActor actor, @SuggestWith(AllPlayers.class) DuelPlayer target) {
+        Player bukkitPlayer = actor.requirePlayer();
+        DuelPlayer player = BukkitAdapter.adapt(bukkitPlayer);
+
+        if (player.isFight()) {
+            config.sendTo(player, "duel-command-is-blocked");
             return;
         }
-        if (Duel.getDuelPlayer(player).isFight()) {
-            player.sendMessage(this.messageConfiguration.getMessage("duelCommandIsBlocked"));
-            return;
-        }
+        String targetName = target.getName();
         if (targetName == null) {
             if (!this.duelAPI.isSpectate(player)) {
-                player.sendMessage(this.messageConfiguration.getMessage("duelSpecArgs"));
+                config.sendTo(player, "duel-spec-args");
                 return;
             }
             DuelFightModel fightModel = this.duelAPI.getDuelFightModelFromSpectator(player);
             this.duelAPI.removeSpectate(player, fightModel, true);
-            player.sendMessage(this.messageConfiguration.getMessage("duelSpectateStop"));
+            config.sendTo(player, "duel-spectate-stop");
             return;
         }
         if (this.duelAPI.isSpectate(player)) {
             DuelFightModel fightModel = this.duelAPI.getDuelFightModelFromSpectator(player);
             this.duelAPI.removeSpectate(player, fightModel, true);
-            player.sendMessage(this.messageConfiguration.getMessage("duelSpectateStop"));
-            return;
-        }
-        Player target = Bukkit.getPlayerExact(targetName);
-        if (target == null) {
-            player.sendMessage(this.messageConfiguration.getMessage("duelOffline").replace("(player)", targetName));
+            config.sendTo(player, "duel-spectate-stop");
             return;
         }
         DuelFightModel fightModel = this.duelAPI.getFightModelFromPlayer(target);
         if (fightModel == null || fightModel.getArenaModel().getSpectatorPosition() == null) {
-            player.sendMessage(this.messageConfiguration.getMessage("duelSpectateNoFight").replace("(player)", target.getName()));
+            config.sendTo(player, Placeholder.wrapped("(player)", targetName), "duel-spectate-no-fighting");
             return;
         }
         this.duelAPI.addSpectate(player, fightModel);
-        player.sendMessage(this.messageConfiguration.getMessage("duelSpectateStart").replace("(player)", target.getName()));
+        config.sendTo(player, Placeholder.wrapped("(player)", targetName), "duel-spectate-start");
     }
 
 }

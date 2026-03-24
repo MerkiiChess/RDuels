@@ -15,10 +15,15 @@ public class SignUtil {
         sign.update();
     }
 
-    public void setLines(Sign sign, List<String> text) {
-        for (int i = 0 ; i < text.size() ; i++) {
-            sign.setLine(i, text.get(i));
+    public void setLines(Sign sign, Component text) {
+        List<Component> lines = text
+                .replaceText(builder -> builder.match("\n").replacement(Component.newline()))
+                .children();
+
+        for (int i = 0; i < 4; i++) {
+            sign.line(i, i < lines.size() ? lines.get(i) : Component.empty());
         }
+
         sign.update();
     }
 

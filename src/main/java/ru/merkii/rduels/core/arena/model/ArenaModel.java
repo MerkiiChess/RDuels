@@ -11,34 +11,64 @@ import java.util.List;
 import java.util.Map;
 
 @Getter
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@AllArgsConstructor
 public class ArenaModel implements Cloneable {
 
-    private final String arenaName;
-    private final String displayName;
-    private final Material material;
+    final String arenaName;
+    final String displayName;
+    final Material material;
+    final boolean customKits;
+    final List<String> customKitsName;
+    final boolean ffa;
+    final boolean breaking;
+    final String schematic;
+    final int radiusDeleteBlocks;
     @Setter
-    private EntityPosition onePosition;
+    EntityPosition onePosition;
     @Setter
-    private EntityPosition twoPosition;
+    EntityPosition twoPosition;
     @Setter
-    private EntityPosition spectatorPosition;
+    EntityPosition spectatorPosition;
     @Setter
-    private Map<Integer, EntityPosition> ffaPositions;
+    Map<Integer, EntityPosition> ffaPositions;
     @Setter
-    private EntityPosition schematicPosition;
-    private boolean customKits;
-    private List<String> customKitsName;
-    private final boolean ffa;
-    private final boolean breaking;
-    private final String schematic;
-    private final int radiusDeleteBlocks;
+    EntityPosition schematicPosition;
 
     public static ArenaModel create(String arenaName, String displayName, Material material, EntityPosition onePosition, EntityPosition twoPosition, EntityPosition spectatorPosition, boolean ffa, boolean breaking, String schematic) {
-        return new ArenaModel(arenaName, displayName, material, onePosition, twoPosition, spectatorPosition, new HashMap<Integer, EntityPosition>(), null, false, new ArrayList<String>(), ffa, breaking, schematic, 50);
+        return new ArenaModel(
+                arenaName,
+                displayName,
+                material,
+                false,
+                new ArrayList<>(),
+                ffa,
+                breaking,
+                schematic,
+                50,
+                onePosition,
+                twoPosition,
+                spectatorPosition,
+                new HashMap<>(),
+                null);
     }
 
     public static ArenaModel create(String arenaName, String displayName, Material material, EntityPosition onePosition, EntityPosition twoPosition, EntityPosition spectatorPosition) {
-        return new ArenaModel(arenaName, displayName, material, onePosition, twoPosition, spectatorPosition, new HashMap<Integer, EntityPosition>(), null, false, new ArrayList<String>(), false, false, "NO_SCHEMATIC", 50);
+        return new ArenaModel(
+                arenaName,
+                displayName,
+                material,
+                false,
+                new ArrayList<>(),
+                false,
+                false,
+                "NO_SCHEMATIC",
+                50,
+                onePosition,
+                twoPosition,
+                spectatorPosition,
+                new HashMap<>(),
+                null);
     }
 
     public ArenaModel clone() {
@@ -48,23 +78,6 @@ public class ArenaModel implements Cloneable {
         catch (CloneNotSupportedException e) {
             throw new AssertionError();
         }
-    }
-
-    ArenaModel(String arenaName, String displayName, Material material, EntityPosition onePosition, EntityPosition twoPosition, EntityPosition spectatorPosition, Map<Integer, EntityPosition> ffaPositions, EntityPosition schematicPosition, boolean customKits, List<String> customKitsName, boolean ffa, boolean breaking, String schematic, int radiusDeleteBlocks) {
-        this.arenaName = arenaName;
-        this.displayName = displayName;
-        this.material = material;
-        this.onePosition = onePosition;
-        this.twoPosition = twoPosition;
-        this.spectatorPosition = spectatorPosition;
-        this.ffaPositions = ffaPositions;
-        this.schematicPosition = schematicPosition;
-        this.customKits = customKits;
-        this.customKitsName = customKitsName;
-        this.ffa = ffa;
-        this.breaking = breaking;
-        this.schematic = schematic;
-        this.radiusDeleteBlocks = radiusDeleteBlocks;
     }
 
     public static ArenaModelBuilder builder() {
@@ -161,7 +174,20 @@ public class ArenaModel implements Cloneable {
         }
 
         public ArenaModel build() {
-            return new ArenaModel(this.arenaName, this.displayName, this.material, this.onePosition, this.twoPosition, this.spectatorPosition, this.ffaPositions, this.schematicPosition, this.customKits, this.customKitsName, this.ffa, this.breaking, this.schematic, this.radiusDeleteBlocks);
+            return new ArenaModel(arenaName,
+                    displayName,
+                    material,
+                    customKits,
+                    customKitsName,
+                    ffa,
+                    breaking,
+                    schematic,
+                    radiusDeleteBlocks,
+                    onePosition,
+                    twoPosition,
+                    spectatorPosition,
+                    ffaPositions,
+                    schematicPosition);
         }
 
         public String toString() {

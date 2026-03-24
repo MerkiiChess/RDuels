@@ -1,55 +1,67 @@
 package ru.merkii.rduels.placeholder;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.entity.Player;
-import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.core.duel.DuelCore;
+import org.jspecify.annotations.NonNull;
+import ru.merkii.rduels.adapter.DuelPlayer;
+import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
+import ru.merkii.rduels.config.messages.MessageConfig;
+import ru.merkii.rduels.config.serializer.ComponentSerializerProviders;
 import ru.merkii.rduels.core.duel.api.DuelAPI;
 import ru.merkii.rduels.manager.DatabaseManager;
 import ru.merkii.rduels.util.TimeUtil;
 
+@Singleton
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor(onConstructor_ = @Inject)
 public class DuelPAPIHook extends PlaceholderExpansion {
 
-    private transient final RDuels plugin = RDuels.getInstance();
-    private transient final DatabaseManager databaseManager = plugin.getDatabaseManager();
+    MessageConfig messageConfig;
+    DuelAPI duelAPI;
 
     @Override
     public String onPlaceholderRequest(Player player, String identifier) {
-        DuelAPI duelAPI = DuelCore.INSTANCE.getDuelAPI();
+        String nullPlaceholder = ComponentSerializerProviders.MINI_MESSAGE.componentSerializer().serialize(messageConfig.message("null-placeholder"));
+        DuelPlayer duelPlayer = BukkitAdapter.adapt(player);
         return switch (identifier) {
-            case "kills" -> String.valueOf(this.databaseManager.getKills(player).join());
-            case "death" -> String.valueOf(this.databaseManager.getDeaths(player).join());
-            case "wins" -> String.valueOf(this.databaseManager.getWinRounds(player).join());
+            case "kills" -> String.valueOf(duelPlayer.getKills());
+            case "death" -> String.valueOf(duelPlayer.getDeath());
+            case "wins" -> String.valueOf(duelPlayer.getWinRounds());
             case "all_rounds" ->
-                    String.valueOf(this.databaseManager.getAllRounds(player).join() - this.databaseManager.getWinRounds(player).join());
+                    String.valueOf(duelPlayer.getAllRounds() - duelPlayer.getWinRounds());
             case "opponent" ->
-                    player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : duelAPI.getOpponentFromFight(player).getName();
+                    player == null || !duelPlayer.isFight() ? nullPlaceholder : duelAPI.getOpponentFromFight(duelPlayer).getName();
             case "time" ->
-                    player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : TimeUtil.getTimeInMaxUnit(duelAPI.getFightModelFromPlayer(player).getBukkitTask().getTime() * 1000L);
+                    player == null || !duelPlayer.isFight() ? nullPlaceholder : TimeUtil.getTimeInMaxUnit(duelPlayer.getDuelFightModel().get().getBukkitTask().getTime() * 1000L);
             case "count_rounds" ->
-                    player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : String.valueOf(duelAPI.getFightModelFromPlayer(player).getNumGames());
+                    player == null || !duelPlayer.isFight() ? nullPlaceholder : String.valueOf(duelPlayer.getDuelFightModel().get().getNumGames());
             case "played_count_rounds" ->
-                    player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : String.valueOf(duelAPI.getFightModelFromPlayer(player).getCountNumGames());
+                    player == null || !duelPlayer.isFight() ? nullPlaceholder : String.valueOf(duelPlayer.getDuelFightModel().get().getCountNumGames());
             case "kit" ->
-                    player == null || !duelAPI.isFightPlayer(player) ? this.plugin.getPluginMessage().getMessage("nullPlaceholder") : duelAPI.getFightModelFromPlayer(player).getKitModel().getDisplayName();
+                    player == null || !duelPlayer.isFight() ? nullPlaceholder : duelPlayer.getDuelFightModel().get().getKitModel().getDisplayName();
             default -> null;
         };
     }
 
 
     @Override
-    public String getAuthor() {
+    public @NonNull String getAuthor() {
         return "RuMerkii";
     }
 
     @Override
-    public String getIdentifier() {
+    public @NonNull String getIdentifier() {
         return "duel";
     }
 
     @Override
-    public String getVersion() {
-        return "1.0";
+    public @NonNull String getVersion() {
+        return "2.0";
     }
 
 }

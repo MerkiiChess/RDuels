@@ -39,25 +39,14 @@ public class TimeUtil {
             return Long.MIN_VALUE;
         } else {
             int ch = Integer.parseInt(number);
-            long result;
-            switch(unit) {
-                case "s":
-                    result = TimeUnit.SECONDS.toMillis((long)ch);
-                    break;
-                case "m":
-                    result = TimeUnit.MINUTES.toMillis((long)ch);
-                    break;
-                case "h":
-                    result = TimeUnit.HOURS.toMillis((long)ch);
-                    break;
-                case "d":
-                    result = TimeUnit.DAYS.toMillis((long)ch);
-                    break;
-                default:
-                    result = defUnit.toMillis(isInt(time) ? (long)Integer.parseInt(time) : (long)ch);
-            }
 
-            return result;
+            return switch (unit) {
+                case "s" -> TimeUnit.SECONDS.toMillis((long) ch);
+                case "m" -> TimeUnit.MINUTES.toMillis((long) ch);
+                case "h" -> TimeUnit.HOURS.toMillis((long) ch);
+                case "d" -> TimeUnit.DAYS.toMillis((long) ch);
+                default -> defUnit.toMillis(isInt(time) ? (long) Integer.parseInt(time) : (long) ch);
+            };
         }
     }
 

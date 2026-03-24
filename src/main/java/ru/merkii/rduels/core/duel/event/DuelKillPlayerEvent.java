@@ -1,29 +1,32 @@
 package ru.merkii.rduels.core.duel.event;
 
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.experimental.FieldDefaults;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.api.DuelPlayer;
+import ru.merkii.rduels.adapter.DuelPlayer;
 import ru.merkii.rduels.core.duel.model.DuelFightModel;
 
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class DuelKillPlayerEvent extends Event implements Cancellable {
 
     private static final HandlerList handlers = new HandlerList();
     @Getter
-    private final DuelPlayer killer;
+    final DuelPlayer killer;
     @Getter
-    private final DuelPlayer victim;
+    final DuelPlayer victim;
     @Getter
-    private final DuelFightModel duelFightModel;
-    private boolean cancelled;
+    final DuelFightModel duelFightModel;
+    boolean cancelled;
 
     public DuelKillPlayerEvent(DuelPlayer killer, DuelPlayer victim) {
         this.killer = killer;
         this.victim = victim;
-        this.duelFightModel = killer.getDuelFightModel();
+        this.duelFightModel = killer.getDuelFightModel().get();
         this.cancelled = false;
     }
 

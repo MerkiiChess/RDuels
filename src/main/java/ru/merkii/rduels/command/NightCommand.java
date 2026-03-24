@@ -1,30 +1,30 @@
 package ru.merkii.rduels.command;
 
-import co.aikar.commands.BaseCommand;
-import co.aikar.commands.annotation.*;
-import org.bukkit.command.CommandSender;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.bukkit.entity.Player;
-import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.config.messages.MessageConfiguration;
+import revxrsal.commands.annotation.Command;
+import ru.merkii.rduels.config.messages.MessageConfig;
+import ru.merkii.rduels.config.settings.SettingsConfiguration;
+import ru.merkii.rduels.manager.DatabaseManager;
 
-@CommandAlias("night")
-public class NightCommand extends BaseCommand {
+@Singleton
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor(onConstructor_ = @Inject)
+public class NightCommand {
 
-    private final RDuels plugin = RDuels.getInstance();
-    private final MessageConfiguration messageConfiguration = plugin.getPluginMessage();
+    DatabaseManager databaseManager;
+    SettingsConfiguration settingsConfiguration;
+    MessageConfig config;
 
-    @Default
-    @CommandPermission("duel.night")
-    @Description("Включить ночь")
+    @Command("night")
     public void onNight(Player player) {
-        this.plugin.getDatabaseManager().setNight(player).join();
-        player.setPlayerTime(this.plugin.getSettings().getNightTicks(), false);
-        player.sendMessage(this.messageConfiguration.getMessage("night"));
-    }
-
-    @CatchUnknown
-    public void noPermission(CommandSender sender) {
-        sender.sendMessage(this.plugin.getPluginMessage().getMessage("noPermission"));
+        databaseManager.setNight(player.getUniqueId());
+        player.setPlayerTime(settingsConfiguration.nightTicks(), false);
+        config.sendTo(player, "night");
     }
 
 }

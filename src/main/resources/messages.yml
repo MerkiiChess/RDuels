@@ -1,0 +1,222 @@
+messages:
+  serializer: MINI_MESSAGE
+  admin-help:
+    - "<dark_gray>╔══════════════════════════════════════╗"
+    - " <gradient:#FFAA00:#FF5555><bold>R-DUEL</bold></gradient> <gray>— <white>Список команд"
+    - "<dark_gray>╚══════════════════════════════════════╝"
+    - ""
+    - "<yellow>» <click:run_command:/r-duel setlobby><hover:show_text:'<green>Установить точку лобби'><green>/r-duel setlobby</green></hover></click> <gray>— установить точку спавна"
+    - "<yellow>» <click:run_command:/r-duel arena help><hover:show_text:'<aqua>Управление аренами'><aqua>/r-duel arena</aqua></hover></click> <gray>— управление аренами"
+    - "<yellow>» <click:run_command:/r-duel sign help><hover:show_text:'<aqua>Управление табличками'><aqua>/r-duel sign</aqua></hover></click> <gray>— управление табличками"
+    - "<yellow>» <click:run_command:/r-duel savekit><hover:show_text:'<green>Сохранить текущий инвентарь как кит'><green>/r-duel savekit <name></green></hover></click>"
+    - "<yellow>» <click:run_command:/r-duel category help><hover:show_text:'<aqua>Категории для кастомных китов'><aqua>/r-duel category</aqua></hover></click>"
+    - "<yellow>» <click:run_command:/r-duel reload><hover:show_text:'<red>Перезагрузить весь плагин'><red>/r-duel reload</red></hover></click>"
+
+  admin-reload-success: "<gray>[<green>✓</green>] <white>Все конфигурации успешно перезагружены!"
+  admin-reload-error: "<red>✘ <gray>Ошибка при перезагрузке конфигураций! Посмотри консоль."
+
+  admin-setlobby-success: "<gray>[<green>✓</green>] <white>Новая точка лобби успешно добавлена! <gray>(всего: <yellow>(count)<gray>)"
+  admin-savekit-server: "<gray>[<green>✓</green>] <white>Новый кит успешно добавлен!"
+  admin-savekit-args: "<yellow>» <green>/r-duel savekit <name></green>"
+  admin-savekit-error: "<red>✘ <gray>Серверный кит с таким именем уже существует!"
+
+  # ──────────────────────────────────────────────
+  #   Настройка сообщений арен
+  # ──────────────────────────────────────────────
+  arena-help:
+    - "<dark_gray>╔════ <gradient:#FFAA00:#FFFF55><bold>УПРАВЛЕНИЕ АРЕНАМИ</bold></gradient> ════╗"
+    - "<dark_gray>╚════════════════════════════════════════════╝"
+    - ""
+    - "<yellow>» <click:suggest_command:/r-duel arena create ><hover:show_text:'<green>Создать новую арену'><green>/r-duel arena create <name> <display> <material></green></hover></click>"
+    - "<gray>   Создаёт арену с указанным id, названием и иконкой"
+    - ""
+    - "<yellow>» <click:suggest_command:/r-duel arena setspawn ><hover:show_text:'<aqua>Установить точку спавна'><aqua>/r-duel arena setspawn <name> <1/2/spec/schematic></aqua></hover></click>"
+    - "<gray>   Устанавливает позицию (1 = первый спавн, 2 = второй, spec = наблюдатель, schematic = точка схемы)"
+  arena-created: "<gray>[<green>✓</green>] <white>Арена <yellow>(name) <white>создана!"
+  arena-already-exists: "<red>✘ <gray>Арена с таким названием уже существует."
+  arena-not-found: "<red>✘ <gray>Арена <white>(name) <red>не найдена."
+  arena-spawn-set: "<gray>[<green>✓</green>] <white>Позиция <yellow>(pos) <white>для арены <yellow>(name) <white>установлена."
+
+  # ──────────────────────────────────────────────
+  #   Настройка сообщений табличек
+  # ──────────────────────────────────────────────
+  sign-help:
+    - "<dark_gray>╔════ <gradient:#55FFFF:#00AAFF><bold>УПРАВЛЕНИЕ ТАБЛИЧКАМИ</bold></gradient> ════╗"
+    - "<dark_gray>╚════════════════════════════════════════════╝"
+    - ""
+    - "<yellow>» <click:suggest_command:/r-duel sign set ><hover:show_text:'<green>Установить табличку'><green>/r-duel sign set <1v1/2v2> <server/custom> [kit]</green></hover></click>"
+    - "<gray>   Привязывает табличку, на которую смотришь, к типу дуэли и киту"
+    - ""
+    - "<yellow>» <click:run_command:/r-duel sign remove><hover:show_text:'<red>Удалить табличку'><red>/r-duel sign remove</red></hover></click>"
+    - "<gray>   Удаляет табличку, на которую сейчас смотришь"
+  sign-set-success: "<gray>[<green>✓</green>] <white>Табличка успешно установлена!"
+  sign-removed: "<gray>[<green>✓</green>] <white>Табличка удалена."
+  sign-not-found: "<red>✘ <gray>Это не табличка или ты не смотришь на неё."
+  sign-invalid-kit: "<red>✘ <gray>Для типа <yellow>SERVER <gray>нужно указать существующий кит!"
+
+  # ──────────────────────────────────────────────
+  #   Настройка сообщений категорий
+  # ──────────────────────────────────────────────
+  category-help:
+    - "<dark_gray>╔════ <gradient:#FF55FF:#AA00FF><bold>УПРАВЛЕНИЕ КАТЕГОРИЯМИ</bold></gradient> ════╗"
+    - "<dark_gray>╚════════════════════════════════════════════╝"
+    - ""
+    - "<yellow>» <click:suggest_command:/r-duel category create ><hover:show_text:'<green>Создать категорию'><green>/r-duel category create <material> <id></green></hover></click>"
+    - "<gray>   Создаёт новую категорию для кастомных китов"
+    - ""
+    - "<yellow>» <click:suggest_command:/r-duel category addmaterial ><hover:show_text:'<aqua>Добавить материал в категорию'><aqua>/r-duel category addmaterial <id> <material></aqua></hover></click>"
+    - "<gray>   Добавляет материал в уже существующую категорию"
+  category-created: "<gray>[<green>✓</green>] <white>Категория <yellow>(id) <white>создана."
+  category-already-exists: "<red>✘ <gray>Категория с таким ID уже существует."
+  category-material-added: "<gray>[<green>✓</green>] <white>Материал <yellow>(material) <white>добавлен в категорию <yellow>(id)<white>."
+  category-not-found: "<red>✘ <gray>Категория <white>(id) <red>не найдена."
+  category-material-already-exists: "<red>✘ <gray>Материал <yellow>(material) <gray>уже добавлен в эту категорию."
+
+  # --- Аргументы команд ---
+  duel-args: "<gray>Использование: <yellow>/duel <ник>"
+  duel-yes-args: "<gray>Использование: <yellow>/duel yes <ник>"
+  duel-no-args: "<gray>Использование: <yellow>/duel no <ник>"
+  duel-spec-args: "<gray>Использование: <yellow>/duel spec <ник>"
+
+  # --- Ошибки и статусы ---
+  duel-offline: "<red>✘ <gray>Игрок <white>(player) <red>сейчас не в сети."
+  duel-you: "<red>✘ <gray>Вы не можете вызвать на дуэль самого себя."
+  duel-already-fight: "<red>✘ <gray>Игрок <white>(player) <red>уже сражается на арене."
+  duel-already-request: "<red>✘ <gray>Вы уже отправили запрос. Подождите еще <white>(time)<red>."
+  duel-request-empty: "<red>✘ <gray>У вас нет активных запросов на дуэль."
+  duel-player-not-request: "<red>✘ <gray>У вас нет запроса от игрока <white>(player)<red>."
+  duel-no: "<gray>[<red>!</gray>] <white>Вы <red>отклонили <white>вызов на дуэль."
+  duel-no-sender: "<gray>[<red>!</gray>] <white>Игрок <white>(player) <red>отказался <white>от дуэли с вами."
+  duel-no-fighting: "<red>✘ <gray>Вы сейчас не находитесь в бою."
+  duel-spectate-no-fighting: "<red>✘ <gray>Игрок <white>(player) <red>сейчас не в бою."
+  duel-spectate-no-position: "<red>✘ <dark_red>Критическая ошибка при телепортации!"
+  duel-command-is-blocked: "<red>✘ <gray>Использование команд <red>запрещено <gray>во время боя!"
+  duel-arenas-full: "<red>✘ <gray>Все арены сейчас заняты. Пожалуйста, подождите."
+  duel-request-time: "<gray>[<red>!</gray>] <red>Время ожидания запроса истекло."
+  duel-request-kits-not-found: "<red>✘ Ошибка на сервере не установлены серверные киты"
+
+  # --- Наблюдение ---
+  duel-spectate-start: "<gray>[<aqua>👁</gray>] <white>Вы начали наблюдение за игроком <aqua>(player)<white>."
+  duel-spectate-stop: "<gray>[<aqua>👁</gray>] <white>Вы прекратили наблюдение за боем."
+  start-spectate: "<gray>[<aqua>👁</gray>] <white>Игрок <aqua>(player) <white>теперь наблюдает за вашим боем."
+  stop-spectate: "<gray>[<aqua>👁</gray>] <white>Игрок <aqua>(player) <white>перестал наблюдать за вами."
+  spectate-leave: "<gray>Напишите <yellow>/spec <gray>чтобы покинуть режим наблюдателя."
+
+  # --- Процесс боя ---
+  duel-next-round: "<gray>[<gold>⚔</gray>] <white>Раунд завершен! Победил: <green>(player)<white>. Прогресс: <yellow>(round)/(rounds)"
+  no-stop-fight: "<red>✘ <gray>Вы не можете принудительно остановить этот бой."
+  no-permission: "<red>✘ <dark_red>У вас недостаточно прав!"
+
+  # --- Заглушки (Replacers) ---
+  null-placeholder: "<gray>—"
+  replace-winner-null: "<gray>Ничья"
+  replace-loser-null: "<gray>Никто"
+  custom-replacer: "<gradient:#55FFFF:#5555FF>Кастомный кит</gradient>"
+
+  # --- Система запросов (Интерактивная) ---
+  request-sender: "<gray>[<green>✓</gray>] <white>Вы отправили вызов игроку <yellow>(player)<white>."
+  request-receiver:
+    - "<dark_gray>---------------------------------------"
+    - "<gradient:#FF5555:#FFAA00><bold>⚔ ВАМ БРОСИЛИ ВЫЗОВ!</bold></gradient>"
+    - ""
+    - " <gray>Отправитель: <white>(player)"
+    - " <gray>Набор: <yellow>(kit)"
+    - " <gray>Арена: <yellow>(arena)"
+    - " <gray>Игр до победы: <yellow>(numGames)"
+    - ""
+    - " <click:run_command:/duel yes (player)><hover:show_text:'<green>Нажмите, чтобы принять'><green><b>[ПРИНЯТЬ]</b></green></hover></click>   <click:run_command:/duel no (player)><hover:show_text:'<red>Нажмите, чтобы отклонить'><red><b>[ОТКЛОНИТЬ]</b></red></hover></click>"
+    - "<dark_gray>---------------------------------------"
+
+  accept-button: "<green>Принять"
+  decline-button: "<red>Отклонить"
+
+  # --- Финал боя ---
+  end-fight:
+    - "<dark_gray>---------------------------------------"
+    - "      <gradient:#FFAA00:#FFFF55><bold>ДУЭЛЬ ЗАВЕРШЕНА</bold></gradient>"
+    - ""
+    - " <gray>Победитель: <green><b>(winner)</b>"
+    - " <gray>Проигравший: <red>(loser)"
+    - ""
+    - " <gray>Сыграно раундов: <white>(numGames)"
+    - " <gray>Использованный кит: <white>(kit)"
+    - "<dark_gray>---------------------------------------"
+
+  # --- Система Пати (Группы) ---
+  party-help:
+    - "<dark_gray>--- <gradient:#FFAA00:#FF5555><bold>Помощь по Группам</bold></gradient> <dark_gray>---"
+    - "<yellow>/party create <gray>- создать новую группу"
+    - "<yellow>/party invite <ник> <gray>- пригласить игрока"
+    - "<yellow>/party yes/no <gray>- управление запросами"
+    - "<yellow>/party kick <ник> <gray>- исключить участника"
+    - "<yellow>/party leave <gray>- выйти из группы"
+    - "<yellow>/party disband <gray>- распустить группу"
+
+  party-yes-args: "<gray>Использование: <yellow>/party yes <ник>"
+  party-no-args: "<gray>Использование: <yellow>/party no <ник>"
+  party-invite-args: "<gray>Использование: <yellow>/party invite <ник>"
+  party-kick-args: "<gray>Использование: <yellow>/party kick <ник>"
+
+  party-new-owner: "<gray>[<gold>P</gray>] <white>Вы стали <gradient:#FFAA00:#FF5555>лидером</gradient> группы!"
+  party-you-leave: "<gray>[<red>!</gray>] <white>Вы покинули группу."
+  party-leave: "<gray>[<red>!</gray>] <white>Игрок <yellow>(player) <white>вышел из группы."
+  party-already: "<red>✘ <gray>Вы уже состоите в группе."
+  party-already-invite: "<red>✘ <gray>Вы уже пригласили игрока <white>(player)<red>."
+  party-already-player: "<red>✘ <gray>Игрок <white>(player) <red>уже находится в какой-то группе."
+  party-no: "<red>✘ <gray>Вы не состоите в группе."
+  party-no-owner: "<red>✘ <gray>Только <gradient:#FFAA00:#FF5555>лидер</gradient> может это делать!"
+  party-full-sender: "<red>✘ <gray>Ваша группа заполнена!"
+  party-full: "<red>✘ <gray>Группа игрока <white>(player) <red>уже заполнена."
+  party-no-player: "<red>✘ <gray>Игрок <white>(player) <red>не состоит в группе."
+  party-no-your-player: "<red>✘ <gray>Этого игрока нет в вашей группе."
+  party-end-duration: "<gray>[<red>!</gray>] <gray>Время действия приглашения истекло."
+  party-join: "<gray>[<green>✓</gray>] <white>Вы успешно вступили в группу."
+  party-join-all: "<gray>[<green>✓</gray>] <white>Игрок <yellow>(player) <white>присоединился к группе."
+  party-decline: "<gray>Вы отклонили приглашение."
+  party-decline-sender: "<gray>Игрок <white>(player) <red>отклонил <gray>ваше приглашение."
+  party-invite: "<gray>[<green>✓</gray>] <white>Вы отправили приглашение игроку <yellow>(player)<white>."
+  party-disband: "<gray>[<red>!</gray>] <white>Группа была <red>распущена <white>лидером."
+  party-created: "<gray>[<green>✓</gray>] <white>Вы <green>создали <white>группу!"
+  party-kick: "<gray>[<red>!</gray>] <white>Игрок <yellow>(player) <red>исключен <white>из группы."
+
+  party-players:
+    - "<dark_gray>--- <gradient:#FFAA00:#FF5555>Информация о Группе</gradient> ---"
+    - " <gray>Лидер: <gold><b>(owner)</b>"
+    - " <gray>Участники: <white>(players)"
+
+  party-invited:
+    - "<dark_gray>---------------------------------------"
+    - " <gradient:#FFAA00:#FF5555><b>ПРИГЛАШЕНИЕ В ГРУППУ</b></gradient>"
+    - " <gray>Лидер: <white>(player)"
+    - ""
+    - " <click:run_command:/party yes (player)><hover:show_text:'<green>Вступить'><green>[ПРИНЯТЬ]</green></hover></click> <dark_gray>| <click:run_command:/party no (player)><hover:show_text:'<red>Отказать'><red>[ОТКЛОНИТЬ]</red></hover></click>"
+    - "<dark_gray>---------------------------------------"
+
+  # --- Таблички и Очередь (Queue) ---
+  sign-start-queue: "<gray>[<green>!</gray>] <white>Вы вошли в очередь. Набор: <gradient:#55FF55:#00AA00>(kit)</gradient>"
+  sign-stop-queue: "<gray>[<red>!</gray>] <white>Вы покинули очередь."
+  sign-no-queue: "<red>✘ <gray>Вы не находитесь в очереди."
+  sign-server-replacer: "<white>(kit)"
+  sign-custom-replacer: "<gradient:#55FFFF:#5555FF>Кастомный</gradient>"
+  sign-no-start: "<red>✘ <gray>У вас не настроен кастомный кит!"
+
+  sign-text-activate:
+    - "<red><bold>ИДЕТ БОЙ</bold></red>"
+    - "<white>(player) <gray>vs <white>(player2)"
+    - "<gray>Тип: <yellow>(type)"
+    - "<dark_gray>● ● ●"
+
+  sign-text-wait:
+    - "<green>ОЖИДАНИЕ</green>"
+    - "<white>(players) <gray>/ <white>(playersMaxSize)"
+    - "<gray>Тип: <yellow>(type)"
+    - "<aqua>(kitName)"
+
+  # --- Мир ---
+  day: "<gray>[<yellow>☀</gray>] <white>Время установлено на <yellow>День<white>."
+  night: "<gray>[<blue>🌙</gray>] <white>Время установлено на <blue>Ночь<white>."
+
+  # --- Матчмейкинг (Matchmaking) ---
+  matchmaking-joined: "<gray>[<green>!</gray>] <white>Вы в очереди на <gradient:#55FF55:#00AA00>%kit%</gradient>. <gray>Ищем соперника..."
+  matchmaking-found: "<gray>[<green>⚔</gray>] <gradient:#55FF55:#00AA00><bold>СОПЕРНИК НАЙДЕН!</bold></gradient> <white>Подготовка арены..."
+  matchmaking-already-in: "<red>✘ <gray>Вы уже ищете игру!"

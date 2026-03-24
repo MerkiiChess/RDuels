@@ -1,97 +1,104 @@
 package ru.merkii.rduels.core.duel.schedualer;
 
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.experimental.FieldDefaults;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import ru.merkii.rduels.RDuels;
-import ru.merkii.rduels.core.duel.DuelCore;
+import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
 import ru.merkii.rduels.core.duel.api.DuelAPI;
-import ru.merkii.rduels.core.duel.config.DuelConfig;
+import ru.merkii.rduels.core.duel.config.DuelConfiguration;
+import ru.merkii.rduels.core.duel.config.TitleSettingsConfiguration;
 import ru.merkii.rduels.core.duel.model.DuelFightModel;
-import ru.merkii.rduels.util.ColorUtil;
 import ru.merkii.rduels.util.PlayerUtil;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class DuelTeleportScheduler extends BukkitRunnable {
 
-    private final DuelAPI duelAPI = DuelCore.INSTANCE.getDuelAPI();
+    final TitleSettingsConfiguration titleSettings;
+    final DuelAPI duelAPI;
     @Getter
-    private final DuelFightModel duelFightModel;
-    private int time;
+    final DuelFightModel duelFightModel;
+    final List<Player> participants = new ArrayList<>();
+     int time = 5;
 
     public DuelTeleportScheduler(DuelFightModel fightModel) {
+        this.duelAPI = RDuels.beanScope().get(DuelAPI.class);
+        DuelConfiguration duelConfiguration = RDuels.beanScope().get(DuelConfiguration.class);
+        this.titleSettings = duelConfiguration.titleSettings();
         this.duelFightModel = fightModel;
-        this.time = 5;
-        this.duelAPI.addNoMove(fightModel.getReceiver());
-        this.duelAPI.addNoMove(fightModel.getSender());
-        if (fightModel.getArenaModel().isFfa()) {
-            if (fightModel.getReceiverParty() != null && fightModel.getSenderParty() != null) {
-                PlayerUtil.convertListUUID(fightModel.getReceiverParty().getPlayers()).forEach(this.duelAPI::addNoMove);
-                PlayerUtil.convertListUUID(fightModel.getSenderParty().getPlayers()).forEach(this.duelAPI::addNoMove);
+        initParticipants(fightModel);
+        this.participants.forEach(p -> this.duelAPI.addNoMove(BukkitAdapter.adapt(p)));
+        this.runTaskTimer(RDuels.getInstance(), 20L, 20L);
+    }
+
+    private void initParticipants(DuelFightModel fm) {
+        participants.add(BukkitAdapter.adapt(fm.getReceiver()));
+        participants.add(BukkitAdapter.adapt(fm.getSender()));
+        if (fm.getArenaModel().isFfa()) {
+            if (fm.getReceiverParty() != null && fm.getSenderParty() != null) {
+                participants.addAll(PlayerUtil.convertListUUID(fm.getReceiverParty().getPlayers()));
+                participants.addAll(PlayerUtil.convertListUUID(fm.getSenderParty().getPlayers()));
             } else {
-                this.duelAPI.addNoMove(fightModel.getPlayer2());
-                this.duelAPI.addNoMove(fightModel.getPlayer4());
+                if (fm.getPlayer2() != null) participants.add(BukkitAdapter.adapt(fm.getPlayer2()));
+                if (fm.getPlayer4() != null) participants.add(BukkitAdapter.adapt(fm.getPlayer4()));
             }
         }
-        runTaskTimer(RDuels.getInstance(), 20L, 20L);
     }
 
     @Override
     public void run() {
-        --this.time;
-        Player receiver = this.duelFightModel.getReceiver();
-        Player sender = this.duelFightModel.getSender();
-        DuelConfig.TitleSettings titleSettings = DuelCore.INSTANCE.getDuelConfig().getTitleSettings();
-        if (this.time != 1) {
-            String text = ColorUtil.color(titleSettings.getToFight().getText()).replace("(time)", String.valueOf(this.time));
-            receiver.sendTitle(text, "", titleSettings.getToFight().getFadeIn(), titleSettings.getToFight().getStay(), titleSettings.getToFight().getFadeOut());
-            sender.sendTitle(text, "", titleSettings.getToFight().getFadeIn(), titleSettings.getToFight().getStay(), titleSettings.getToFight().getFadeOut());
-            if (this.duelFightModel.getArenaModel().isFfa()) {
-                if (this.duelFightModel.getSenderParty() != null && this.duelFightModel.getReceiverParty() != null) {
-                    PlayerUtil.convertListUUID(this.duelFightModel.getReceiverParty().getPlayers()).forEach(player -> player.sendTitle(text, "", titleSettings.getToFight().getFadeIn(), titleSettings.getToFight().getStay(), titleSettings.getToFight().getFadeOut()));
-                    PlayerUtil.convertListUUID(this.duelFightModel.getSenderParty().getPlayers()).forEach(player -> player.sendTitle(text, "", titleSettings.getToFight().getFadeIn(), titleSettings.getToFight().getStay(), titleSettings.getToFight().getFadeOut()));
-                } else if (this.duelFightModel.getPlayer2() != null && this.duelFightModel.getPlayer4() != null) {
-                    this.duelFightModel.getPlayer4().sendTitle(text, "", titleSettings.getToFight().getFadeIn(), titleSettings.getToFight().getStay(), titleSettings.getToFight().getFadeOut());
-                    this.duelFightModel.getPlayer2().sendTitle(text, "", titleSettings.getToFight().getFadeIn(), titleSettings.getToFight().getStay(), titleSettings.getToFight().getFadeOut());
-                }
-            }
-            Sound sound = Sound.valueOf(titleSettings.getToFight().getSoundName());
-            if (sound == null) {
-                RDuels.getInstance().debug("Sound " + titleSettings.getToFight().getSoundName() + " not found!");
-                return;
-            }
-            receiver.playSound(receiver.getLocation(), sound, titleSettings.getToFight().getV1(), titleSettings.getToFight().getV2());
-            sender.playSound(sender.getLocation(), sound, titleSettings.getToFight().getV1(), titleSettings.getToFight().getV2());
+        if (time <= 0) {
+            finish();
             return;
         }
-        Sound sound = Sound.valueOf(titleSettings.getFight().getSoundName());
-        if (sound == null) {
-            RDuels.getInstance().debug("Sound " + titleSettings.getFight().getSoundName() + " not found!");
-        } else {
-            receiver.playSound(receiver.getLocation(), sound, titleSettings.getFight().getV1(), titleSettings.getFight().getV2());
-            sender.playSound(sender.getLocation(), sound, titleSettings.getFight().getV1(), titleSettings.getFight().getV2());
-        }
-        receiver.sendTitle(ColorUtil.color(titleSettings.getFight().getText()), "", titleSettings.getFight().getFadeIn(), titleSettings.getFight().getStay(), titleSettings.getFight().getFadeOut());
-        sender.sendTitle(ColorUtil.color(titleSettings.getFight().getText()), "", titleSettings.getFight().getFadeIn(), titleSettings.getFight().getStay(), titleSettings.getFight().getFadeOut());
-        this.duelAPI.removeNoMove(receiver);
-        this.duelAPI.removeNoMove(sender);
-        if (this.duelFightModel.getArenaModel().isFfa()) {
-            if (this.duelFightModel.getReceiverParty() != null && this.duelFightModel.getSenderParty() != null) {
-                PlayerUtil.convertListUUID(this.duelFightModel.getReceiverParty().getPlayers()).forEach(player -> {
-                    this.duelAPI.removeNoMove(player);
-                    player.sendTitle(ColorUtil.color(titleSettings.getFight().getText()), "", titleSettings.getFight().getFadeIn(), titleSettings.getFight().getStay(), titleSettings.getFight().getFadeOut());
-                });
-                PlayerUtil.convertListUUID(this.duelFightModel.getSenderParty().getPlayers()).forEach(player -> {
-                    this.duelAPI.removeNoMove(player);
-                    player.sendTitle(ColorUtil.color(titleSettings.getFight().getText()), "", titleSettings.getFight().getFadeIn(), titleSettings.getFight().getStay(), titleSettings.getFight().getFadeOut());
-                });
-            } else {
-                this.duelFightModel.getPlayer2().sendTitle(ColorUtil.color(titleSettings.getFight().getText()), "", titleSettings.getFight().getFadeIn(), titleSettings.getFight().getStay(), titleSettings.getFight().getFadeOut());
-                this.duelFightModel.getPlayer4().sendTitle(ColorUtil.color(titleSettings.getFight().getText()), "", titleSettings.getFight().getFadeIn(), titleSettings.getFight().getStay(), titleSettings.getFight().getFadeOut());
-                this.duelAPI.removeNoMove(this.duelFightModel.getPlayer2());
-                this.duelAPI.removeNoMove(this.duelFightModel.getPlayer4());
-            }
-        }
+        broadcastTitleAndSound(false);
+        this.time--;
+    }
+
+    private void finish() {
+        broadcastTitleAndSound(true);
+        this.participants.forEach(p -> this.duelAPI.removeNoMove(BukkitAdapter.adapt(p)));
         this.cancel();
+    }
+
+    private void broadcastTitleAndSound(boolean isStart) {
+        String rawText = isStart ? titleSettings.fight().text() : titleSettings.toFight().text();
+        int fadeIn = isStart ? titleSettings.fight().fadeIn() : titleSettings.toFight().fadeIn();
+        int stay = isStart ? titleSettings.fight().stay() : titleSettings.toFight().stay();
+        int fadeOut = isStart ? titleSettings.fight().fadeOut() : titleSettings.toFight().fadeOut();
+        String soundName = isStart ? titleSettings.fight().soundName() : titleSettings.toFight().soundName();
+        float v1 = isStart ? titleSettings.fight().v1() : titleSettings.toFight().v1();
+        float v2 = isStart ? titleSettings.fight().v2() : titleSettings.toFight().v2();
+
+        if (!isStart) {
+            rawText = rawText.replace("(time)", String.valueOf(time));
+        }
+
+        Component titleContent = MiniMessage.miniMessage().deserialize(rawText);
+        Title.Times times = Title.Times.times(
+                Duration.ofMillis(fadeIn * 50L),
+                Duration.ofMillis(stay * 50L),
+                Duration.ofMillis(fadeOut * 50L)
+        );
+        Title title = Title.title(titleContent, Component.empty(), times);
+        try {
+            Sound sound = Sound.valueOf(soundName.toUpperCase());
+            for (Player player : participants) {
+                player.showTitle(title);
+                player.playSound(player.getLocation(), sound, v1, v2);
+            }
+        } catch (IllegalArgumentException e) {
+            participants.forEach(p -> p.showTitle(title));
+        }
     }
 }

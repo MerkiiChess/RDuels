@@ -1,6 +1,9 @@
 package ru.merkii.rduels.core.duel.event;
 
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -8,28 +11,30 @@ import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.merkii.rduels.RDuels;
+import ru.merkii.rduels.adapter.DuelPlayer;
+import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
 import ru.merkii.rduels.core.duel.model.DuelFightModel;
 import ru.merkii.rduels.core.party.model.PartyModel;
 
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor
 public class DuelStartFightEvent extends Event {
 
     private static final HandlerList handlers = new HandlerList();
 
     @Getter
-    private final Player sender;
+    Player sender;
     @Getter
-    private final Player receiver;
+    Player receiver;
     @Getter
-    private final DuelFightModel duelFightModel;
-    private final PartyModel senderParty;
-    private final PartyModel receiverParty;
+    DuelFightModel duelFightModel;
+    PartyModel senderParty;
+    PartyModel receiverParty;
 
-    public DuelStartFightEvent(Player sender, Player receiver, DuelFightModel duelFightModel, PartyModel senderParty, PartyModel receiverParty) {
-        this.sender = sender;
-        this.receiver = receiver;
-        this.duelFightModel = duelFightModel;
-        this.senderParty = senderParty;
-        this.receiverParty = receiverParty;
+    public static DuelStartFightEvent create(DuelPlayer sender, DuelPlayer receiver, DuelFightModel duelFightModel) {
+        Player bukkitSender = BukkitAdapter.adapt(sender);
+        Player bukkitReceiver = BukkitAdapter.adapt(receiver);
+        return create(bukkitSender, bukkitReceiver, duelFightModel);
     }
 
     public static DuelStartFightEvent create(Player sender, Player receiver, DuelFightModel duelFightModel) {

@@ -1,0 +1,6 @@
+enchants:
+  - name-enchant: DAMAGE_ALL
+    lvl: 5
+    materials-enchanted:
+      - SWORD
+      - AXE

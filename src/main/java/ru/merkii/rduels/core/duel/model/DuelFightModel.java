@@ -6,6 +6,7 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
+import ru.merkii.rduels.adapter.DuelPlayer;
 import ru.merkii.rduels.core.arena.model.ArenaModel;
 import ru.merkii.rduels.core.duel.schedualer.DuelScheduler;
 import ru.merkii.rduels.core.party.model.PartyModel;
@@ -21,9 +22,9 @@ import java.util.UUID;
 public class DuelFightModel {
 
     @Setter
-    Player sender;
+    DuelPlayer sender;
     @Setter
-    Player receiver;
+    DuelPlayer receiver;
     final int numGames;
     final KitModel kitModel;
     final ArenaModel arenaModel;
@@ -39,13 +40,13 @@ public class DuelFightModel {
     @Setter
     PartyModel receiverParty;
     @Setter
-    Player player2;
+    DuelPlayer player2;
     @Setter
-    Player player4;
+    DuelPlayer player4;
     @Setter
     boolean end;
 
-    public DuelFightModel(Player sender, Player receiver, int numGames, KitModel kitModel, ArenaModel arenaModel) {
+    public DuelFightModel(DuelPlayer sender, DuelPlayer receiver, int numGames, KitModel kitModel, ArenaModel arenaModel) {
         this.sender = sender;
         this.receiver = receiver;
         this.numGames = numGames;
