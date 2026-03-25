@@ -17,7 +17,7 @@ public record EditEnchantOrAmountClickHandler(MenuConfiguration config,
 
     @Override
     public void handle(InventoryContext context, Player player, AbstractClickHandler handler) {
-        InventoryItem inventoryItem = context.require("inventory_item");
+        InventoryItem inventoryItem = context.require("item_config");
         ItemStack item = new ItemStack(inventoryItem.bukkitMaterial());
         String kitName = context.require("kit_name");
 

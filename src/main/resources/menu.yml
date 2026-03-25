@@ -57,7 +57,7 @@ settings:
           - "*********"
           - "*********"
           - "BLCHOxxxx"
-          - "xxxxExxxx"
+          - "xxxPExxxx"
         mapping:
           x: background
           E: exit
@@ -66,12 +66,18 @@ settings:
           L: leggings
           B: boots
           O: offhand
+          P: back
           '*': kit-slot
         items:
+          back:
+            material: DARK_OAK_DOR
+            name: '<red><b>[<white>!<b><red>] Назад к выбору китов'
+            on-click:
+              open: create-kit
           background: { material: BLACK_STAINED_GLASS_PANE, name: " " }
           exit:
-            material: DARK_OAK_DOOR
-            name: '<red><b>[<white>!<b>] <red>Назад к выбору китов'
+            material: BARRIER
+            name: '<red><b>[<white>!<b>] <red>Выйти из меню'
             on-click: { callback: EXIT_MENU }
           helmet:
             slot-id: 39
@@ -132,11 +138,26 @@ settings:
         structure:
           - "xxxxxxxxx"
           - "xCCCCCCCx"
-          - "xxxxExxxx"
-        mapping: { x: background, E: exit, C: category-item }
+          - "xxxBExxxx"
+        mapping:
+          x: background
+          E: exit
+          B: back
+          C: category-item
         items:
-          background: { material: GRAY_STAINED_GLASS_PANE, name: " " }
-          exit: { material: DARK_OAK_DOOR, name: '<red>Назад', on-click: { callback: EXIT_MENU } }
+          back:
+            material: DARK_OAK_DOOR
+            name: '<red><b>[<white>!<b><red>] Назад к выбору китов'
+            on-click:
+              open: edit-kit
+          background:
+            material: GRAY_STAINED_GLASS_PANE
+            name: " "
+          exit:
+            material: DARK_OAK_DOOR
+            name: '<red>Назад'
+            on-click:
+              callback: EXIT_MENU
           category-item:
             material: '%category_material%'
             name: '<yellow>→ <white>%category_name%'

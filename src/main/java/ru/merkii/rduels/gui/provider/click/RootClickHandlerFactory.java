@@ -6,6 +6,7 @@ import org.bukkit.event.inventory.ClickType;
 import ru.merkii.rduels.RDuels;
 import ru.merkii.rduels.config.menu.settings.gui.ClickSettings;
 import ru.merkii.rduels.config.menu.settings.gui.RootClickSettings;
+import ru.merkii.rduels.core.customkit.model.CustomKitModel;
 import ru.merkii.rduels.gui.internal.InventoryGUI;
 import ru.merkii.rduels.gui.internal.InventoryGUIFactory;
 import ru.merkii.rduels.gui.internal.click.ClickHandler;
@@ -48,7 +49,7 @@ public class RootClickHandlerFactory implements ClickHandlerFactory {
         Player clicker = context.require("player");
 
         context.get("model").ifPresent(model -> {
-            if (model instanceof ru.merkii.rduels.core.customkit.model.CustomKitModel kitModel) {
+            if (model instanceof CustomKitModel kitModel) {
                 context.extend("kit_name", kitModel.getDisplayName());
             }
             if (model instanceof SlotModel slotModel) {
