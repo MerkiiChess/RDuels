@@ -134,7 +134,8 @@ public class DuelPlayerProvider implements DuelPlayer {
 
     @Override
     public DuelPlayer getKiller() {
-        return BukkitAdapter.adapt(player.getKiller());
+        Player killer = player.getKiller();
+        return killer == null ? null : BukkitAdapter.adapt(killer);
     }
 
     @Override

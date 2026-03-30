@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.bukkit.plugin.Plugin;
+import ru.merkii.rduels.exception.PluginStartupException;
 import ru.merkii.rduels.util.GsonUtil;
 import java.io.File;
 import java.io.IOException;
@@ -47,13 +48,13 @@ public class Config {
         if (!file.exists() || file.length() == 0L) {
             p.getDataFolder().mkdirs();
             try {
-                T config1 = clazz.newInstance();
+                T config1 = clazz.getDeclaredConstructor().newInstance();
                 config1.setFile(file);
                 config1.save();
                 config1.init();
                 return config1;
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new PluginStartupException("Не удалось создать файл " + fileName + " в папке плагина.", e);
             }
         }
         JsonObject jobj = GsonUtil.GSON.fromJson(GsonUtil.readFile(file), JsonObject.class);
@@ -61,14 +62,14 @@ public class Config {
         config.setFile(file);
         config.init();
         try {
-            JsonObject def = GsonUtil.GSON.toJsonTree(clazz.newInstance()).getAsJsonObject();
+            JsonObject def = GsonUtil.GSON.toJsonTree(clazz.getDeclaredConstructor().newInstance()).getAsJsonObject();
             for (Map.Entry<String, JsonElement> ent : def.entrySet()) {
                 if (jobj.has(ent.getKey())) continue;
                 config.save();
                 break;
             }
-        } catch (IllegalAccessException | InstantiationException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            p.getLogger().warning("Не удалось обновить структуру файла " + fileName + ". Использую текущую версию файла.");
         }
         return config;
     }
@@ -80,7 +81,7 @@ public class Config {
         try {
             Files.write(this.file.toPath(), GsonUtil.GSON.toJson(this).getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new IllegalStateException("Не удалось сохранить файл " + this.file.getName(), e);
         }
     }
 

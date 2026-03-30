@@ -1,59 +1,91 @@
+# Глобальные настройки плагина.
+# Все интервалы поддерживают формат TimeUtil: 5s, 10m, 1h.
+
+# Внутренние настройки меню создания кастомных китов.
+# Обычно меняются только вместе с menu.yml.
 create-settings:
   kits: {}
   categories: {}
   custom-enchants: {}
+
+# Длительность боя, запроса и обратного отсчёта до начала.
 duration-fight: "10m"
 duration-request: "2m"
 duration-to-start: "5s"
+
+# Задержки между раундами и перед завершением боя, в секундах.
 next-round-time: 3
 stop-fight-time: 4
+
+# Личное время игрока для команд /day и /night.
 day-ticks: 1000
 night-ticks: 16000
+
+# Предмет для открытия меню кастомных китов.
 create-custom-kit:
-  material: "BOOK"
+  material: BOOK
   display-name: "Создать кит"
   lore:
     - "Создание своих китов"
   slot: 0
   amount: 1
+
+# Предмет входа в матчмейкинг.
 matchmaking-item:
   material: DIAMOND_SWORD
   display-name: "Поиск дуэли"
   slot: 1
   amount: 1
+
+# Предмет выхода из матчмейкинга.
 matchmaking-leave-item:
   material: IRON_SWORD
   display-name: "Выйти из дуэли"
   slot: 0
   amount: 1
+
+# Предметы, которые получает игрок в пати.
 fight-party:
-  material: "BOOK"
+  material: BOOK
   display-name: "Бой FFA"
   lore:
     - "Кинуть бой другим игрокам"
   slot: 0
   amount: 1
+
 leave-party:
-  material: "BARRIER"
+  material: BARRIER
   display-name: "Выйти с пати"
   slot: 8
   amount: 1
+
+# Команды, запрещённые во время обычного боя.
 black-commands:
   - "fly"
+
+# Команды, запрещённые в режиме наблюдателя.
 black-commands-spectator:
   - "setspawn"
   - "duel"
+
+# Точки возврата после дуэлей и выхода из режима наблюдателя.
+# Добавляйте их командой /r-duel setlobby.
 spawns: []
-debug: true
+
+# Если true, игрок получает предмет открытия кастомного кита.
 item-open-custom-kit: true
+
+# Настройки встроенной базы данных.
+# Поддерживаются только sqlite и mysql.
 my-sql:
-  # Возможные значения: mysql, mariadb, postgres, sqlite, h2
+  # sqlite: локальный файл в папке плагина
+  # mysql: внешний MySQL сервер
   driver-name: sqlite
 
-  # Для MySQL / MariaDB / PostgreSQL / H2
+  # Используется только для mysql.
   url: "jdbc:mysql://localhost:3306/rduels?autoreconnect=true&useSSL=false&serverTimezone=UTC"
   user: "root"
   password: ""
 
-  # Только для SQLite (игнорируется для остальных)
-  file: "rduels.db"        # файл будет в папке плагина
+  # Используется только для sqlite.
+  file: "rduels.db"

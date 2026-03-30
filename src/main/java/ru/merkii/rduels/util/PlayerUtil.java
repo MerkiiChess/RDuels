@@ -18,29 +18,35 @@ public class PlayerUtil {
 
     public static void clearEffects(Player... players) {
         for (Player player : players) {
+            if (player == null) {
+                continue;
+            }
             player.getActivePotionEffects().forEach(potionEffect -> player.removePotionEffect(potionEffect.getType()));
         }
     }
 
     public static void healPlayers(Player... players) {
         for (Player player : players) {
+            if (player == null) {
+                continue;
+            }
             player.setHealth(player.getMaxHealth());
             player.setFireTicks(0);
         }
     }
 
-    public static void sendMessage(String text, Player... players) {
-        for (Player player : players) {
-            player.sendMessage(text);
-        }
-    }
-
     public static List<Player> convertListUUID(List<UUID> uuids) {
-        return uuids.stream().map(Bukkit::getPlayer).filter(Objects::nonNull).collect(Collectors.toList());
+        return uuids.stream()
+                .map(Bukkit::getPlayer)
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     public static List<DuelPlayer> duelPlayersConvertListUUID(List<UUID> uuids) {
-        return uuids.stream().map(BukkitAdapter::getPlayer).toList();
+        return uuids.stream()
+                .map(BukkitAdapter::getPlayer)
+                .filter(Objects::nonNull)
+                .toList();
     }
 
 }

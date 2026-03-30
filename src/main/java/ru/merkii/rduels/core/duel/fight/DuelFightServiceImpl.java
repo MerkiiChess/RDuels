@@ -89,6 +89,7 @@ public class DuelFightServiceImpl implements DuelFightService {
             removeSignIfPresent(duelRequest);
             return;
         }
+        duelRequest.setArena(arenaModel);
 
         arenaAPI.restoreArena(arenaModel);
 
@@ -104,9 +105,11 @@ public class DuelFightServiceImpl implements DuelFightService {
         arenaAPI.addBusyArena(arenaModel);
 
         if (isFfa) {
-            handlePartyFightStart(duelRequest, duelFightModel);
+            duelFightModel.setReceiverParty(duelRequest.getReceiverParty());
+            duelFightModel.setSenderParty(duelRequest.getSenderParty());
+            handlePartyFightStart(duelFightModel);
         } else {
-            teleportPlayersToArena(duelRequest, duelFightModel);
+            teleportPlayersToArena(duelFightModel);
             duelFightModel.getKitModel().giveItemPlayers(allPlayers.stream().map(BukkitAdapter::adapt).toList().toArray(new Player[0]));
             DuelStartFightEvent.create(sender, receiver, duelFightModel).call();
         }
@@ -280,8 +283,10 @@ public class DuelFightServiceImpl implements DuelFightService {
 
     private ArenaModel selectValidArena(ArenaModel initialArena, boolean isFfa) {
         ArenaModel arenaModel = initialArena;
+        String preferredDisplayName = initialArena != null ? initialArena.getDisplayName() : null;
+
         if (arenaModel == null || arenaAPI.isBusyArena(arenaModel)) {
-            Optional<ArenaModel> optionalArenaModel = isFfa ? arenaAPI.getFreeArenaFFA() : arenaAPI.getFreeArenaName(initialArena.getDisplayName());
+            Optional<ArenaModel> optionalArenaModel = findReplacementArena(isFfa, preferredDisplayName);
             if (optionalArenaModel.isEmpty()) {
                 return null;
             }
@@ -292,7 +297,7 @@ public class DuelFightServiceImpl implements DuelFightService {
             ArenaModel oldArena = arenaModel.clone();
             int attempts = 5;
             while (attempts > 0) {
-                Optional<ArenaModel> optionalArenaModel = isFfa ? arenaAPI.getFreeArenaFFA() : arenaAPI.getFreeArenaName(initialArena.getDisplayName());
+                Optional<ArenaModel> optionalArenaModel = findReplacementArena(isFfa, preferredDisplayName);
                 if (optionalArenaModel.isPresent() &&
                         !optionalArenaModel.get().equals(oldArena) &&
                         !hasLocationErrors(optionalArenaModel.get())) {
@@ -308,11 +313,26 @@ public class DuelFightServiceImpl implements DuelFightService {
 
     private boolean hasLocationErrors(ArenaModel arenaModel) {
         if (arenaModel.isFfa()) {
-            return arenaModel.getFfaPositions().values().stream().anyMatch(pos -> pos.getWorldName() == null);
+            Map<Integer, EntityPosition> ffaPositions = arenaModel.getFfaPositions();
+            return ffaPositions == null || ffaPositions.isEmpty() || ffaPositions.values().stream()
+                    .anyMatch(pos -> pos == null || pos.getWorldName() == null);
         } else {
             return arenaModel.getOnePosition() == null || arenaModel.getOnePosition().getWorldName() == null ||
                     arenaModel.getTwoPosition() == null || arenaModel.getTwoPosition().getWorldName() == null;
         }
+    }
+
+    private Optional<ArenaModel> findReplacementArena(boolean isFfa, String preferredDisplayName) {
+        if (isFfa) {
+            return arenaAPI.getFreeArenaFFA();
+        }
+        if (preferredDisplayName != null && !preferredDisplayName.isBlank()) {
+            Optional<ArenaModel> preferredArena = arenaAPI.getFreeArenaName(preferredDisplayName);
+            if (preferredArena.isPresent()) {
+                return preferredArena;
+            }
+        }
+        return arenaAPI.getFreeArena();
     }
 
     private List<DuelPlayer> getAllPlayersFromRequest(DuelRequest duelRequest) {
@@ -330,13 +350,13 @@ public class DuelFightServiceImpl implements DuelFightService {
         return players;
     }
 
-    private void handlePartyFightStart(DuelRequest duelRequest, DuelFightModel duelFightModel) {
-        PartyModel receiverParty = duelRequest.getReceiverParty();
-        PartyModel senderParty = duelRequest.getSenderParty();
+    private void handlePartyFightStart(DuelFightModel duelFightModel) {
+        PartyModel receiverParty = duelFightModel.getReceiverParty();
+        PartyModel senderParty = duelFightModel.getSenderParty();
         duelFightModel.setReceiverParty(receiverParty);
         duelFightModel.setSenderParty(senderParty);
 
-        partyAPI.teleportToArena(duelRequest);
+        partyAPI.teleportToArena(duelFightModel);
 
         List<DuelPlayer> senderPlayers = PlayerUtil.duelPlayersConvertListUUID(senderParty.getPlayers());
         List<DuelPlayer> receiverPlayers = PlayerUtil.duelPlayersConvertListUUID(receiverParty.getPlayers());
@@ -354,15 +374,15 @@ public class DuelFightServiceImpl implements DuelFightService {
         DuelStartFightEvent.create(senderParty, receiverParty, duelFightModel).call();
     }
 
-    private void teleportPlayersToArena(DuelRequest duelRequest, DuelFightModel duelFightModel) {
-        ArenaModel arena = duelRequest.getArena();
+    private void teleportPlayersToArena(DuelFightModel duelFightModel) {
+        ArenaModel arena = duelFightModel.getArenaModel();
         if (arena.isFfa()) {
             Map<Integer, EntityPosition> pos = arena.getFfaPositions();
-            duelRequest.getSender().teleport(pos.get(1));
-            duelRequest.getReceiver().teleport(pos.get(11));
+            duelFightModel.getSender().teleport(pos.get(1));
+            duelFightModel.getReceiver().teleport(pos.get(11));
         } else {
-            duelRequest.getSender().teleport(arena.getOnePosition());
-            duelRequest.getReceiver().teleport(arena.getTwoPosition());
+            duelFightModel.getSender().teleport(arena.getOnePosition());
+            duelFightModel.getReceiver().teleport(arena.getTwoPosition());
         }
     }
 
@@ -373,7 +393,13 @@ public class DuelFightServiceImpl implements DuelFightService {
     }
 
     private void removeNonPlayerEntitiesNear(DuelPlayer player) {
+        if (player == null) {
+            return;
+        }
         Player bukkitPlayer = BukkitAdapter.adapt(player);
+        if (bukkitPlayer == null) {
+            return;
+        }
         bukkitPlayer.getNearbyEntities(100.0, 100.0, 100.0).stream()
                 .filter(entity -> !(entity instanceof Player))
                 .forEach(Entity::remove);
@@ -440,7 +466,10 @@ public class DuelFightServiceImpl implements DuelFightService {
 
         if (party != null) {
             team.addAll(PlayerUtil.duelPlayersConvertListUUID(party.getPlayers()));
-            team.add(BukkitAdapter.getPlayer(party.getOwner()));
+            DuelPlayer owner = BukkitAdapter.getPlayer(party.getOwner());
+            if (owner != null) {
+                team.add(owner);
+            }
         } else if (duelFightModel.getSender().equals(referencePlayer) || (duelFightModel.getPlayer2() != null && duelFightModel.getPlayer2().equals(referencePlayer))) {
             team.add(duelFightModel.getSender());
             if (duelFightModel.getPlayer2() != null) team.add(duelFightModel.getPlayer2());
@@ -488,12 +517,15 @@ public class DuelFightServiceImpl implements DuelFightService {
         try {
             duelFightModel.getSpectates().stream()
                     .map(BukkitAdapter::getPlayer)
+                    .filter(Objects::nonNull)
                     .forEach(spectator -> spectatorService.removeSpectate(spectator, duelFightModel, false));
         } catch (ConcurrentModificationException ignored) {
             Iterator<UUID> iterator = duelFightModel.getSpectates().iterator();
             while (iterator.hasNext()) {
                 DuelPlayer spectator = BukkitAdapter.getPlayer(iterator.next());
-                spectatorService.removeSpectate(spectator, duelFightModel, false);
+                if (spectator != null) {
+                    spectatorService.removeSpectate(spectator, duelFightModel, false);
+                }
             }
         }
     }
@@ -520,7 +552,7 @@ public class DuelFightServiceImpl implements DuelFightService {
     }
 
     private void sendTo(List<DuelPlayer> players, Component messaage) {
-        players.forEach(player -> player.sendMessage(messaage));
+        players.stream().filter(Objects::nonNull).forEach(player -> player.sendMessage(messaage));
     }
 
 }

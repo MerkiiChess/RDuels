@@ -70,7 +70,7 @@ settings:
           '*': kit-slot
         items:
           back:
-            material: DARK_OAK_DOR
+            material: DARK_OAK_DOOR
             name: '<red><b>[<white>!<b><red>] Назад к выбору китов'
             on-click:
               open: create-kit

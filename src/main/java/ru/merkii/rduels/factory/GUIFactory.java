@@ -104,8 +104,8 @@ public class GUIFactory {
     }
 
     @Bean
-    public MatchmakingSelectKitClickHandler matchmakingSelectKitClickHandler(DuelMatchmakingService duelMatchmakingService, ArenaAPI arenaAPI, DuelAPI duelAPI) {
-        return new MatchmakingSelectKitClickHandler(duelMatchmakingService, arenaAPI, duelAPI);
+    public MatchmakingSelectKitClickHandler matchmakingSelectKitClickHandler(DuelMatchmakingService duelMatchmakingService, ArenaAPI arenaAPI, DuelAPI duelAPI, MessageConfig messageConfig) {
+        return new MatchmakingSelectKitClickHandler(duelMatchmakingService, arenaAPI, duelAPI, messageConfig);
     }
 
     @Bean

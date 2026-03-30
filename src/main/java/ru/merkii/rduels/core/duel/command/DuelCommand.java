@@ -59,7 +59,7 @@ public class DuelCommand {
                     Placeholder.wrapped("(time)", TimeUtil.getTimeInMaxUnit(duelRequest.getTime() - System.currentTimeMillis())),
                     "duel-already-request"
             );
-            duelAPI.removeRequest(duelRequest);
+            return;
         }
 
         new DuelChoiceKitMenu().open(BukkitAdapter.adapt(senderPlayer), DuelRequest.create(senderPlayer, receiver), false);
@@ -93,7 +93,7 @@ public class DuelCommand {
         duelAPI.removeRequest(request);
 
         if (duelAPI.isFightPlayer(sender)) {
-            config.sendTo(sender, Placeholder.wrapped("(player)", senderName), "duel-already-fight");
+            config.sendTo(receiver, Placeholder.wrapped("(player)", senderName), "duel-already-fight");
             return;
         }
 
@@ -110,7 +110,7 @@ public class DuelCommand {
         config.sendTo(actor.requirePlayer(), "duel-no-args");
     }
 
-    @Command("duel no")
+    @Command("duel no <sender>")
     @Description("Отклонить вызов на дуэль.")
     public void onNo(BukkitCommandActor actor, @SuggestWith(AllPlayers.class) DuelPlayer sender) {
         Player receiverBukkit = actor.asPlayer();

@@ -1,20 +1,29 @@
+# Категории предметов для редактора кастомных китов.
+# ID категории используются в menu.yml и click handlers.
 categories:
   swords:
-    display-material: "DIAMOND_SWORD"
+    id: "SWORDS"
+    display-material: DIAMOND_SWORD
     display-name: "Мечи"
     items:
       - DIAMOND_SWORD
       - STONE_SWORD
+      - NETHERITE_SWORD
+      - IRON_SWORD
   other-items:
-    display-material: "TOTEM_OF_UNDYING"
+    id: "UTILITY"
+    display-material: TOTEM_OF_UNDYING
     display-name: "Вспомогательные предметы"
     items:
       - SHIELD
       - TOTEM_OF_UNDYING
+      - ENDER_PEARL
+      - GOLDEN_APPLE
   helmets:
-    display-material: "DIAMOND_HELMET"
-    display-name: "Шлемы"
     id: "HELMET"
+    display-material: DIAMOND_HELMET
+    display-name: "Шлемы"
     items:
       - DIAMOND_HELMET
       - IRON_HELMET
+      - NETHERITE_HELMET

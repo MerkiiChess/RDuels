@@ -87,8 +87,18 @@ public class DuelListener implements Listener {
     @EventHandler
     public void onKillPlayer(DuelKillPlayerEvent event) {
         DuelPlayer victimPlayer = event.getVictim();
-        DuelPlayer killerPlayer = event.getKiller();
         DuelFightModel fightModel = event.getDuelFightModel();
+        if (fightModel == null) {
+            return;
+        }
+
+        DuelPlayer killerPlayer = event.getKiller();
+        if (killerPlayer == null) {
+            killerPlayer = getKiller(victimPlayer, fightModel);
+            if (killerPlayer == null) {
+                return;
+            }
+        }
 
         victimPlayer.respawnPlayer();
         killerPlayer.addKill();
@@ -132,6 +142,9 @@ public class DuelListener implements Listener {
     private void handlePartyKill(DuelPlayer victim, DuelFightModel fightModel) {
         PartyModel deadParty = determineParty(victim, fightModel);
         PartyModel winnerParty = determineOpponentParty(deadParty, fightModel);
+        if (deadParty == null || winnerParty == null) {
+            return;
+        }
 
         if (isPartyAlive(deadParty)) {
             return;
@@ -231,7 +244,10 @@ public class DuelListener implements Listener {
     private boolean isInSpawnWorld(Player player) {
         String worldName = player.getWorld().getName();
         return settingsConfiguration.spawns().stream()
-                .anyMatch(position -> position.getWorldName().equalsIgnoreCase(worldName));
+                .filter(Objects::nonNull)
+                .map(position -> position.getWorldName())
+                .filter(Objects::nonNull)
+                .anyMatch(worldName::equalsIgnoreCase);
     }
 
     @EventHandler
@@ -289,12 +305,13 @@ public class DuelListener implements Listener {
     public void onCommand(PlayerCommandPreprocessEvent event) {
         Player player = event.getPlayer();
         String command = CommandUtil.getOriginalCommand(event.getMessage()).toLowerCase();
-        List<String> blackCommands = settingsConfiguration.blackCommands().stream()
-                .map(String::toLowerCase)
-                .toList();
         DuelPlayer duelPlayer = BukkitAdapter.adapt(player);
-        if ((duelPlayer.isFight() || this.duelAPI.isSpectate(duelPlayer)) &&
-                blackCommands.contains(command)) {
+        List<String> blockedCommands = duelPlayer.isFight()
+                ? settingsConfiguration.blackCommands().stream().map(String::toLowerCase).toList()
+                : this.duelAPI.isSpectate(duelPlayer)
+                ? settingsConfiguration.blackCommandsSpectator().stream().map(String::toLowerCase).toList()
+                : Collections.emptyList();
+        if (!blockedCommands.isEmpty() && blockedCommands.contains(command)) {
             messageConfig.sendTo(player, "duel-command-is-blocked");
             event.setCancelled(true);
         }
@@ -409,8 +426,8 @@ public class DuelListener implements Listener {
 
     private PartyModel determineParty(DuelPlayer player, DuelFightModel fightModel) {
         UUID uuid = player.getUUID();
-        if (fightModel.getReceiverParty() == null) {
-            throw new IllegalStateException("Party not found!");
+        if (fightModel.getReceiverParty() == null || fightModel.getSenderParty() == null) {
+            return null;
         }
         if (fightModel.getReceiverParty().getOwner().equals(uuid) || fightModel.getReceiverParty().getPlayers().contains(uuid)) {
             return fightModel.getReceiverParty();
@@ -419,19 +436,30 @@ public class DuelListener implements Listener {
     }
 
     private PartyModel determineOpponentParty(PartyModel party, DuelFightModel fightModel) {
+        if (party == null || fightModel.getSenderParty() == null || fightModel.getReceiverParty() == null) {
+            return null;
+        }
         return party == fightModel.getSenderParty() ? fightModel.getReceiverParty() : fightModel.getSenderParty();
     }
 
     private boolean isPartyAlive(PartyModel party) {
+        if (party == null) {
+            return false;
+        }
         List<DuelPlayer> players = getPartyPlayers(party);
         return players.stream().anyMatch(p -> p.getGameMode() != GameMode.SPECTATOR);
     }
 
     private List<DuelPlayer> getPartyPlayers(PartyModel party) {
+        if (party == null) {
+            return Collections.emptyList();
+        }
         List<DuelPlayer> players = new ArrayList<>(PlayerUtil.duelPlayersConvertListUUID(party.getPlayers()));
         DuelPlayer owner = BukkitAdapter.getPlayer(party.getOwner());
-        players.add(owner);
-        return players;
+        if (owner != null) {
+            players.add(owner);
+        }
+        return players.stream().filter(Objects::nonNull).toList();
     }
 
     private void updatePartyStats(PartyModel party, boolean winRound) {
@@ -485,16 +513,16 @@ public class DuelListener implements Listener {
     private DuelPlayer getOpponentOwner(DuelPlayer player, DuelFightModel fightModel) {
         PartyModel party = determineParty(player, fightModel);
         PartyModel opponent = determineOpponentParty(party, fightModel);
-        return BukkitAdapter.getPlayer(opponent.getOwner());
+        return opponent == null ? null : BukkitAdapter.getPlayer(opponent.getOwner());
     }
 
     private DuelPlayer getPlayerOwner(DuelPlayer player, DuelFightModel fightModel) {
         PartyModel party = determineParty(player, fightModel);
-        return BukkitAdapter.getPlayer(party.getOwner());
+        return party == null ? null : BukkitAdapter.getPlayer(party.getOwner());
     }
 
     private void sendTo(List<DuelPlayer> players, Component message) {
-        players.forEach(player -> player.sendMessage(message));
+        players.stream().filter(Objects::nonNull).forEach(player -> player.sendMessage(message));
     }
 
 }

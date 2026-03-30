@@ -121,7 +121,8 @@ public class SignAPIProvider implements SignAPI {
 
     @Override
     public boolean isClickedSignQueuePlayer(DuelPlayer player, SignModel signModel) {
-        return this.isQueuePlayer(player) && this.getQueueInSignModel(signModel) != null && this.signQueue.getQueues().stream().anyMatch(Objects.requireNonNull(this.getQueueInSignModel(signModel))::equals);
+        SignQueueModel queueInSignModel = this.getQueueInSignModel(signModel);
+        return queueInSignModel != null && this.isQueuePlayer(player) && this.signQueue.getQueues().stream().anyMatch(queueInSignModel::equals);
     }
 
     @Override
@@ -177,7 +178,8 @@ public class SignAPIProvider implements SignAPI {
             if (queue.getReceiver() != null) size++;
             if (queue.getReceiverHelper() != null) size++;
             Sign sign = (Sign) queue.getSignModel().getBlockPosition().getBlock().getState();
-            this.setSignWait(sign, size, queue.getSignModel().getDuelType().getSize(), queue.getSignModel().getDuelKit(), queue.getSignModel().getKitModel().getDisplayName());
+            String kitName = queue.getSignModel().getKitModel() != null ? queue.getSignModel().getKitModel().getDisplayName() : "";
+            this.setSignWait(sign, size, queue.getSignModel().getDuelType().getSize(), queue.getSignModel().getDuelKit(), kitName);
         });
     }
 

@@ -154,12 +154,14 @@ public class PartyAPIProvider implements PartyAPI {
         player.sendMessage(joinMessage);
 
         DuelPlayer owner = BukkitAdapter.getPlayer(partyModel.getOwner());
-        owner.sendMessage(joinMessage);
+        if (owner != null) {
+            owner.sendMessage(joinMessage);
+        }
         Component message = messageConfig.message(Placeholder.wrapped("(player)", player.getName()), "party-join-all");
         PlayerUtil.convertListUUID(partyModel.getPlayers()).forEach(member -> member.sendMessage(message));
 
         if (this.isFightParty(partyModel)) {
-            DuelFightModel fightModel = duelAPI.getFightModelFromPlayer(owner);
+            DuelFightModel fightModel = owner != null ? duelAPI.getFightModelFromPlayer(owner) : null;
             if (fightModel != null) {
                 duelAPI.addSpectate(player, fightModel);
             }
@@ -254,28 +256,39 @@ public class PartyAPIProvider implements PartyAPI {
         Map<Integer, EntityPosition> positions = arenaModel.getFfaPositions();
 
         DuelPlayer senderOwner = BukkitAdapter.getPlayer(senderParty.getOwner());
-        senderOwner.teleport(positions.get(1));
+        if (senderOwner != null) {
+            senderOwner.teleport(positions.get(1));
+        }
 
         List<UUID> senderMembers = senderParty.getPlayers();
         for (int i = 0; i < senderMembers.size(); i++) {
             DuelPlayer member = BukkitAdapter.getPlayer(senderMembers.get(i));
-            member.teleport(positions.get(i + 2));
+            if (member != null) {
+                member.teleport(positions.get(i + 2));
+            }
         }
 
         int offset = partyConfiguration.maxPartySize() + 1;
         DuelPlayer receiverOwner = BukkitAdapter.getPlayer(receiverParty.getOwner());
-        receiverOwner.teleport(positions.get(offset));
+        if (receiverOwner != null) {
+            receiverOwner.teleport(positions.get(offset));
+        }
 
         List<UUID> receiverMembers = receiverParty.getPlayers();
         for (int i = 0; i < receiverMembers.size(); i++) {
             DuelPlayer member = BukkitAdapter.getPlayer(receiverMembers.get(i));
-            member.teleport(positions.get(offset + i + 1));
+            if (member != null) {
+                member.teleport(positions.get(offset + i + 1));
+            }
         }
     }
 
     @Override
     public void giveStartItems(DuelPlayer... players) {
         Arrays.asList(players).forEach(player -> {
+            if (player == null) {
+                return;
+            }
             Player bukkitPlayer = BukkitAdapter.adapt(player);
             PlayerInventory inventory = bukkitPlayer.getInventory();
             inventory.setArmorContents(null);
@@ -289,7 +302,9 @@ public class PartyAPIProvider implements PartyAPI {
     private List<DuelPlayer> getAllPlayersInParty(PartyModel partyModel) {
         List<DuelPlayer> players = new ArrayList<>(PlayerUtil.duelPlayersConvertListUUID(partyModel.getPlayers()));
         DuelPlayer owner = BukkitAdapter.getPlayer(partyModel.getOwner());
-        players.add(owner);
-        return players;
+        if (owner != null) {
+            players.add(owner);
+        }
+        return players.stream().filter(Objects::nonNull).toList();
     }
 }

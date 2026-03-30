@@ -5,6 +5,7 @@ import ru.merkii.rduels.adapter.DuelPlayer;
 import ru.merkii.rduels.model.KitModel;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface CustomKitAPI {
 
@@ -14,7 +15,15 @@ public interface CustomKitAPI {
      * @param player The player whose selected kit display name to retrieve.
      * @return The display name of the selected kit, or "NULL" if no kit is selected.
      */
+    @Deprecated(forRemoval = false, since = "2.0.0")
     String getSelectedKitDisplayName(DuelPlayer player);
+
+    default Optional<String> getSelectedKit(DuelPlayer player) {
+        return Optional.ofNullable(getSelectedKitDisplayName(player))
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .filter(value -> !"NULL".equalsIgnoreCase(value));
+    }
 
     /**
      * Checks if the specified kit is selected by the player.

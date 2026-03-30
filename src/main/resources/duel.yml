@@ -1,20 +1,28 @@
+# Настройки боевой части дуэлей.
+
+# Через сколько секунд удалять выброшенные предметы во время боя.
 item-remove-seconds: 5
+
+# Настройки меню выбора параметров боя.
 choice-kit-menu:
   no-selected: "Не выбрано"
   request-num-games:
     count-fight-num:
       1:
-        material: "PAPER"
+        material: PAPER
         display-name: "1 игра"
         amount: 1
       3:
-        material: "PAPER"
+        material: PAPER
         display-name: "3 игры"
         amount: 3
       5:
-        material: "PAPER"
+        material: PAPER
         display-name: "5 игр"
         amount: 5
+
+# Заголовки и звуки во время боя.
+# fade-in/stay/fade-out задаются в тиках.
 title-settings:
   to-fight:
     fade-in: 1

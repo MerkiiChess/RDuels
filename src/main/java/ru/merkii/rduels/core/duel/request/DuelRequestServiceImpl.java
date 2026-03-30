@@ -39,13 +39,19 @@ public class DuelRequestServiceImpl implements DuelRequestService {
 
         config.sendTo(sender, Placeholder.wrapped("(player)", receiver.getName()), "request-sender");
 
+        String kitName = duelRequest.getDuelKit() == DuelKitType.CUSTOM
+                ? config.plainMessage("custom-replacer")
+                : duelRequest.getKitModel() != null
+                ? duelRequest.getKitModel().getDisplayName()
+                : config.plainMessage("null-placeholder");
+        String arenaName = duelRequest.getArena() != null
+                ? duelRequest.getArena().getArenaName()
+                : config.plainMessage("null-placeholder");
+
         Placeholders placeholder = Placeholders.of(
                 Placeholder.of("(player)", sender.getName()),
-                Placeholder.of("(kit)",
-                        duelRequest.getDuelKit() == DuelKitType.CUSTOM
-                                ? config.plainMessage("custom-replacer")
-                                : duelRequest.getKitModel().getDisplayName()),
-                Placeholder.of("(arena)", duelRequest.getArena().getArenaName()),
+                Placeholder.of("(kit)", kitName),
+                Placeholder.of("(arena)", arenaName),
                 Placeholder.of("(numGames)", String.valueOf(duelRequest.getNumGames()))
         );
 

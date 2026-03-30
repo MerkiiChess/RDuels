@@ -75,8 +75,8 @@ public class ArenaModelSerializer implements TypeSerializer<ArenaModel> {
                 }
             });
         }
-        if (value.getSpectatorPosition() != null)
-            node.node("schematic-position").set(value.getSpectatorPosition());
+        if (value.getSchematicPosition() != null)
+            node.node("schematic-position").set(value.getSchematicPosition());
 
         node.node("custom-kits").set(value.isCustomKits());
         if (value.getCustomKitsName() != null && !value.getCustomKitsName().isEmpty())

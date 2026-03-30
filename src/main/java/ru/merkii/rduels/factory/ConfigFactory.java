@@ -17,6 +17,7 @@ import ru.merkii.rduels.core.duel.config.DuelConfiguration;
 import ru.merkii.rduels.core.duel.config.TitleSettingsConfiguration;
 import ru.merkii.rduels.core.party.config.PartyConfiguration;
 import ru.merkii.rduels.core.sign.storage.SignStorage;
+import ru.merkii.rduels.exception.PluginStartupException;
 
 import java.io.IOException;
 
@@ -33,7 +34,7 @@ public class ConfigFactory {
         try {
             return new ResourceConfiguration(plugin);
         } catch (IOException e) {
-            throw new IllegalStateException(e);
+            throw new PluginStartupException("Не удалось загрузить YAML-конфиги RDuels. Проверьте права на папку плагина и содержимое файлов.", e);
         }
     }
 

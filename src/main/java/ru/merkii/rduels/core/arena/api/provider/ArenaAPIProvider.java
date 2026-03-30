@@ -30,6 +30,7 @@ import ru.merkii.rduels.core.arena.config.ArenaConfiguration;
 import ru.merkii.rduels.core.arena.model.ArenaModel;
 import ru.merkii.rduels.model.EntityPosition;
 import ru.merkii.rduels.model.KitModel;
+import ru.merkii.rduels.util.PluginConsole;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -55,7 +56,10 @@ public class ArenaAPIProvider implements ArenaAPI {
                 .filter(arena -> !arena.isCustomKits())
                 .filter(arena -> !arenaBusyBucket.getArenas().contains(arena))
                 .toList();
-        return Optional.ofNullable(availableArenas.get(ThreadLocalRandom.current().nextInt(availableArenas.size())));
+        if (availableArenas.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(availableArenas.get(ThreadLocalRandom.current().nextInt(availableArenas.size())));
     }
 
     @Override
@@ -126,7 +130,7 @@ public class ArenaAPIProvider implements ArenaAPI {
         block11: {
             position = arenaModel.getSchematicPosition();
             if (position == null) {
-                RDuels.getInstance().getLogger().info("Позиция схематики у арены: " + arenaModel.getDisplayName() + " не установлена!");
+                PluginConsole.warn(RDuels.getInstance(), "У арены " + arenaModel.getDisplayName() + " не настроена schematic-position. Восстановление пропущено.");
                 return;
             }
             try {
@@ -146,7 +150,7 @@ public class ArenaAPIProvider implements ArenaAPI {
         int radius = arenaModel.getRadiusDeleteBlocks();
         for (int x = location.getBlockX() - radius; x < location.getBlockX() + radius; ++x) {
             for (int y = location.getBlockY() - radius; y < location.getBlockY() + radius; ++y) {
-                for (int z = location.getBlockZ() - radius; z < location.getBlockY() + radius; ++z) {
+                for (int z = location.getBlockZ() - radius; z < location.getBlockZ() + radius; ++z) {
                     Location newLocation = new Location(location.getWorld(), x, y, z);
                     newLocation.getBlock().setType(Material.AIR);
                 }
@@ -154,12 +158,13 @@ public class ArenaAPIProvider implements ArenaAPI {
         }
         File file = new File(RDuels.getInstance().getDataFolder() + "/schematic", arenaModel.getSchematic());
         if (!file.exists()) {
-            Bukkit.getLogger().warning("Схематика: " + arenaModel.getSchematic() + " не найдена!");
+            PluginConsole.warn(RDuels.getInstance(), "Схематика " + arenaModel.getSchematic() + " для арены " + arenaModel.getDisplayName() + " не найдена.");
             return;
         }
         ClipboardFormat format = ClipboardFormats.findByFile(file);
         try {
             if (format == null) {
+                PluginConsole.warn(RDuels.getInstance(), "Не удалось определить формат схематики " + file.getName() + ".");
                 return;
             }
             ClipboardReader reader = format.getReader(Files.newInputStream(file.toPath()));
@@ -170,13 +175,22 @@ public class ArenaAPIProvider implements ArenaAPI {
             editSession.getChangeSet().setRecordChanges(true);
             editSession.close();
         } catch (WorldEditException | IOException e) {
-            throw new RuntimeException(e);
+            PluginConsole.warn(RDuels.getInstance(), "Не удалось восстановить арену " + arenaModel.getDisplayName() + ". Проверьте schematic и WorldEdit.");
         }
     }
 
     @Override
     public Optional<ArenaModel> getArenaFromKit(KitModel kitModel) {
-        return this.arenaConfiguration.arenas().keySet().stream().filter(ArenaModel::isCustomKits).filter(arena -> arena.getCustomKitsName() != null).filter(arena -> !arena.getCustomKitsName().isEmpty()).filter(arena -> arena.getCustomKitsName().contains(kitModel.getDisplayName())).filter(arena -> !this.isBusyArena(arena)).findFirst();
+        if (kitModel == null) {
+            return Optional.empty();
+        }
+        return this.arenaConfiguration.arenas().keySet().stream()
+                .filter(ArenaModel::isCustomKits)
+                .filter(arena -> arena.getCustomKitsName() != null)
+                .filter(arena -> !arena.getCustomKitsName().isEmpty())
+                .filter(arena -> arena.getCustomKitsName().contains(kitModel.getDisplayName()))
+                .filter(arena -> !this.isBusyArena(arena))
+                .findFirst();
     }
 
 

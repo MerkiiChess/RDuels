@@ -14,7 +14,7 @@ public class CustomKitEnchantCategorySerializer implements TypeSerializer<Custom
     public CustomKitEnchantCategory deserialize(Type type, ConfigurationNode node) throws SerializationException {
         String nameEnchant = node.node("name-enchant").getString();
         int lvl = node.node("lvl").getInt();
-        List<String> materials = node.node("materials").getList(String.class);
+        List<String> materials = node.node("materials-enchanted").getList(String.class);
         return new CustomKitEnchantCategory(nameEnchant, lvl, materials);
     }
 

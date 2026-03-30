@@ -28,7 +28,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @Singleton
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -37,22 +39,38 @@ public class ResourceConfiguration {
     Plugin plugin;
     Map<String, ConfigurationNode> nodes = new HashMap<>();
     Map<String, Object> configs = new HashMap<>();
+    Map<String, Class<?>> configTypes = new LinkedHashMap<>();
 
     public ResourceConfiguration(Plugin plugin) throws IOException {
         this.plugin = plugin;
-        loadConfiguration("kits.yml", KitConfiguration.class);
-        loadConfiguration("menu.yml", MenuConfiguration.class);
-        loadConfiguration("settings.yml", SettingsConfiguration.class);
-        loadConfiguration("messages.yml", PluginMessageConfig.class);
-        loadConfiguration("arenas.yml", ArenaConfiguration.class);
-        loadConfiguration("custom-kits.yml", CustomKitConfiguration.class);
-        loadConfiguration("duel.yml", DuelConfiguration.class);
-        loadConfiguration("party.yml", PartyConfiguration.class);
-        loadConfiguration("category-items.yml", CategoryItemConfiguration.class);
-        loadConfiguration("enchants-items.yml", EnchantItemConfiguration.class);
+        registerConfiguration("kits.yml", KitConfiguration.class);
+        registerConfiguration("menu.yml", MenuConfiguration.class);
+        registerConfiguration("settings.yml", SettingsConfiguration.class);
+        registerConfiguration("messages.yml", PluginMessageConfig.class);
+        registerConfiguration("arenas.yml", ArenaConfiguration.class);
+        registerConfiguration("custom-kits.yml", CustomKitConfiguration.class);
+        registerConfiguration("duel.yml", DuelConfiguration.class);
+        registerConfiguration("party.yml", PartyConfiguration.class);
+        registerConfiguration("category-items.yml", CategoryItemConfiguration.class);
+        registerConfiguration("enchants-items.yml", EnchantItemConfiguration.class);
+        loadAll();
+    }
+
+    private void registerConfiguration(String fileName, Class<?> configClass) {
+        configTypes.put(fileName, configClass);
+    }
+
+    private void loadAll() throws IOException {
+        for (Map.Entry<String, Class<?>> entry : configTypes.entrySet()) {
+            loadConfigurationUnchecked(entry.getKey(), entry.getValue(), false);
+        }
     }
 
     private <T> void loadConfiguration(String fileName, Class<T> configClass) throws IOException {
+        loadConfiguration(fileName, configClass, false);
+    }
+
+    private <T> void loadConfiguration(String fileName, Class<T> configClass, boolean reloadExisting) throws IOException {
         Path dataFolder = plugin.getDataFolder().toPath();
         Path configPath = dataFolder.resolve(fileName);
 
@@ -60,26 +78,40 @@ public class ResourceConfiguration {
             Files.createDirectories(dataFolder);
             try (InputStream resourceStream = plugin.getClass().getResourceAsStream("/" + fileName)) {
                 if (resourceStream == null) {
-                    throw new NullPointerException("Cannot find resource: " + fileName);
+                    throw new IOException("Не найден встроенный ресурс " + fileName);
                 }
                 Files.copy(resourceStream, configPath, StandardCopyOption.REPLACE_EXISTING);
             }
         }
 
+        ConfigurationNode loadedNode = createLoader(configPath).load();
+        T config = Objects.requireNonNull(loadedNode.get(configClass), "Config was not loaded: " + fileName);
+
+        if (reloadExisting && nodes.containsKey(fileName)) {
+            ConfigurationNode currentNode = nodes.get(fileName);
+            currentNode.raw(loadedNode.raw());
+            configs.put(fileName, Objects.requireNonNull(currentNode.get(configClass), "Config was not reloaded: " + fileName));
+            return;
+        }
+
+        nodes.put(fileName, loadedNode);
+        configs.put(fileName, config);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void loadConfigurationUnchecked(String fileName, Class<?> configClass, boolean reloadExisting) throws IOException {
+        loadConfiguration(fileName, (Class<Object>) configClass, reloadExisting);
+    }
+
+    private YamlConfigurationLoader createLoader(Path configPath) {
         ObjectMapper.Factory objectMapperFactory = new InterfaceObjectMapperFactory();
-        ConfigurationNode node = YamlConfigurationLoader.builder()
+        return YamlConfigurationLoader.builder()
                 .path(configPath)
                 .defaultOptions(opt -> opt.serializers(builder ->
                         builder.register(InterfaceObjectMapperFactory::applicable, objectMapperFactory.asTypeSerializer())
                                 .registerAll(PluginConfigBasicSerializers.serializers())
                                 .registerAll(TypeSerializerCollection.defaults())))
-                .build()
-                .load();
-
-        T config = node.get(configClass);
-
-        nodes.put(fileName, node);
-        configs.put(fileName, config);
+                .build();
     }
 
     @SuppressWarnings("unchecked")
@@ -88,11 +120,12 @@ public class ResourceConfiguration {
         if (config == null) {
             try {
                 loadConfiguration(fileName, clazz);
+                config = configs.get(fileName);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
-        return (T) config;
+        return clazz.cast(config);
     }
 
     public <T> void updateAndSave(String fileName, Class<T> configClass, T configInstance) throws IOException {
@@ -114,24 +147,13 @@ public class ResourceConfiguration {
             return;
         }
         Path configPath = plugin.getDataFolder().toPath().resolve(fileName);
-        YamlConfigurationLoader.builder()
-                .path(configPath)
-                .build()
-                .save(node);
+        createLoader(configPath).save(node);
     }
 
     public void reloadAll() throws IOException {
-        nodes.clear();
-        configs.clear();
-        loadConfiguration("kits.yml", KitConfiguration.class);
-        loadConfiguration("settings.yml", SettingsConfiguration.class);
-        loadConfiguration("messages.yml", MessageConfig.class);
-        loadConfiguration("arenas.yml", ArenaConfiguration.class);
-        loadConfiguration("custom-kits.yml", CustomKitConfiguration.class);
-        loadConfiguration("duel.yml", DuelConfiguration.class);
-        loadConfiguration("party.yml", PartyConfiguration.class);
-        loadConfiguration("category-items.yml", CategoryItemConfiguration.class);
-        loadConfiguration("enchants-items.yml", EnchantItemConfiguration.class);
+        for (Map.Entry<String, Class<?>> entry : configTypes.entrySet()) {
+            loadConfigurationUnchecked(entry.getKey(), entry.getValue(), true);
+        }
     }
 
 }

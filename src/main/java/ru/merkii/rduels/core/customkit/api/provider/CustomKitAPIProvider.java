@@ -26,7 +26,7 @@ public class CustomKitAPIProvider implements CustomKitAPI {
 
     @Override
     public String getSelectedKitDisplayName(DuelPlayer player) {
-        return kitStorage.getSelectedKit(player.getUUID());
+        return kitStorage.getSelectedKit(player.getUUID()).orElse("NULL");
     }
 
     @Override
@@ -46,8 +46,15 @@ public class CustomKitAPIProvider implements CustomKitAPI {
 
     @Override
     public KitModel getKitModel(DuelPlayer player) {
+        String selectedKit = kitStorage.getSelectedKit(player.getUUID()).orElse(null);
+        if (selectedKit == null) {
+            return null;
+        }
+
         Map<Integer, ItemBuilder> map = new HashMap<>();
-        this.kitStorage.getAllItemsKit(player, this.getSelectedKitDisplayName(player)).forEach((key, value) -> map.put(key, ItemBuilder.builder().fromItemStack(value)));
-        return KitModel.create(this.getSelectedKitDisplayName(player), map);
+        this.kitStorage.getAllItemsKit(player, selectedKit)
+                .forEach((key, value) -> map.put(key, ItemBuilder.builder().fromItemStack(value)));
+
+        return map.isEmpty() ? null : KitModel.create(selectedKit, map);
     }
 }

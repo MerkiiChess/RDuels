@@ -6,7 +6,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import ru.merkii.rduels.RDuels;
 import ru.merkii.rduels.adapter.DuelPlayer;
 import ru.merkii.rduels.adapter.bukkit.GameMode;
 import ru.merkii.rduels.config.settings.SettingsConfiguration;
@@ -14,6 +16,7 @@ import ru.merkii.rduels.core.duel.spectator.DuelSpectatorService;
 import ru.merkii.rduels.core.party.model.PartyModel;
 import ru.merkii.rduels.model.EntityPosition;
 import ru.merkii.rduels.util.PlayerUtil;
+import ru.merkii.rduels.util.PluginConsole;
 
 import java.util.Arrays;
 import java.util.List;
@@ -24,6 +27,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class PlayerPreparationServiceImpl implements PlayerPreparationService {
 
     private final SettingsConfiguration settings;
+    private volatile boolean missingSpawnsWarningLogged;
     @Inject
     public DuelSpectatorService spectatorService;
 
@@ -57,7 +61,8 @@ public class PlayerPreparationServiceImpl implements PlayerPreparationService {
     public void giveStartItems(DuelPlayer player) {
         Player bukkitPlayer = Bukkit.getPlayer(player.getUUID());
         if (bukkitPlayer == null) {
-            throw new IllegalStateException("Player with UUID: " + player.getUUID() + " is not online!");
+            PluginConsole.warn(RDuels.getInstance(), "Не удалось выдать стартовые предметы игроку " + player.getUUID() + ": игрок уже не в сети.");
+            return;
         }
         bukkitPlayer.getInventory().clear();
         bukkitPlayer.getInventory().setArmorContents(null);
@@ -70,6 +75,17 @@ public class PlayerPreparationServiceImpl implements PlayerPreparationService {
     @Override
     public EntityPosition getRandomSpawn() {
         List<EntityPosition> spawns = settings.spawns();
+        if (spawns == null || spawns.isEmpty()) {
+            if (!missingSpawnsWarningLogged) {
+                missingSpawnsWarningLogged = true;
+                PluginConsole.warn(RDuels.getInstance(), "В settings.yml не настроены spawns. Используется spawn первого мира.");
+            }
+            if (Bukkit.getWorlds().isEmpty()) {
+                return new EntityPosition("world", 0, 64, 0);
+            }
+            Location fallbackSpawn = Bukkit.getWorlds().getFirst().getSpawnLocation();
+            return new EntityPosition(fallbackSpawn);
+        }
         return spawns.get(ThreadLocalRandom.current().nextInt(spawns.size()));
     }
 }

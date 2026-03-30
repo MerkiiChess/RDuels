@@ -33,6 +33,7 @@ import ru.merkii.rduels.lamp.suggestion.Arenas;
 import ru.merkii.rduels.lamp.suggestion.DuelKits;
 import ru.merkii.rduels.model.BlockPosition;
 import ru.merkii.rduels.model.EntityPosition;
+import ru.merkii.rduels.util.PluginConsole;
 
 import java.io.IOException;
 import java.util.*;
@@ -66,8 +67,10 @@ public class RDuelCommand {
     public void setLobby(BukkitCommandActor actor) {
         Player player = actor.requirePlayer();
         settings.spawns().add(new EntityPosition(player));
-        saveResource("settings.yml", SettingsConfiguration.class, settings);
-        messageConfig.send(actor, "admin-setlobby-success");
+        if (!saveResource("settings.yml", SettingsConfiguration.class, settings, actor)) {
+            return;
+        }
+        messageConfig.send(actor, Placeholder.wrapped("(count)", String.valueOf(settings.spawns().size())), "admin-setlobby-success");
     }
 
     @Subcommand("reload")
@@ -77,8 +80,8 @@ public class RDuelCommand {
             resourceConfiguration.reloadAll();
             messageConfig.send(actor, "admin-reload-success");
         } catch (IOException e) {
+            PluginConsole.warn(ru.merkii.rduels.RDuels.getInstance(), "Не удалось перезагрузить конфиги RDuels. Проверьте YAML-файлы в папке плагина.");
             messageConfig.send(actor, "admin-reload-error");
-            e.printStackTrace();
         }
     }
 
@@ -93,6 +96,10 @@ public class RDuelCommand {
     public void saveKit(BukkitCommandActor actor, String kitName) {
         if (duelAPI.isKitNameContains(kitName)) {
             messageConfig.send(actor, "admin-savekit-error");
+            return;
+        }
+        if (duelAPI.getFreeSlotKit() < 0) {
+            messageConfig.send(actor, "admin-savekit-no-free-slot");
             return;
         }
         Player player = actor.requirePlayer();
@@ -121,7 +128,9 @@ public class RDuelCommand {
                 .material(material).breaking(false).schematic("no")
                 .build();
         arenaConfiguration.arenas().put(model, ItemBuilder.builder().setMaterial(material).setDisplayName(displayName));
-        saveResource("arenas.yml", ArenaConfiguration.class, arenaConfiguration);
+        if (!saveResource("arenas.yml", ArenaConfiguration.class, arenaConfiguration, actor)) {
+            return;
+        }
         messageConfig.send(actor, Placeholder.wrapped("(name)", name), "arena-created");
     }
 
@@ -146,7 +155,9 @@ public class RDuelCommand {
                     }
                 }
             }
-            saveResource("arenas.yml", ArenaConfiguration.class, arenaConfiguration);
+            if (!saveResource("arenas.yml", ArenaConfiguration.class, arenaConfiguration, actor)) {
+                return;
+            }
             messageConfig.send(
                     actor,
                     Placeholder.Placeholders.of(
@@ -177,7 +188,17 @@ public class RDuelCommand {
 
     @Subcommand("sign set")
     @CommandPermission("r.duel.sign.set")
-    public void set(BukkitCommandActor actor, DuelType type, DuelKitType kitType, @SuggestWith(DuelKits.class) String kitName) {
+    public void set(BukkitCommandActor actor, @Suggest({"1v1", "2v2", "ONE", "TWO"}) String typeName, DuelKitType kitType, @SuggestWith(DuelKits.class) String kitName) {
+        DuelType resolvedType = DuelType.fromString(typeName);
+        if (resolvedType == null) {
+            try {
+                resolvedType = DuelType.valueOf(typeName.toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException exception) {
+                messageConfig.send(actor, "sign-help");
+                return;
+            }
+        }
+        DuelType type = resolvedType;
         getTargetSign(actor).ifPresent(block -> {
             Sign sign = (Sign) block.getState();
 
@@ -213,7 +234,9 @@ public class RDuelCommand {
         }
         CustomKitCategory category = new CustomKitCategory(id, id, material, new ArrayList<>());
         categoryItemConfiguration.categories().put(id, category);
-        saveResource("category-items.yml", CategoryItemConfiguration.class, categoryItemConfiguration);
+        if (!saveResource("category-items.yml", CategoryItemConfiguration.class, categoryItemConfiguration, actor)) {
+            return;
+        }
         messageConfig.send(actor, Placeholder.wrapped("(id)", id), "category-created");
     }
 
@@ -228,7 +251,9 @@ public class RDuelCommand {
                 return;
             }
             cat.getItems().add(material);
-            saveResource("category-items.yml", CategoryItemConfiguration.class, categoryItemConfiguration);
+            if (!saveResource("category-items.yml", CategoryItemConfiguration.class, categoryItemConfiguration, actor)) {
+                return;
+            }
             messageConfig.send(
                     actor,
                     Placeholder.Placeholders.of(
@@ -239,11 +264,14 @@ public class RDuelCommand {
             }, () -> messageConfig.send(actor, Placeholder.wrapped("(id)", id), "category-not-found"));
     }
 
-    private <T> void saveResource(String fileName, Class<T> tClass, T config) {
+    private <T> boolean saveResource(String fileName, Class<T> tClass, T config, BukkitCommandActor actor) {
         try {
             resourceConfiguration.updateAndSave(fileName, tClass, config);
+            return true;
         } catch (IOException e) {
-            throw new RuntimeException("Не удалось сохранить " + fileName, e);
+            PluginConsole.warn(ru.merkii.rduels.RDuels.getInstance(), "Не удалось сохранить файл " + fileName + ". Проверьте права доступа и корректность YAML.");
+            messageConfig.send(actor, Placeholder.wrapped("(file)", fileName), "config-save-error");
+            return false;
         }
     }
 

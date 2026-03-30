@@ -1,0 +1,9 @@
+name: RDuels
+version: '${version}'
+main: ru.merkii.rduels.RDuels
+api-version: '1.21'
+description: Дуэли, партии, кастомные киты, очереди на табличках и матчмейкинг для Paper.
+depend:
+  - WorldEdit
+softdepend:
+  - PlaceholderAPI

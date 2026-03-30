@@ -26,7 +26,7 @@ public class GsonUtil {
         try {
             return new String(Files.readAllBytes(file.toPath()));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException("Не удалось прочитать файл " + file.getName(), e);
         }
     }
 

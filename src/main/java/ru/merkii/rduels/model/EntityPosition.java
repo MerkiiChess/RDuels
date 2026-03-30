@@ -59,7 +59,7 @@ public class EntityPosition implements Position {
 
     @Override
     public Block toBlock() {
-        return null;
+        return toLocation().getBlock();
     }
 
     public float getPitch() {

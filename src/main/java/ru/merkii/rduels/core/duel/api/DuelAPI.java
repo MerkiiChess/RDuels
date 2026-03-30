@@ -1,10 +1,7 @@
 package ru.merkii.rduels.core.duel.api;
 
-import org.bukkit.Location;
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 import ru.merkii.rduels.adapter.DuelPlayer;
-import ru.merkii.rduels.core.arena.model.ArenaModel;
 import ru.merkii.rduels.core.duel.model.DuelFightModel;
 import ru.merkii.rduels.core.duel.model.DuelRequest;
 import ru.merkii.rduels.core.duel.schedualer.DuelTeleportScheduler;

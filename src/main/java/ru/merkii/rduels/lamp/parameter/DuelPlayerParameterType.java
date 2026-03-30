@@ -21,7 +21,7 @@ public class DuelPlayerParameterType implements ParameterType<BukkitCommandActor
         String name = input.readString();
         Player bukkitPlayer = Bukkit.getPlayerExact(name);
         if (bukkitPlayer == null) {
-            throw new DuelPlayerException();
+            throw new DuelPlayerException(name);
         }
         return BukkitAdapter.adapt(bukkitPlayer);
     }

@@ -33,7 +33,7 @@ public class JarUtil {
 
             fullPath = new File(new URI(path));
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            throw new IOException("Некорректный путь до jar-файла: " + path, e);
         }
         // do not try to copy files from non jar files
         if (fullPath == null || !fullPath.exists() || fullPath.isDirectory()) {

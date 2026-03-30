@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import revxrsal.commands.bukkit.actor.BukkitCommandActor;
 import revxrsal.commands.bukkit.exception.BukkitExceptionHandler;
 import revxrsal.commands.exception.NoPermissionException;
+import ru.merkii.rduels.config.Placeholder;
 import ru.merkii.rduels.config.messages.MessageConfig;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -22,6 +23,6 @@ public class CustomExceptionHandler extends BukkitExceptionHandler {
 
     @HandleException
     public void duelPlayerNotFound(@NotNull DuelPlayerException e, @NotNull BukkitCommandActor actor) {
-        messageConfig.sendTo(actor.requirePlayer(), "duel-offline");
+        messageConfig.sendTo(actor.requirePlayer(), Placeholder.wrapped("(player)", e.getPlayerName()), "duel-offline");
     }
 }

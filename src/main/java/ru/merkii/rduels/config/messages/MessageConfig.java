@@ -33,10 +33,10 @@ public interface MessageConfig {
         player.sendMessage(message(placeholders, key, keys));
     }
 
-    // test govna
-
     default void sendTo(DuelPlayer player, String key, String... keys) {
-        player.sendMessage(message(key, keys));
+        if (player != null) {
+            player.sendMessage(message(key, keys));
+        }
     }
 
     default void sendTo(List<DuelPlayer> players, String key, String... keys) {
@@ -48,7 +48,9 @@ public interface MessageConfig {
     }
 
     default void sendTo(DuelPlayer player, Placeholder.Placeholders placeholders, String key, String... keys) {
-        player.sendMessage(message(placeholders, key, keys));
+        if (player != null) {
+            player.sendMessage(message(placeholders, key, keys));
+        }
     }
 
     default void send(BukkitCommandActor actor, String key) {

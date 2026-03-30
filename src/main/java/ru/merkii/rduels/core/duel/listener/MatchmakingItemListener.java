@@ -52,7 +52,9 @@ public class MatchmakingItemListener implements Listener {
         matchmakingService.leaveQueue(BukkitAdapter.adapt(player));
         PlayerInventory inventory = player.getInventory();
         inventory.setItem(settings.matchmakingItem().slot(), settings.matchmakingItem().build());
-        inventory.setItem(settings.createCustomKit().slot(), settings.createCustomKit().build());
+        if (settings.itemOpenCustomKit()) {
+            inventory.setItem(settings.createCustomKit().slot(), settings.createCustomKit().build());
+        }
         player.updateInventory();
     }
 

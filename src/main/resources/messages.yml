@@ -19,6 +19,8 @@ messages:
   admin-savekit-server: "<gray>[<green>✓</green>] <white>Новый кит успешно добавлен!"
   admin-savekit-args: "<yellow>» <green>/r-duel savekit <name></green>"
   admin-savekit-error: "<red>✘ <gray>Серверный кит с таким именем уже существует!"
+  admin-savekit-no-free-slot: "<red>✘ <gray>В меню серверных китов больше нет свободных слотов."
+  config-save-error: "<red>✘ <gray>Не удалось сохранить файл <white>(file)<gray>. Проверь консоль."
 
   # ──────────────────────────────────────────────
   #   Настройка сообщений арен
@@ -200,7 +202,7 @@ messages:
   sign-custom-replacer: "<gradient:#55FFFF:#5555FF>Кастомный</gradient>"
   sign-no-start: "<red>✘ <gray>У вас не настроен кастомный кит!"
 
-  sign-text-activate:
+  sign-text-active:
     - "<red><bold>ИДЕТ БОЙ</bold></red>"
     - "<white>(player) <gray>vs <white>(player2)"
     - "<gray>Тип: <yellow>(type)"

@@ -13,6 +13,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
 import ru.merkii.rduels.adapter.DuelPlayer;
 import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
 import ru.merkii.rduels.config.settings.SettingsConfiguration;
@@ -40,7 +41,9 @@ public class CustomKitListener implements Listener {
         if (duelPlayer.isFight()) {
             return;
         }
-        if (!player.getInventory().getItemInMainHand().equals(this.settings.createCustomKit().build())) {
+        ItemStack expectedItem = this.settings.createCustomKit().build();
+        ItemStack inHand = player.getInventory().getItemInMainHand();
+        if (inHand == null || !inHand.isSimilar(expectedItem)) {
             return;
         }
         if (!this.settings.itemOpenCustomKit()) {

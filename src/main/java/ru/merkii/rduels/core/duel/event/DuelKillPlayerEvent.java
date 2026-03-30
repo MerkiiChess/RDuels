@@ -26,7 +26,9 @@ public class DuelKillPlayerEvent extends Event implements Cancellable {
     public DuelKillPlayerEvent(DuelPlayer killer, DuelPlayer victim) {
         this.killer = killer;
         this.victim = victim;
-        this.duelFightModel = killer.getDuelFightModel().get();
+        this.duelFightModel = killer != null
+                ? killer.getDuelFightModel().orElseGet(() -> victim.getDuelFightModel().orElse(null))
+                : victim.getDuelFightModel().orElse(null);
         this.cancelled = false;
     }
 

@@ -5,6 +5,8 @@ import lombok.Getter;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.merkii.rduels.config.settings.Config;
 import ru.merkii.rduels.core.Core;
+import ru.merkii.rduels.exception.PluginStartupException;
+import ru.merkii.rduels.util.PluginConsole;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,11 +19,19 @@ public final class RDuels extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        beanScope = BeanScope.builder()
-                .bean(RDuels.class, this)
-                .classLoader(getClassLoader())
-                .build();
-        beanScope.get(PluginBootstrap.class).initialize(this);
+        try {
+            beanScope = BeanScope.builder()
+                    .bean(RDuels.class, this)
+                    .classLoader(getClassLoader())
+                    .build();
+            beanScope.get(PluginBootstrap.class).initialize(this);
+        } catch (PluginStartupException exception) {
+            PluginConsole.error(this, exception.getMessage());
+            getServer().getPluginManager().disablePlugin(this);
+        } catch (Exception | LinkageError exception) {
+            PluginConsole.error(this, "RDuels не смог запуститься. Проверьте конфигурацию плагина и обязательные зависимости.");
+            getServer().getPluginManager().disablePlugin(this);
+        }
     }
 
     @Override

@@ -105,7 +105,7 @@ public class PartyCommand {
         DuelPlayer player = BukkitAdapter.adapt(bukkitPlayer);
         PartyRequestModel request = partyAPI.getPartyRequestModel(sender, player);
         if (request == null) {
-            messageConfig.sendTo(player, "party-end-duration");messageConfig.sendTo(player, "party-end-duration");
+            messageConfig.sendTo(player, "party-end-duration");
             return;
         }
         partyAPI.removeRequest(request);

@@ -129,12 +129,13 @@ public class SignListener implements Listener {
 
     private boolean checkCustomKit(SignModel signModel, DuelPlayer player) {
         if (signModel.getDuelKit() == DuelKitType.CUSTOM) {
-            signModel.setKitModel(customKitAPI.getKitModel(player));
-            if (signModel.getKitModel() == null || signModel.getKitModel().getDisplayName().equalsIgnoreCase("null")) {
+            KitModel selectedKit = customKitAPI.getKitModel(player);
+            if (selectedKit == null) {
                 signModel.setKitModel(null);
                 messageConfig.sendTo(player, "sign-no-start");
                 return false;
             }
+            signModel.setKitModel(selectedKit);
         }
         return true;
     }
@@ -180,9 +181,10 @@ public class SignListener implements Listener {
         }
         if (!checkCustomKit(signModel, player)) return;
 
+        String kitName = signModel.getKitModel() != null ? signModel.getKitModel().getDisplayName() : "";
         this.signAPI.addQueueSign(SignQueueModel.create(signModel, player));
-        this.signAPI.setSignWait(sign, 1, signModel.getDuelType().getSize(), signModel.getDuelKit(), signModel.getKitModel().getDisplayName());
-        messageConfig.sendTo(player, Placeholder.wrapped("(kit)", signModel.getKitModel().getDisplayName()), "sign-start-queue");
+        this.signAPI.setSignWait(sign, 1, signModel.getDuelType().getSize(), signModel.getDuelKit(), kitName);
+        messageConfig.sendTo(player, Placeholder.wrapped("(kit)", kitName), "sign-start-queue");
     }
 
     private void handleQueueSign(SignModel signModel, PartyModel partyModel, Sign sign, DuelPlayer player) {
@@ -228,13 +230,14 @@ public class SignListener implements Listener {
 
         if (signModel.getDuelType().getSize() == 4) {
             if (partySize == 1) {
+                String kitName = signModel.getKitModel() != null ? signModel.getKitModel().getDisplayName() : "";
                 this.signAPI.addQueueSign(SignQueueModel.builder()
                         .signModel(signModel)
                         .sender(player)
                         .senderHelper(BukkitAdapter.getPlayer(partyModel.getPlayers().getFirst()))
                         .build());
-                this.signAPI.setSignWait(sign, 2, 4, signModel.getDuelKit(), signModel.getKitModel().getDisplayName());
-                messageConfig.sendTo(player, Placeholder.wrapped("(kit)", signModel.getKitModel().getDisplayName()), "sign-start-queue");
+                this.signAPI.setSignWait(sign, 2, 4, signModel.getDuelKit(), kitName);
+                messageConfig.sendTo(player, Placeholder.wrapped("(kit)", kitName), "sign-start-queue");
                 return;
             }
             if (partySize != 3) return;
@@ -365,12 +368,8 @@ public class SignListener implements Listener {
 
             Sign sign = (Sign) bukkitPlayer.getWorld().getBlockAt(signQueueModel.getSignModel().getBlockPosition().toLocation()).getState();
             KitModel kitModel = signQueueModel.getSignModel().getKitModel();
-
-            String kitParam = kitModel != null
-                    ? messageConfig.plainMessage("sign-server-replacer").replace("(kit)", kitModel.getDisplayName())
-                    : messageConfig.plainMessage("sign-custom-replacer");
-
-            this.signAPI.setSignWait(sign, this.getSizeQueue(signQueueModel), signQueueModel.getSignModel().getDuelType().getSize(), signQueueModel.getSignModel().getDuelKit(), kitParam);
+            String kitName = kitModel != null ? kitModel.getDisplayName() : "";
+            this.signAPI.setSignWait(sign, this.getSizeQueue(signQueueModel), signQueueModel.getSignModel().getDuelType().getSize(), signQueueModel.getSignModel().getDuelKit(), kitName);
         });
     }
 }

@@ -14,6 +14,7 @@ import ru.merkii.rduels.builder.ItemBuilder;
 import ru.merkii.rduels.config.ResourceConfiguration;
 import ru.merkii.rduels.config.settings.KitConfiguration;
 import ru.merkii.rduels.model.KitModel;
+import ru.merkii.rduels.util.PluginConsole;
 
 import java.io.IOException;
 import java.util.*;
@@ -44,6 +45,12 @@ public class KitServiceImpl implements KitService {
         Map<Integer, ItemBuilder> items = new HashMap<>();
         ItemStack mainHand = inventory.getItemInMainHand();
         Material displayMaterial = (mainHand != null && !mainHand.getType().isAir()) ? mainHand.getType() : Material.AIR;
+        int freeSlot = this.getFreeSlotKit();
+
+        if (freeSlot < 0) {
+            PluginConsole.warn(RDuels.getInstance(), "Не удалось сохранить серверный кит " + kitName + ": в меню больше нет свободных слотов.");
+            return;
+        }
 
         for (int i = 0; i < inventory.getSize(); i++) {
             ItemStack item = inventory.getItem(i);
@@ -54,7 +61,7 @@ public class KitServiceImpl implements KitService {
 
         if (displayMaterial.isAir()) displayMaterial = Material.PAPER;
 
-        KitModel kitModel = KitModel.create(kitName, this.getFreeSlotKit(), new ArrayList<>(), displayMaterial, items);
+        KitModel kitModel = KitModel.create(kitName, freeSlot, new ArrayList<>(), displayMaterial, items);
         Map<KitModel, ItemBuilder> map = new HashMap<>(this.kitConfig.kits());
         map.put(kitModel, ItemBuilder.builder()
                 .setMaterial(kitModel.getDisplayMaterial())
@@ -64,7 +71,7 @@ public class KitServiceImpl implements KitService {
         try {
             this.resourceConfiguration.updateAndSave("kits.yml", KitConfiguration.class, this.kitConfig);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            PluginConsole.warn(RDuels.getInstance(), "Не удалось сохранить kits.yml после добавления серверного кита " + kitName + ".");
         }
     }
 

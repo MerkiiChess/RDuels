@@ -40,6 +40,7 @@ public record RequestFightClickHandler(CustomKitAPI customKitAPI, DuelAPI duelAP
         if (duelRequest.getArena() == null) {
             ArenaModel arenaModel = getArena(duelRequest.getKitModel());
             if (arenaModel == null) {
+                config.sendTo(player, "duel-arenas-full");
                 player.closeInventory();
                 return;
             }
@@ -51,10 +52,9 @@ public record RequestFightClickHandler(CustomKitAPI customKitAPI, DuelAPI duelAP
 
     private ArenaModel getArena(KitModel kitModel) {
         if (!kitModel.isBindingArena()) {
-            return arenaAPI.getFreeArena().get();
+            return arenaAPI.getFreeArena().orElse(null);
         }
-        Optional<ArenaModel> optionalArena = arenaAPI.getArenaFromKit(kitModel);
-        return optionalArena.orElse(null);
+        return arenaAPI.getArenaFromKit(kitModel).orElse(null);
     }
 
     private KitModel getKitModel(DuelRequest duelRequest, DuelPlayer player) {

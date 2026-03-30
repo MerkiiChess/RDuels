@@ -10,11 +10,13 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
+import ru.merkii.rduels.RDuels;
 import ru.merkii.rduels.adapter.DuelPlayer;
 import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
 import ru.merkii.rduels.config.settings.SettingsConfiguration;
 import ru.merkii.rduels.core.duel.matchmaking.DuelMatchmakingService;
 import ru.merkii.rduels.manager.DatabaseManager;
+import ru.merkii.rduels.util.PluginConsole;
 
 @Singleton
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -35,13 +37,13 @@ public class PlayerListener implements Listener {
             player.getInventory().setItem(this.settings.createCustomKit().slot(), this.settings.createCustomKit().build());
         }
 
-        databaseManager.loadUserData(player.getUniqueId());
-
-        if (databaseManager.isDay(player.getUniqueId())) {
-            player.setPlayerTime(this.settings.dayTicks(), false);
-        } else if (databaseManager.isNight(player.getUniqueId())) {
-            player.setPlayerTime(this.settings.nightTicks(), false);
-        }
+        databaseManager.loadUserData(player.getUniqueId())
+                .thenRun(() -> RDuels.getInstance().getServer().getScheduler().runTask(RDuels.getInstance(), () -> applyPlayerTime(player)))
+                .exceptionally(exception -> {
+                    PluginConsole.warn(RDuels.getInstance(), "Не удалось загрузить статистику игрока " + player.getName() + ". Используются значения по умолчанию.");
+                    RDuels.getInstance().getServer().getScheduler().runTask(RDuels.getInstance(), () -> applyPlayerTime(player));
+                    return null;
+                });
     }
 
     @EventHandler
@@ -71,10 +73,24 @@ public class PlayerListener implements Listener {
     }
 
     private boolean isNotDroppedItem(ItemStack itemStack) {
+        if (itemStack == null) {
+            return false;
+        }
         return  itemStack.isSimilar(settings.matchmakingItem().build()) ||
                 itemStack.isSimilar(settings.createCustomKit().build()) ||
                 itemStack.isSimilar(settings.fightParty().build()) ||
                 itemStack.isSimilar(settings.leaveParty().build());
+    }
+
+    private void applyPlayerTime(Player player) {
+        if (!player.isOnline()) {
+            return;
+        }
+        if (databaseManager.isNight(player.getUniqueId())) {
+            player.setPlayerTime(this.settings.nightTicks(), false);
+            return;
+        }
+        player.setPlayerTime(this.settings.dayTicks(), false);
     }
 
 }

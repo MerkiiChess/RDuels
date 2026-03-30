@@ -38,14 +38,21 @@ public class BukkitAdapter {
     }
 
     public static DuelPlayer adapt(Player player) {
+        if (player == null) {
+            return null;
+        }
         return new DuelPlayerProvider(player);
     }
 
     public static DuelPlayer getPlayer(UUID uuid) {
-        return adapt(Bukkit.getPlayer(uuid));
+        Player player = Bukkit.getPlayer(uuid);
+        return player == null ? null : adapt(player);
     }
 
     public static Player adapt(DuelPlayer player) {
+        if (player == null) {
+            return null;
+        }
         return Bukkit.getPlayer(player.getUUID());
     }
 

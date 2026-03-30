@@ -3,6 +3,7 @@ package ru.merkii.rduels.gui.click;
 import org.bukkit.entity.Player;
 import ru.merkii.rduels.adapter.DuelPlayer;
 import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
+import ru.merkii.rduels.config.messages.MessageConfig;
 import ru.merkii.rduels.core.arena.api.ArenaAPI;
 import ru.merkii.rduels.core.arena.model.ArenaModel;
 import ru.merkii.rduels.core.duel.api.DuelAPI;
@@ -17,7 +18,7 @@ import ru.merkii.rduels.model.KitModel;
 import java.util.Optional;
 
 public record MatchmakingSelectKitClickHandler(DuelMatchmakingService matchmakingService, ArenaAPI arenaAPI,
-                                               DuelAPI duelAPI) implements ClickHandlerRegistry.ClickHandlerFacade {
+                                               DuelAPI duelAPI, MessageConfig messageConfig) implements ClickHandlerRegistry.ClickHandlerFacade {
 
     public static final String NAME = "MATCHMAKING_SELECT_KIT";
 
@@ -41,6 +42,7 @@ public record MatchmakingSelectKitClickHandler(DuelMatchmakingService matchmakin
         if (arena == null) {
             matchmakingService.addInQueue(opponent, kitModel);
             matchmakingService.addInQueue(duelPlayer, kitModel);
+            messageConfig.sendTo(player, "duel-arenas-full");
             player.closeInventory();
             return;
         }
@@ -51,10 +53,9 @@ public record MatchmakingSelectKitClickHandler(DuelMatchmakingService matchmakin
 
     private ArenaModel getArena(KitModel kitModel) {
         if (!kitModel.isBindingArena()) {
-            return arenaAPI.getFreeArena().get();
+            return arenaAPI.getFreeArena().orElse(null);
         }
-        Optional<ArenaModel> optionalArena = arenaAPI.getArenaFromKit(kitModel);
-        return optionalArena.orElse(null);
+        return arenaAPI.getArenaFromKit(kitModel).orElse(null);
     }
 
 }

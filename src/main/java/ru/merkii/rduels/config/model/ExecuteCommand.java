@@ -1,9 +1,9 @@
 package ru.merkii.rduels.config.model;
 
-import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
+import java.lang.reflect.Method;
 import java.util.EnumSet;
 
 public class ExecuteCommand {
@@ -19,7 +19,7 @@ public class ExecuteCommand {
     }
 
     public void execute(Player target) {
-        String execution = PlaceholderAPI.setPlaceholders(target, command);
+        String execution = applyPlaceholders(target, command);
         executorType.execute(target, execution);
     }
 
@@ -29,6 +29,20 @@ public class ExecuteCommand {
 
     public String prefix() {
         return executorType.prefix;
+    }
+
+    private String applyPlaceholders(Player target, String rawCommand) {
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") == null) {
+            return rawCommand;
+        }
+        try {
+            Class<?> placeholderApiClass = Class.forName("me.clip.placeholderapi.PlaceholderAPI");
+            Method method = placeholderApiClass.getMethod("setPlaceholders", Player.class, String.class);
+            Object result = method.invoke(null, target, rawCommand);
+            return result instanceof String stringResult ? stringResult : rawCommand;
+        } catch (ReflectiveOperationException exception) {
+            return rawCommand;
+        }
     }
 
     private enum ExecutorType {
