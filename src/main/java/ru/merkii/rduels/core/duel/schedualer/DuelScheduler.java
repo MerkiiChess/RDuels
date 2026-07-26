@@ -24,7 +24,7 @@ public class DuelScheduler extends BukkitRunnable {
     }
 
     public static DuelScheduler create(long time, DuelFightModel duelFightModel) {
-        return new DuelScheduler(time / 1000L, duelFightModel);
+        return new DuelScheduler(time, duelFightModel);
     }
 
     @Override

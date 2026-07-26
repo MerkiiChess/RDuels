@@ -23,7 +23,6 @@ public class CustomKitCore implements Core {
 
     @Override
     public void enable(RDuels plugin) {
-        plugin.registerListeners(CustomKitListener.class);
         lamp.register(RDuels.beanScope().get(CustomKitCommand.class));
     }
 

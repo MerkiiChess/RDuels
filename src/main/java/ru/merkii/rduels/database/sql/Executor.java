@@ -5,8 +5,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.jetbrains.annotations.Nullable;
 import ru.merkii.rduels.model.UserModel;
-
-import java.util.UUID;
+import ru.merkii.rduels.statistic.UserStats;
 
 @Singleton
 public class Executor {
@@ -22,91 +21,49 @@ public class Executor {
         database.save(userModel);
     }
 
-    public void addKill(UUID uuid) {
-        UserModel userModel = getUserModel(uuid.toString());
-        userModel.setKills(userModel.getKills() + 1);
-        database.update(userModel);
-    }
-
-    public void setDay(UUID uuid) {
-        UserModel userModel = getUserModel(uuid.toString());
-        userModel.setDay(true);
-        userModel.setNight(false);
-        database.update(userModel);
-    }
-
-    public void setNight(UUID uuid) {
-        UserModel userModel = getUserModel(uuid.toString());
-        userModel.setNight(true);
-        userModel.setDay(false);
-        database.update(userModel);
-    }
-
-    public void addDeath(UUID uuid) {
-        UserModel userModel = getUserModel(uuid.toString());
-        userModel.setDeath(userModel.getDeath() + 1);
-        database.update(userModel);
-    }
-
-    public void addWinRound(UUID uuid) {
-        UserModel userModel = getUserModel(uuid.toString());
-        userModel.setWinRounds(userModel.getWinRounds() + 1);
-        database.update(userModel);
-    }
-
-    public void addAllRounds(UUID uuid) {
-        UserModel userModel = getUserModel(uuid.toString());
-        userModel.setAllRounds(userModel.getAllRounds() + 1);
-        database.update(userModel);
-    }
-
-    public int getKills(UUID uuid) {
-        if (!this.isTableExists(uuid.toString())) {
-            this.insert(UserModel.create(uuid.toString()));
+    /**
+     * Loads the user row, creating and persisting a fresh one if it does not exist yet.
+     * Always returns a non-null, managed entity.
+     */
+    public UserModel getOrCreate(String uuid) {
+        UserModel model = getUserModel(uuid);
+        if (model == null) {
+            model = UserModel.create(uuid);
+            insert(model);
         }
-        return getUserModel(uuid.toString()).getKills();
+        return model;
     }
 
-    public int getDeaths(UUID uuid) {
-        if (!this.isTableExists(uuid.toString())) {
-            this.insert(UserModel.create(uuid.toString()));
+    /**
+     * Persists the full player row (statistics, Elo, tier and the day/night preference)
+     * using absolute values from the in-memory cache. The cache is the single source of
+     * truth, so there is no read-modify-write increment race here.
+     */
+    public void saveStats(UserStats stats) {
+        String uuid = stats.getUuid().toString();
+        UserModel model = getUserModel(uuid);
+        if (model == null) {
+            model = UserModel.create(uuid);
         }
-        return getUserModel(uuid.toString()).getDeath();
-    }
-
-    public int getWinRounds(UUID uuid) {
-        if (!this.isTableExists(uuid.toString())) {
-            this.insert(UserModel.create(uuid.toString()));
+        if (stats.getName() != null) {
+            model.setName(stats.getName());
         }
-        return getUserModel(uuid.toString()).getWinRounds();
-    }
-
-    public int getAllRounds(UUID uuid) {
-        if (!this.isTableExists(uuid.toString())) {
-            this.insert(UserModel.create(uuid.toString()));
-        }
-        return getUserModel(uuid.toString()).getAllRounds();
-    }
-
-    public boolean isDay(UUID uuid) {
-        if (!this.isTableExists(uuid.toString())) {
-            this.insert(UserModel.create(uuid.toString()));
-        }
-        return getUserModel(uuid.toString()).isDay();
-    }
-
-    public boolean isNight(UUID uuid) {
-        if (!this.isTableExists(uuid.toString())) {
-            this.insert(UserModel.create(uuid.toString()));
-        }
-        return getUserModel(uuid.toString()).isNight();
-    }
-
-    public boolean isTableExists(String UUID) {
-        return database.find(UserModel.class)
-                .where()
-                .eq("UUID", UUID)
-                .findCount() > 0;
+        model.setKills(stats.getKills());
+        model.setDeath(stats.getDeaths());
+        model.setWinRounds(stats.getWinRounds());
+        model.setAllRounds(stats.getAllRounds());
+        model.setElo(stats.getElo());
+        model.setWins(stats.getWins());
+        model.setLosses(stats.getLosses());
+        model.setTier(Math.max(0, stats.getTier()));
+        model.setDay(stats.isDay());
+        model.setNight(stats.isNight());
+        model.setScoreboardEnabled(stats.isScoreboardEnabled());
+        model.setDuelRequestsEnabled(stats.isDuelRequestsEnabled());
+        model.setAutoGg(stats.isAutoGg());
+        model.setAutoRequeue(stats.isAutoRequeue());
+        model.setKillEffect(stats.getKillEffect());
+        database.save(model);
     }
 
     @Nullable

@@ -35,7 +35,6 @@ public class SignCore implements Core {
     public void enable(RDuels plugin) {
         this.signAPI = RDuels.beanScope().get(SignAPI.class);
         this.signStorage = RDuels.beanScope().get(SignStorage.class);
-        plugin.registerListeners(SignListener.class);
         lamp.register(RDuels.beanScope().get(QueueCommand.class));
         for (SignModel signModel : signStorage.getSigns()) {
             BlockPosition blockPosition = signModel.getBlockPosition();

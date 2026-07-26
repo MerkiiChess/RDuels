@@ -1,5 +1,6 @@
 package ru.merkii.rduels.model;
 
+import io.ebean.annotation.DbDefault;
 import io.ebean.annotation.WhenCreated;
 import io.ebean.annotation.WhenModified;
 import jakarta.persistence.Column;
@@ -38,8 +39,23 @@ public class UserModel {
     int kills;
     int death;
 
+    int elo;
+    int wins;
+    int losses;
+    int tier;
+
     boolean day;
     boolean night;
+
+    @DbDefault("true")
+    boolean scoreboardEnabled;
+    @DbDefault("true")
+    boolean duelRequestsEnabled;
+    boolean autoGg;
+    boolean autoRequeue;
+
+    @DbDefault("")
+    String killEffect;
 
     @WhenCreated
     Instant whenCreated;
@@ -60,9 +76,17 @@ public class UserModel {
         this.day = day;
     }
 
+    /** Starting Elo rating for freshly created players. */
+    public static final int START_ELO = 1000;
+
     public static UserModel create(String UUID) {
         String playerName = Bukkit.getOfflinePlayer(java.util.UUID.fromString(UUID)).getName();
         if (playerName == null) playerName = "Unknown";
-        return new UserModel(UUID, playerName, 0, 0, 0, 0, false, false);
+        UserModel model = new UserModel(UUID, playerName, 0, 0, 0, 0, false, false);
+        model.setElo(START_ELO);
+        model.setScoreboardEnabled(true);
+        model.setDuelRequestsEnabled(true);
+        model.setKillEffect("");
+        return model;
     }
 }

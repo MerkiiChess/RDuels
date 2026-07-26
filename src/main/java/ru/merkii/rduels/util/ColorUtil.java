@@ -13,15 +13,18 @@ import java.util.stream.Collectors;
 @UtilityClass
 public class ColorUtil {
 
-    private static final Pattern RGBD_PATTERN = Pattern.compile("&#[a-fA-F0-9]{6}");
+    private static final Pattern RGBD_PATTERN = Pattern.compile("&#([a-fA-F0-9]{6})");
 
     public String color(String text) {
+        if (text == null) {
+            return "";
+        }
         Matcher matcher = RGBD_PATTERN.matcher(text);
         StringBuilder sb = new StringBuilder();
 
         while (matcher.find()) {
             String hexColor = matcher.group(1);
-            matcher.appendReplacement(sb, ChatColor.of("#" + hexColor).toString());
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(ChatColor.of("#" + hexColor).toString()));
         }
         matcher.appendTail(sb);
 

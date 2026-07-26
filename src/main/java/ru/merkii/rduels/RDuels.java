@@ -2,11 +2,10 @@ package ru.merkii.rduels;
 
 import io.avaje.inject.BeanScope;
 import lombok.Getter;
-import org.bukkit.event.Listener;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.merkii.rduels.config.settings.Config;
 import ru.merkii.rduels.core.Core;
+import ru.merkii.rduels.statistic.StatisticService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +31,8 @@ public final class RDuels extends JavaPlugin {
             cores.forEach(core -> core.disable(this));
         }
         if (beanScope != null) {
+            // Persist any cached statistics synchronously while the database is still open.
+            beanScope.get(StatisticService.class).flushAllBlocking();
             beanScope.close();
         }
     }
@@ -52,15 +53,6 @@ public final class RDuels extends JavaPlugin {
     }
 
     public void debug(String str) {
-    }
-
-    @SafeVarargs
-    public final <T extends Listener> void registerListeners(Class<T>... clazzs) {
-        PluginManager pluginManager = this.getServer().getPluginManager();
-        for (Class<T> clazz : clazzs) {
-            Listener listener = beanScope.get(clazz);
-            pluginManager.registerEvents(listener, this);
-        }
     }
 
     public static RDuels getInstance() {
