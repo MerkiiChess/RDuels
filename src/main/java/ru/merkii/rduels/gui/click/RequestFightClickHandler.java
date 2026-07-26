@@ -9,6 +9,7 @@ import ru.merkii.rduels.core.customkit.api.CustomKitAPI;
 import ru.merkii.rduels.core.duel.api.DuelAPI;
 import ru.merkii.rduels.core.duel.model.DuelKitType;
 import ru.merkii.rduels.core.duel.model.DuelRequest;
+import ru.merkii.rduels.core.randomkit.RandomKitService;
 import ru.merkii.rduels.gui.internal.click.AbstractClickHandler;
 import ru.merkii.rduels.gui.internal.click.ClickHandlerRegistry;
 import ru.merkii.rduels.gui.internal.context.InventoryContext;
@@ -22,11 +23,13 @@ public class RequestFightClickHandler implements ClickHandlerRegistry.ClickHandl
     private final CustomKitAPI customKitAPI;
     private final DuelAPI duelAPI;
     private final ArenaAPI arenaAPI;
+    private final RandomKitService randomKitService;
 
-    public RequestFightClickHandler(CustomKitAPI customKitAPI, DuelAPI duelAPI, ArenaAPI arenaAPI) {
+    public RequestFightClickHandler(CustomKitAPI customKitAPI, DuelAPI duelAPI, ArenaAPI arenaAPI, RandomKitService randomKitService) {
         this.customKitAPI = customKitAPI;
         this.duelAPI = duelAPI;
         this.arenaAPI = arenaAPI;
+        this.randomKitService = randomKitService;
     }
 
     @Override
@@ -61,8 +64,11 @@ public class RequestFightClickHandler implements ClickHandlerRegistry.ClickHandl
     }
 
     private KitModel getKitModel(DuelRequest duelRequest, DuelPlayer player) {
-        return duelRequest.getDuelKit() == DuelKitType.CUSTOM
-                ? customKitAPI.getKitModel(player)
-                : duelAPI.getRandomKit();
+        if (duelRequest.getDuelKit() == DuelKitType.CUSTOM) {
+            return customKitAPI.getKitModel(player);
+        }
+        // No server kit chosen: fall back to a random one from the configured pool.
+        KitModel random = randomKitService.pickRandom();
+        return random != null ? random : duelAPI.getRandomKit();
     }
 }

@@ -36,6 +36,11 @@ public interface SettingsConfiguration {
 
     boolean itemOpenCustomKit();
 
+    /** Worlds where the plugin's player commands (duel, queue, rematch) are disabled. */
+    default List<String> disabledWorlds() {
+        return List.of();
+    }
+
     MySQLConfiguration mySql();
 
 }

@@ -1,0 +1,16 @@
+# Серии убийств (kill streaks).
+# broadcast-global: true — анонс всему серверу, false — только участникам боя.
+# В message доступны плейсхолдеры (player) и (streak).
+# commands выполняются один раз при достижении серии ([console]/[player] + PAPI).
+enabled: true
+broadcast-global: false
+tiers:
+  - count: 3
+    message: "<yellow>(player) <gray>на серии из <white>(streak) <gray>убийств!"
+    commands: []
+  - count: 5
+    message: "<gold>(player) <gray>уничтожает всех! Серия: <white>(streak)"
+    commands: []
+  - count: 10
+    message: "<red><bold>(player) НЕУДЕРЖИМ! Серия: (streak)"
+    commands: []

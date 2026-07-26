@@ -45,6 +45,17 @@ public class DuelFightModel {
     DuelPlayer player4;
     @Setter
     boolean end;
+    /** True for fights created through the ranked queue — only those may affect Elo when only-ranked mode is on. */
+    @Setter
+    boolean ranked;
+    /** True for fights created through the queue — eligible for auto-requeue when the toggle is on. */
+    @Setter
+    boolean fromQueue;
+    /** Bedwars: whether the sender-side / receiver-side bed still stands. */
+    @Setter
+    boolean senderBedAlive = true;
+    @Setter
+    boolean receiverBedAlive = true;
 
     public DuelFightModel(DuelPlayer sender, DuelPlayer receiver, int numGames, KitModel kitModel, ArenaModel arenaModel) {
         this.sender = sender;

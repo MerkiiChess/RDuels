@@ -6,25 +6,25 @@ import org.bukkit.entity.Player;
 import revxrsal.commands.annotation.Command;
 import ru.merkii.rduels.config.messages.MessageConfig;
 import ru.merkii.rduels.config.settings.SettingsConfiguration;
-import ru.merkii.rduels.manager.DatabaseManager;
+import ru.merkii.rduels.statistic.StatisticService;
 
 @Singleton
 public class DayCommand {
 
-    private final DatabaseManager databaseManager;
+    private final StatisticService statisticService;
     private final SettingsConfiguration settingsConfiguration;
     private final MessageConfig config;
 
     @Inject
-    public DayCommand(DatabaseManager databaseManager, SettingsConfiguration settingsConfiguration, MessageConfig config) {
-        this.databaseManager = databaseManager;
+    public DayCommand(StatisticService statisticService, SettingsConfiguration settingsConfiguration, MessageConfig config) {
+        this.statisticService = statisticService;
         this.settingsConfiguration = settingsConfiguration;
         this.config = config;
     }
 
     @Command("day")
     public void onDay(Player player) {
-        databaseManager.setDay(player.getUniqueId()).join();
+        statisticService.setDay(player.getUniqueId());
         player.setPlayerTime(settingsConfiguration.dayTicks(), false);
         config.sendTo(player, "day");
     }

@@ -289,7 +289,9 @@ public class PartyAPIProvider implements PartyAPI {
     private List<DuelPlayer> getAllPlayersInParty(PartyModel partyModel) {
         List<DuelPlayer> players = new ArrayList<>(PlayerUtil.duelPlayersConvertListUUID(partyModel.getPlayers()));
         DuelPlayer owner = BukkitAdapter.getPlayer(partyModel.getOwner());
-        players.add(owner);
+        if (owner != null) {
+            players.add(owner);
+        }
         return players;
     }
 }

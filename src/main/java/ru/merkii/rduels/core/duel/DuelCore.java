@@ -32,7 +32,6 @@ public class DuelCore implements Core {
     @Override
     public void enable(RDuels plugin) {
         reloadConfig(plugin);
-        plugin.registerListeners(DuelListener.class);
         BeanScope beanScope = RDuels.beanScope();
         registerCommands(
                 beanScope.get(DuelCommand.class),

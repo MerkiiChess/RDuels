@@ -13,6 +13,8 @@ import ru.merkii.rduels.core.party.api.PartyAPI;
 import ru.merkii.rduels.core.party.config.PartyConfiguration;
 import ru.merkii.rduels.core.party.model.PartyModel;
 import ru.merkii.rduels.core.party.model.PartyRequestModel;
+import ru.merkii.rduels.core.economy.EconomyService;
+import ru.merkii.rduels.core.economy.config.EconomyConfiguration;
 import ru.merkii.rduels.lamp.suggestion.AllPlayers;
 
 @Command({"party", "p"})
@@ -22,12 +24,17 @@ public class PartyCommand {
     private final PartyAPI partyAPI;
     private final PartyConfiguration partyConfiguration;
     private final MessageConfig messageConfig;
+    private final EconomyService economyService;
+    private final EconomyConfiguration economyConfiguration;
 
     @Inject
-    public PartyCommand(PartyAPI partyAPI, PartyConfiguration partyConfiguration, MessageConfig messageConfig) {
+    public PartyCommand(PartyAPI partyAPI, PartyConfiguration partyConfiguration, MessageConfig messageConfig,
+                        EconomyService economyService, EconomyConfiguration economyConfiguration) {
         this.partyAPI = partyAPI;
         this.partyConfiguration = partyConfiguration;
         this.messageConfig = messageConfig;
+        this.economyService = economyService;
+        this.economyConfiguration = economyConfiguration;
     }
 
     @Command("create")
@@ -39,8 +46,24 @@ public class PartyCommand {
             messageConfig.sendTo(player, "party-already");
             return;
         }
+        if (!chargePartyCost(bukkitPlayer, player)) {
+            return;
+        }
         partyAPI.createParty(player);
         messageConfig.sendTo(player, "party-created");
+    }
+
+    /** Charges the configured party creation cost. Returns false if the player can't pay. */
+    private boolean chargePartyCost(Player bukkitPlayer, DuelPlayer player) {
+        double cost = economyConfiguration.partyCost();
+        if (!economyConfiguration.enabled() || cost <= 0 || !economyService.isEnabled()) {
+            return true;
+        }
+        if (!economyService.has(bukkitPlayer, cost) || !economyService.withdraw(bukkitPlayer, cost)) {
+            messageConfig.sendTo(player, Placeholder.wrapped("(amount)", economyService.format(cost)), "party-not-enough-money");
+            return false;
+        }
+        return true;
     }
 
     @Command("invite")

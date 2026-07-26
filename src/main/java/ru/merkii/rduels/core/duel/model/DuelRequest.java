@@ -36,6 +36,12 @@ public class DuelRequest {
     private KitModel kitModel;
     @Setter
     private ArenaModel arena;
+    /** Set by the ranked queue so the resulting fight is marked as ranked. */
+    @Setter
+    private boolean ranked;
+    /** Set by the queue so the resulting fight is eligible for auto-requeue. */
+    @Setter
+    private boolean fromQueue;
 
     public DuelRequest(DuelPlayer sender, DuelPlayer receiver, long time, PartyModel senderParty, PartyModel receiverParty) {
         this.sender = sender;

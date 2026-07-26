@@ -14,11 +14,10 @@ import ru.merkii.rduels.core.duel.model.DuelFightModel;
 import ru.merkii.rduels.core.party.api.PartyAPI;
 import ru.merkii.rduels.core.party.model.PartyModel;
 import ru.merkii.rduels.core.sign.api.SignAPI;
-import ru.merkii.rduels.manager.DatabaseManager;
 import ru.merkii.rduels.model.BlockPosition;
 import ru.merkii.rduels.model.EntityPosition;
 import ru.merkii.rduels.model.Position;
-import ru.merkii.rduels.model.UserModel;
+import ru.merkii.rduels.statistic.StatisticService;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -26,7 +25,7 @@ import java.util.UUID;
 public class DuelPlayerProvider implements DuelPlayer {
 
     private final Player player;
-    private final DatabaseManager databaseManager;
+    private final StatisticService statisticService;
     private final DuelAPI duelAPI;
     private final PartyAPI partyAPI;
     private final SignAPI signAPI;
@@ -34,7 +33,7 @@ public class DuelPlayerProvider implements DuelPlayer {
     public DuelPlayerProvider(Player player) {
         this.player = player;
         BeanScope beanScope = RDuels.beanScope();
-        this.databaseManager = beanScope.get(DatabaseManager.class);
+        this.statisticService = beanScope.get(StatisticService.class);
         this.duelAPI = beanScope.get(DuelAPI.class);
         this.partyAPI = beanScope.get(PartyAPI.class);
         this.signAPI = beanScope.get(SignAPI.class);
@@ -72,34 +71,22 @@ public class DuelPlayerProvider implements DuelPlayer {
 
     @Override
     public void addKill() {
-        if (!this.databaseManager.isTableExists(getUUID()).join()) {
-            this.databaseManager.insert(UserModel.create(getUUID().toString()));
-        }
-        this.databaseManager.addKill(getUUID()).join();
+        this.statisticService.addKill(getUUID());
     }
 
     @Override
     public void addDeath() {
-        if (!this.databaseManager.isTableExists(getUUID()).join()) {
-            this.databaseManager.insert(UserModel.create(getUUID().toString()));
-        }
-        this.databaseManager.addDeath(getUUID()).join();
+        this.statisticService.addDeath(getUUID());
     }
 
     @Override
     public void addWinRound() {
-        if (!this.databaseManager.isTableExists(getUUID()).join()) {
-            this.databaseManager.insert(UserModel.create(getUUID().toString()));
-        }
-        this.databaseManager.addWinRound(getUUID()).join();
+        this.statisticService.addWinRound(getUUID());
     }
 
     @Override
     public void addAllRound() {
-        if (!this.databaseManager.isTableExists(getUUID()).join()) {
-            this.databaseManager.insert(UserModel.create(getUUID().toString()));
-        }
-        this.databaseManager.addAllRound(getUUID()).join();
+        this.statisticService.addAllRound(getUUID());
     }
 
     @Override
@@ -144,7 +131,8 @@ public class DuelPlayerProvider implements DuelPlayer {
 
     @Override
     public DuelPlayer getKiller() {
-        return BukkitAdapter.adapt(player.getKiller());
+        Player killer = player.getKiller();
+        return killer == null ? null : BukkitAdapter.adapt(killer);
     }
 
     @Override
@@ -159,22 +147,22 @@ public class DuelPlayerProvider implements DuelPlayer {
 
     @Override
     public int getKills() {
-        return this.databaseManager.getKills(getUUID()).join();
+        return this.statisticService.getKills(getUUID());
     }
 
     @Override
     public int getDeath() {
-        return this.databaseManager.getDeaths(getUUID()).join();
+        return this.statisticService.getDeaths(getUUID());
     }
 
     @Override
     public int getWinRounds() {
-        return this.databaseManager.getWinRounds(getUUID()).join();
+        return this.statisticService.getWinRounds(getUUID());
     }
 
     @Override
     public int getAllRounds() {
-        return this.databaseManager.getAllRounds(getUUID()).join();
+        return this.statisticService.getAllRounds(getUUID());
     }
 
     @Override
@@ -190,5 +178,20 @@ public class DuelPlayerProvider implements DuelPlayer {
     private void teleportTo(Position position) {
         Location loc = BukkitAdapter.adapt(position);
         player.teleport(loc);
+    }
+
+    // Adapter instances are created on every adapt() call, so identity comparison is
+    // meaningless — two wrappers are the same player iff their UUIDs match. Team checks
+    // and bucket lookups across the plugin rely on this.
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof DuelPlayer other)) return false;
+        return getUUID().equals(other.getUUID());
+    }
+
+    @Override
+    public int hashCode() {
+        return getUUID().hashCode();
     }
 }

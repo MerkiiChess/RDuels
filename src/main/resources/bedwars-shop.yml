@@ -1,0 +1,102 @@
+# Магазин Bedwars (открывается предметом-эмеральдом или /shop).
+# cost-resource: IRON | GOLD | DIAMOND | EMERALD
+# category: armor | pickaxe | axe | shears — сохраняется между смертями (tier — уровень)
+# enchants: имена зачарований -> уровень
+title: "<green>Магазин"
+items:
+  # Блоки
+  - slot: 0
+    material: WHITE_WOOL
+    name: "<white>Шерсть x16"
+    cost-resource: IRON
+    cost-amount: 4
+    amount: 16
+  - slot: 1
+    material: END_STONE
+    name: "<yellow>Эндстоун x12"
+    cost-resource: IRON
+    cost-amount: 24
+    amount: 12
+  - slot: 2
+    material: OBSIDIAN
+    name: "<dark_purple>Обсидиан x4"
+    cost-resource: EMERALD
+    cost-amount: 4
+    amount: 4
+  # Оружие
+  - slot: 9
+    material: STONE_SWORD
+    name: "<gray>Каменный меч"
+    cost-resource: IRON
+    cost-amount: 10
+  - slot: 10
+    material: IRON_SWORD
+    name: "<white>Железный меч"
+    cost-resource: GOLD
+    cost-amount: 7
+  - slot: 11
+    material: DIAMOND_SWORD
+    name: "<aqua>Алмазный меч"
+    cost-resource: GOLD
+    cost-amount: 4
+    enchants:
+      SHARPNESS: 1
+  # Броня (category armor + tier)
+  - slot: 18
+    material: CHAINMAIL_BOOTS
+    name: "<gray>Кольчужная броня"
+    cost-resource: IRON
+    cost-amount: 40
+    category: armor
+    tier: 1
+  - slot: 19
+    material: IRON_BOOTS
+    name: "<white>Железная броня"
+    cost-resource: GOLD
+    cost-amount: 12
+    category: armor
+    tier: 2
+  - slot: 20
+    material: DIAMOND_BOOTS
+    name: "<aqua>Алмазная броня"
+    cost-resource: EMERALD
+    cost-amount: 6
+    category: armor
+    tier: 3
+  # Инструменты
+  - slot: 27
+    material: IRON_PICKAXE
+    name: "<white>Кирка"
+    cost-resource: IRON
+    cost-amount: 10
+    category: pickaxe
+    tier: 1
+  - slot: 28
+    material: IRON_AXE
+    name: "<white>Топор"
+    cost-resource: IRON
+    cost-amount: 10
+    category: axe
+    tier: 1
+  - slot: 29
+    material: SHEARS
+    name: "<green>Ножницы"
+    cost-resource: IRON
+    cost-amount: 20
+    category: shears
+  # Утилиты
+  - slot: 36
+    material: GOLDEN_APPLE
+    name: "<gold>Золотое яблоко"
+    cost-resource: GOLD
+    cost-amount: 3
+  - slot: 37
+    material: ENDER_PEARL
+    name: "<dark_purple>Жемчуг Края"
+    cost-resource: EMERALD
+    cost-amount: 4
+  - slot: 38
+    material: TNT
+    name: "<red>ТНТ"
+    cost-resource: GOLD
+    cost-amount: 4

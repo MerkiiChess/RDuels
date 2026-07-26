@@ -13,7 +13,6 @@ public class ArenaCore implements Core {
     @Override
     public void enable(RDuels plugin) {
         this.reloadConfig(plugin);
-        plugin.registerListeners(BlockListener.class);
     }
 
     @Override

@@ -145,7 +145,7 @@ public class ArenaAPIProvider implements ArenaAPI {
         int radius = arenaModel.getRadiusDeleteBlocks();
         for (int x = location.getBlockX() - radius; x < location.getBlockX() + radius; ++x) {
             for (int y = location.getBlockY() - radius; y < location.getBlockY() + radius; ++y) {
-                for (int z = location.getBlockZ() - radius; z < location.getBlockY() + radius; ++z) {
+                for (int z = location.getBlockZ() - radius; z < location.getBlockZ() + radius; ++z) {
                     Location newLocation = new Location(location.getWorld(), x, y, z);
                     newLocation.getBlock().setType(Material.AIR);
                 }

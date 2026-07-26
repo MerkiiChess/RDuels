@@ -12,6 +12,7 @@ import ru.merkii.rduels.config.messages.MessageConfig;
 import ru.merkii.rduels.core.duel.api.DuelAPI;
 import ru.merkii.rduels.core.duel.menu.DuelChoiceKitMenu;
 import ru.merkii.rduels.core.duel.model.DuelRequest;
+import ru.merkii.rduels.core.world.WorldRestrictionService;
 import ru.merkii.rduels.lamp.suggestion.AllPlayers;
 import ru.merkii.rduels.util.TimeUtil;
 
@@ -23,17 +24,22 @@ public class DuelCommand {
 
     private final MessageConfig config;
     private final DuelAPI duelAPI;
+    private final WorldRestrictionService worldRestrictionService;
 
     @Inject
-    public DuelCommand(DuelAPI duelAPI, MessageConfig config) {
+    public DuelCommand(DuelAPI duelAPI, MessageConfig config, WorldRestrictionService worldRestrictionService) {
         this.config = config;
         this.duelAPI = duelAPI;
+        this.worldRestrictionService = worldRestrictionService;
     }
 
     @Command("duel")
     @Description("Вызвать игрока на дуэль.")
     public void onDuel(BukkitCommandActor actor, @SuggestWith(AllPlayers.class) DuelPlayer receiver) {
         Player senderPlayerBukkit = actor.asPlayer();
+        if (worldRestrictionService.denyIfDisabled(senderPlayerBukkit)) {
+            return;
+        }
         DuelPlayer senderPlayer = BukkitAdapter.adapt(senderPlayerBukkit);
 
         if (senderPlayer.getUUID().equals(receiver.getUUID())) {

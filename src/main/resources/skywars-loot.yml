@@ -1,0 +1,74 @@
+# Режим Skywars. Активируется флагом "skywars: true" у арены в arenas.yml.
+# При старте боя сундуки в радиусе search-radius от центра арены заполняются
+# случайным лутом. Одна жизнь (numGames принудительно = 1). Пустота = смерть.
+enabled: true
+
+# Полурадиус куба вокруг центра арены для поиска сундуков (держите небольшим — скан блоков)
+search-radius: 20
+
+# Сундуки ближе этого расстояния к центру = mid-лут (лучше); 0 — без деления на тиры
+mid-radius: 8
+
+# Перезаполнять сундуки каждые N секунд, пока идёт бой (0 = только на старте)
+refill-seconds: 0
+refill-announce: true
+refill-message: "<yellow>Сундуки пополнены!"
+
+# Сколько стопок предметов класть в каждый сундук
+min-items-per-chest: 3
+max-items-per-chest: 6
+
+# Стартовые предметы (если заданы — заменяют кит). Броня авто-экипируется.
+starter-items:
+  - material: WOODEN_SWORD
+    amount: 1
+  - material: OAK_PLANKS
+    amount: 16
+  - material: COOKED_BEEF
+    amount: 4
+
+# Лут островных (внешних) сундуков (weight — относительный вес)
+loot:
+  - material: IRON_SWORD
+    weight: 3
+  - material: BOW
+    weight: 2
+  - material: ARROW
+    min-amount: 4
+    max-amount: 16
+    weight: 4
+  - material: IRON_CHESTPLATE
+    weight: 2
+  - material: COOKED_BEEF
+    min-amount: 2
+    max-amount: 6
+    weight: 4
+  - material: COBBLESTONE
+    min-amount: 8
+    max-amount: 32
+    weight: 3
+  - material: GOLDEN_APPLE
+    weight: 1
+
+# Лут центральных (mid) сундуков — лучше
+mid-loot:
+  - material: DIAMOND_SWORD
+    weight: 2
+  - material: DIAMOND_CHESTPLATE
+    weight: 2
+  - material: ENDER_PEARL
+    min-amount: 1
+    max-amount: 2
+    weight: 2
+  - material: GOLDEN_APPLE
+    min-amount: 2
+    max-amount: 4
+    weight: 3
+  - material: DIAMOND
+    min-amount: 2
+    max-amount: 5
+    weight: 2
+  - material: TNT
+    min-amount: 1
+    max-amount: 3
+    weight: 2

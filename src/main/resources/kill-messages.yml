@@ -1,0 +1,24 @@
+# Сообщения о смерти в дуэлях по причине.
+# broadcast-global: true — всему серверу, false — только участникам боя.
+# Ключи causes — имена DamageCause в нижнем регистре:
+#   entity_attack, entity_sweep_attack, projectile, void, fall, fire, fire_tick,
+#   lava, magic, block_explosion, entity_explosion, drowning, suffocation, contact,
+#   thorns, wither, poison, freeze
+# Плейсхолдеры: (victim) — погибший, (killer) — убийца (или environment-name для окружения).
+enabled: true
+broadcast-global: false
+default-message: "<gray>(victim) <white>погибает от рук <gray>(killer)"
+environment-name: "<dark_gray>окружения"
+causes:
+  entity_attack: "<gray>(killer) <white>зарубил <gray>(victim)"
+  entity_sweep_attack: "<gray>(killer) <white>размашистым ударом добил <gray>(victim)"
+  projectile: "<gray>(killer) <white>прострелил <gray>(victim)"
+  void: "<gray>(victim) <white>упал в пустоту"
+  fall: "<gray>(victim) <white>разбился при падении"
+  fire: "<gray>(victim) <white>сгорел"
+  fire_tick: "<gray>(victim) <white>сгорел заживо"
+  lava: "<gray>(victim) <white>утонул в лаве"
+  block_explosion: "<gray>(victim) <white>взорвался"
+  entity_explosion: "<gray>(killer) <white>взорвал <gray>(victim)"
+  magic: "<gray>(killer) <white>отравил зельем <gray>(victim)"
+  drowning: "<gray>(victim) <white>утонул"

@@ -3,6 +3,8 @@ package ru.merkii.rduels.core.duel.schedualer;
 import lombok.Getter;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import ru.merkii.rduels.RDuels;
 import ru.merkii.rduels.adapter.DuelPlayer;
@@ -41,7 +43,36 @@ public class DuelTeleportScheduler extends BukkitRunnable {
                 this.duelAPI.addNoMove(fightModel.getPlayer4());
             }
         }
+        if (duelConfiguration.matchFoundBlindness()) {
+            forEachParticipant(fightModel, player ->
+                    player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, (this.time + 1) * 20, 0, false, false)));
+        }
         runTaskTimer(RDuels.getInstance(), 20L, 20L);
+    }
+
+    /** Applies an action to every bukkit player taking part in the fight (both sides, all formats). */
+    private void forEachParticipant(DuelFightModel fightModel, java.util.function.Consumer<Player> action) {
+        applyTo(fightModel.getSender(), action);
+        applyTo(fightModel.getReceiver(), action);
+        if (fightModel.getArenaModel().isFfa()) {
+            if (fightModel.getReceiverParty() != null && fightModel.getSenderParty() != null) {
+                PlayerUtil.convertListUUID(fightModel.getReceiverParty().getPlayers()).forEach(action);
+                PlayerUtil.convertListUUID(fightModel.getSenderParty().getPlayers()).forEach(action);
+            } else {
+                applyTo(fightModel.getPlayer2(), action);
+                applyTo(fightModel.getPlayer4(), action);
+            }
+        }
+    }
+
+    private void applyTo(DuelPlayer duelPlayer, java.util.function.Consumer<Player> action) {
+        if (duelPlayer == null) {
+            return;
+        }
+        Player player = BukkitAdapter.adapt(duelPlayer);
+        if (player != null) {
+            action.accept(player);
+        }
     }
 
     @Override
@@ -55,7 +86,7 @@ public class DuelTeleportScheduler extends BukkitRunnable {
         int fadeIn = this.time != 1 ? titleSettings.toFight().fadeIn() : titleSettings.fight().fadeIn();
         int fadeOut = this.time != -1 ? titleSettings.toFight().fadeOut() : titleSettings.fight().fadeOut();
         int stay = this.time != -1 ? titleSettings.toFight().stay() : titleSettings.fight().stay();
-        Sound sound = this.time != -1 ? Sound.valueOf(titleSettings.toFight().soundName()) : Sound.valueOf(titleSettings.fight().soundName());
+        Sound sound = this.time != -1 ? safeSound(titleSettings.toFight().soundName()) : safeSound(titleSettings.fight().soundName());
         float v1 = this.time != -1 ? titleSettings.toFight().v1() : titleSettings.fight().v1();
         float v2 = this.time != -1 ? titleSettings.toFight().v2() : titleSettings.fight().v2();
         if (this.time != 1) {
@@ -99,11 +130,25 @@ public class DuelTeleportScheduler extends BukkitRunnable {
                 this.duelAPI.removeNoMove(this.duelFightModel.getPlayer4());
             }
         }
-        if (sound == null) {
-            return;
+        if (sound != null) {
+            bukkitReceiver.playSound(bukkitReceiver.getLocation(), sound, v1, v2);
+            bukkitSender.playSound(bukkitSender.getLocation(), sound, v1, v2);
         }
-        bukkitReceiver.playSound(bukkitReceiver.getLocation(), sound, v1, v2);
-        bukkitSender.playSound(bukkitSender.getLocation(), sound, v1, v2);
-        this.cancel();
+// Clear the match-found blindness so the fight starts with full visibility.
+        if (duelConfiguration.matchFoundBlindness()) {
+            forEachParticipant(this.duelFightModel, player -> player.removePotionEffect(PotionEffectType.BLINDNESS));
+        }
+                this.cancel();
+    }
+
+    private Sound safeSound(String name) {
+        if (name == null) {
+            return null;
+        }
+        try {
+            return Sound.valueOf(name);
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
     }
 }

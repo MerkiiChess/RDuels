@@ -1,0 +1,10 @@
+.gradle/
+build/
+
+# Локальный серверный jar для runServerSmoke (класть в корень вручную)
+paper-*.jar
+purpur-*.jar
+spigot-*.jar
+
+# Личные инструкции Claude — не публиковать
+CLAUDE.md

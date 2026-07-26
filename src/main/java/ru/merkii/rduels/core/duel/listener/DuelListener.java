@@ -13,6 +13,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.*;
+import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.*;
 import ru.merkii.rduels.RDuels;
@@ -157,6 +158,7 @@ public class DuelListener implements Listener {
         DuelPlayer loserOwner = BukkitAdapter.getPlayer(deadParty.getOwner());
 
         if (fightModel.getCountNumGames() == fightModel.getNumGames()) {
+            fightModel.setEnd(true);
             Bukkit.getScheduler().runTaskLater(this.plugin, () -> this.duelAPI.stopFight(fightModel, winnerOwner, loserOwner), (long) config.stopFightTime() * 20L);
             return;
         }
@@ -193,6 +195,7 @@ public class DuelListener implements Listener {
         updatePlayerStats(getTeammate(loser, fightModel), false);
 
         if (fightModel.getCountNumGames() == fightModel.getNumGames()) {
+            fightModel.setEnd(true);
             Bukkit.getScheduler().runTaskLater(this.plugin, () -> this.duelAPI.stopFight(fightModel, winner, loser), (long) config.stopFightTime() * 20L);
             return;
         }
@@ -271,6 +274,19 @@ public class DuelListener implements Listener {
     }
 
     @EventHandler
+    public void onCraft(CraftItemEvent event) {
+        if (!(event.getWhoClicked() instanceof Player bukkitPlayer)) {
+            return;
+        }
+
+        DuelPlayer duelPlayer = BukkitAdapter.adapt(bukkitPlayer);
+
+        if (this.duelAPI.isFightPlayer(duelPlayer)) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
     public void onMove(PlayerMoveEvent event) {
         if (this.duelAPI.isNoMovePlayer(BukkitAdapter.adapt(event.getPlayer()))) {
             event.setCancelled(true);
@@ -335,12 +351,22 @@ public class DuelListener implements Listener {
         player.getDuelFightModel().ifPresent(fightModel -> {
             updateStatsOnDisconnect(player);
             if (!fightModel.getArenaModel().isFfa()) {
+                // 1v1 — the fight ends immediately in favour of the opponent.
                 this.duelAPI.stopFight(fightModel, this.duelAPI.getOpponentFromFight(fightModel, player), player);
                 return;
             }
-            if (!isTeamAlive(player, fightModel)) {
-                this.duelAPI.stopFight(fightModel, getOpponentOwner(player, fightModel), getPlayerOwner(player, fightModel));
+            boolean party = fightModel.getSenderParty() != null && fightModel.getReceiverParty() != null;
+            // The player is now offline and no longer counts as alive. If a teammate is still
+            // online, the fight continues down a man; otherwise the whole side is out.
+            boolean sideStillAlive = party
+                    ? isPartyAlive(determineParty(player, fightModel))
+                    : isTeamAlive(player, fightModel);
+            if (sideStillAlive) {
+                return;
             }
+            DuelPlayer winner = party ? getOpponentOwner(player, fightModel) : getWinnerFour(player, fightModel);
+            DuelPlayer loser = party ? getPlayerOwner(player, fightModel) : getLoserFour(player, fightModel);
+            this.duelAPI.stopFight(fightModel, winner, loser);
         });
     }
 
@@ -441,7 +467,9 @@ public class DuelListener implements Listener {
     private List<DuelPlayer> getPartyPlayers(PartyModel party) {
         List<DuelPlayer> players = new ArrayList<>(PlayerUtil.duelPlayersConvertListUUID(party.getPlayers()));
         DuelPlayer owner = BukkitAdapter.getPlayer(party.getOwner());
-        players.add(owner);
+        if (owner != null) {
+            players.add(owner);
+        }
         return players;
     }
 
@@ -458,7 +486,14 @@ public class DuelListener implements Listener {
 
     private boolean isTeamAlive(DuelPlayer player, DuelFightModel fightModel) {
         return getTeamPlayersFour(player, fightModel).stream()
-                .anyMatch(p -> p != null && p.getGameMode() != ru.merkii.rduels.adapter.bukkit.GameMode.SPECTATOR);
+                .filter(Objects::nonNull)
+                .anyMatch(this::isFighterAlive);
+    }
+
+    /** A fighter counts as alive only while actually online and not spectating (offline = dead). */
+    private boolean isFighterAlive(DuelPlayer duelPlayer) {
+        Player bukkit = Bukkit.getPlayer(duelPlayer.getUUID());
+        return bukkit != null && bukkit.getGameMode() != org.bukkit.GameMode.SPECTATOR;
     }
 
     private List<DuelPlayer> getTeamPlayersFour(DuelPlayer player, DuelFightModel fightModel) {

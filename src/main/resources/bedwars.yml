@@ -1,0 +1,34 @@
+# Режим Bedwars. Активируется флагом "bedwars: true" у арены в arenas.yml.
+# Кровати ставятся у спавнов сторон (one-position / two-position).
+enabled: true
+
+# Задержка возрождения (пока кровать цела), сек
+respawn-seconds: 4
+
+# Полурадиус куба вокруг центра арены для поиска маркеров генераторов
+scan-radius: 40
+
+# Генераторы: ключ — материал блока-маркера. Ресурс спавнится на блок выше маркера.
+# resource: IRON | GOLD | DIAMOND | EMERALD
+# team: true — базовый генератор команды (ускоряется апгрейдом Forge)
+generators:
+  IRON_BLOCK:
+    resource: IRON
+    interval: 24
+    team: true
+    max-nearby: 48
+  GOLD_BLOCK:
+    resource: GOLD
+    interval: 100
+    team: true
+    max-nearby: 12
+  DIAMOND_BLOCK:
+    resource: DIAMOND
+    interval: 600
+    team: false
+    max-nearby: 8
+  EMERALD_BLOCK:
+    resource: EMERALD
+    interval: 1200
+    team: false
+    max-nearby: 4

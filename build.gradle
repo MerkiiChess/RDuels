@@ -38,6 +38,9 @@ dependencies {
     // Placeholder
     compileOnly 'me.clip:placeholderapi:2.12.2'
 
+    // Vault (economy, soft-depend)
+    compileOnly 'com.github.MilkBowl:VaultAPI:1.7'
+
     // Commands
     implementation 'io.github.revxrsal:lamp.common:4.0.0-rc.14'
     implementation 'io.github.revxrsal:lamp.bukkit:4.0.0-rc.14'
@@ -61,7 +64,19 @@ dependencies {
     // InvUI
     implementation 'xyz.xenondevs.invui:invui:1.36'
 
+    // Tests
     testImplementation 'io.ebean:ebean-test:15.5.0'
+    testImplementation 'io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT'
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+    }
 }
 
 tasks.withType(JavaCompile) {
@@ -101,4 +116,70 @@ build.dependsOn shadowJar
 
 ebean {
     debugLevel = 1
+}
+
+// Boots a real Paper server with the shaded plugin and fails if it does not enable cleanly.
+// A Paper server jar must be placed at the project root as `paper-*.jar` (gitignored).
+tasks.register('runServerSmoke') {
+    dependsOn shadowJar
+    group = 'verification'
+    description = 'Boots a Paper server with the shaded plugin, fails if the plugin does not enable.'
+    doLast {
+        def serverJar = fileTree(dir: projectDir, includes: ['paper-*.jar', 'purpur-*.jar', 'spigot-*.jar']).files.sort().find { true }
+        if (serverJar == null) {
+            throw new GradleException('runServerSmoke: не найден серверный jar. Скачайте Paper 1.21 и положите в корень как paper-1.21.jar')
+        }
+
+        def runDir = new File(layout.buildDirectory.get().asFile, 'smoke-server')
+        def pluginsDir = new File(runDir, 'plugins')
+        pluginsDir.mkdirs()
+        new File(runDir, 'eula.txt').text = 'eula=true\n'
+        new File(runDir, 'server.properties').text = 'online-mode=false\nspawn-protection=0\nmax-players=1\nlevel-type=minecraft\\:flat\n'
+        pluginsDir.listFiles()?.findAll { it.name.startsWith('RDuels') }?.each { it.delete() }
+        copy {
+            from shadowJar.archiveFile
+            into pluginsDir
+        }
+
+        def proc = new ProcessBuilder('java', '-Xmx1024M', '-jar', serverJar.absolutePath, '--nogui')
+                .directory(runDir)
+                .redirectErrorStream(true)
+                .start()
+        def stdin = new OutputStreamWriter(proc.outputStream)
+        boolean done = false
+        boolean failed = false
+        long deadline = System.currentTimeMillis() + 240_000
+
+        proc.inputStream.withReader { reader ->
+            String line
+            while ((line = reader.readLine()) != null) {
+                logger.lifecycle('[smoke] ' + line)
+                if (line.contains('Error occurred while enabling RDuels') ||
+                        line.contains("Could not load 'plugins") && line.contains('RDuels')) {
+                    failed = true
+                }
+                if (line.contains('Done (')) {
+                    done = true
+                    stdin.write('stop\n'); stdin.flush()
+                }
+                if (System.currentTimeMillis() > deadline) {
+                    stdin.write('stop\n'); stdin.flush()
+                    break
+                }
+            }
+        }
+        proc.waitFor()
+
+        if (failed || !done) {
+            throw new GradleException("runServerSmoke: плагин не включился чисто (done=${done}, failed=${failed})")
+        }
+        logger.lifecycle('runServerSmoke: плагин включился корректно')
+    }
+}
+
+// test + runServerSmoke
+tasks.register('verifyPlugin') {
+    group = 'verification'
+    description = 'Runs unit tests and the server smoke test.'
+    dependsOn 'test', 'runServerSmoke'
 }
