@@ -12,7 +12,24 @@ import ru.merkii.rduels.config.settings.SettingsConfiguration;
 import ru.merkii.rduels.core.arena.config.ArenaConfiguration;
 import ru.merkii.rduels.core.customkit.config.CustomKitConfiguration;
 import ru.merkii.rduels.core.duel.config.DuelConfiguration;
+import ru.merkii.rduels.core.elo.config.EloConfiguration;
 import ru.merkii.rduels.core.party.config.PartyConfiguration;
+import ru.merkii.rduels.core.bedwars.config.BedwarsConfiguration;
+import ru.merkii.rduels.core.bedwars.config.BedwarsShopConfiguration;
+import ru.merkii.rduels.core.bedwars.config.BedwarsUpgradeConfiguration;
+import ru.merkii.rduels.core.boundary.config.BoundaryConfiguration;
+import ru.merkii.rduels.core.economy.config.EconomyConfiguration;
+import ru.merkii.rduels.core.flowercrown.config.FlowerCrownConfiguration;
+import ru.merkii.rduels.core.goldenhead.config.GoldenHeadConfiguration;
+import ru.merkii.rduels.core.killeffect.config.KillEffectConfiguration;
+import ru.merkii.rduels.core.killmessage.config.KillMessageConfiguration;
+import ru.merkii.rduels.core.killstreak.config.KillStreakConfiguration;
+import ru.merkii.rduels.core.queue.config.QueueConfiguration;
+import ru.merkii.rduels.core.randomkit.config.RandomKitConfiguration;
+import ru.merkii.rduels.core.scoreboard.config.ScoreboardConfiguration;
+import ru.merkii.rduels.core.skywars.config.SkywarsConfiguration;
+import ru.merkii.rduels.core.sumo.config.SumoConfiguration;
+import ru.merkii.rduels.core.tnttag.config.TntTagConfiguration;
 import ru.merkii.rduels.core.sign.storage.SignStorage;
 
 import java.io.IOException;
@@ -73,6 +90,91 @@ public class ConfigFactory {
     @Bean
     public SettingsConfiguration settingsConfiguration(ResourceConfiguration resourceConfiguration) {
         return resourceConfiguration.getConfig("settings.yml", SettingsConfiguration.class);
+    }
+
+    @Bean
+    public EloConfiguration eloConfiguration(ResourceConfiguration resourceConfiguration) {
+        return resourceConfiguration.getConfig("elo.yml", EloConfiguration.class);
+    }
+
+    @Bean
+    public ScoreboardConfiguration scoreboardConfiguration(ResourceConfiguration resourceConfiguration) {
+        return resourceConfiguration.getConfig("scoreboard.yml", ScoreboardConfiguration.class);
+    }
+
+    @Bean
+    public QueueConfiguration queueConfiguration(ResourceConfiguration resourceConfiguration) {
+        return resourceConfiguration.getConfig("queue.yml", QueueConfiguration.class);
+    }
+
+    @Bean
+    public KillEffectConfiguration killEffectConfiguration(ResourceConfiguration resourceConfiguration) {
+        return resourceConfiguration.getConfig("kill-effects.yml", KillEffectConfiguration.class);
+    }
+
+    @Bean
+    public KillStreakConfiguration killStreakConfiguration(ResourceConfiguration resourceConfiguration) {
+        return resourceConfiguration.getConfig("kill-streaks.yml", KillStreakConfiguration.class);
+    }
+
+    @Bean
+    public KillMessageConfiguration killMessageConfiguration(ResourceConfiguration resourceConfiguration) {
+        return resourceConfiguration.getConfig("kill-messages.yml", KillMessageConfiguration.class);
+    }
+
+    @Bean
+    public GoldenHeadConfiguration goldenHeadConfiguration(ResourceConfiguration resourceConfiguration) {
+        return resourceConfiguration.getConfig("golden-head.yml", GoldenHeadConfiguration.class);
+    }
+
+    @Bean
+    public BoundaryConfiguration boundaryConfiguration(ResourceConfiguration resourceConfiguration) {
+        return resourceConfiguration.getConfig("boundary.yml", BoundaryConfiguration.class);
+    }
+
+    @Bean
+    public SumoConfiguration sumoConfiguration(ResourceConfiguration resourceConfiguration) {
+        return resourceConfiguration.getConfig("sumo.yml", SumoConfiguration.class);
+    }
+
+    @Bean
+    public EconomyConfiguration economyConfiguration(ResourceConfiguration resourceConfiguration) {
+        return resourceConfiguration.getConfig("economy.yml", EconomyConfiguration.class);
+    }
+
+    @Bean
+    public RandomKitConfiguration randomKitConfiguration(ResourceConfiguration resourceConfiguration) {
+        return resourceConfiguration.getConfig("random-kits.yml", RandomKitConfiguration.class);
+    }
+
+    @Bean
+    public SkywarsConfiguration skywarsConfiguration(ResourceConfiguration resourceConfiguration) {
+        return resourceConfiguration.getConfig("skywars-loot.yml", SkywarsConfiguration.class);
+    }
+
+    @Bean
+    public BedwarsConfiguration bedwarsConfiguration(ResourceConfiguration resourceConfiguration) {
+        return resourceConfiguration.getConfig("bedwars.yml", BedwarsConfiguration.class);
+    }
+
+    @Bean
+    public BedwarsShopConfiguration bedwarsShopConfiguration(ResourceConfiguration resourceConfiguration) {
+        return resourceConfiguration.getConfig("bedwars-shop.yml", BedwarsShopConfiguration.class);
+    }
+
+    @Bean
+    public BedwarsUpgradeConfiguration bedwarsUpgradeConfiguration(ResourceConfiguration resourceConfiguration) {
+        return resourceConfiguration.getConfig("bedwars-upgrades.yml", BedwarsUpgradeConfiguration.class);
+    }
+
+    @Bean
+    public TntTagConfiguration tntTagConfiguration(ResourceConfiguration resourceConfiguration) {
+        return resourceConfiguration.getConfig("tnt-tag.yml", TntTagConfiguration.class);
+    }
+
+    @Bean
+    public FlowerCrownConfiguration flowerCrownConfiguration(ResourceConfiguration resourceConfiguration) {
+        return resourceConfiguration.getConfig("flower-crown.yml", FlowerCrownConfiguration.class);
     }
 
     @Bean

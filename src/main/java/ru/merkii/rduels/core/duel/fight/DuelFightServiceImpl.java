@@ -115,7 +115,14 @@ public class DuelFightServiceImpl implements DuelFightService {
 
         arenaAPI.restoreArena(arenaModel);
 
+        // Bedwars/Skywars are single elimination — one game, no round loop.
+        if (arenaModel.isBedwars() || arenaModel.isSkywars()) {
+            duelRequest.setNumGames(1);
+        }
+
         DuelFightModel duelFightModel = new DuelFightModel(sender, receiver, duelRequest.getNumGames(), duelRequest.getKitModel(), arenaModel);
+        duelFightModel.setRanked(duelRequest.isRanked());
+        duelFightModel.setFromQueue(duelRequest.isFromQueue());
         if (duelRequest.getSignModel() != null) {
             duelFightModel.setSignModel(duelRequest.getSignModel());
         }
@@ -190,6 +197,7 @@ public class DuelFightServiceImpl implements DuelFightService {
 
         duelFight.getSpectates().stream()
                 .map(BukkitAdapter::getPlayer)
+                .filter(Objects::nonNull)
                 .forEach(spectator -> spectator.teleport(arenaModel.getSpectatorPosition()));
 
         removeNonPlayerEntitiesNear(duelFight.getSender());
@@ -304,7 +312,13 @@ public class DuelFightServiceImpl implements DuelFightService {
     private ArenaModel selectValidArena(ArenaModel initialArena, boolean isFfa) {
         ArenaModel arenaModel = initialArena;
         if (arenaModel == null || arenaAPI.isBusyArena(arenaModel)) {
-            arenaModel = isFfa ? arenaAPI.getFreeArenaFFA() : arenaAPI.getFreeArenaName(initialArena.getDisplayName());
+            if (isFfa) {
+                arenaModel = arenaAPI.getFreeArenaFFA();
+            } else if (initialArena != null) {
+                arenaModel = arenaAPI.getFreeArenaName(initialArena.getDisplayName());
+            } else {
+                arenaModel = arenaAPI.getFreeArena();
+            }
             if (arenaModel == null) return null;
         }
 
@@ -372,7 +386,9 @@ public class DuelFightServiceImpl implements DuelFightService {
     }
 
     private void teleportPlayersToArena(DuelRequest duelRequest, DuelFightModel duelFightModel) {
-        ArenaModel arena = duelRequest.getArena();
+        // Always the arena actually selected for the fight — the requested arena may have
+        // been busy (or absent, for queue matches) and replaced by selectValidArena.
+        ArenaModel arena = duelFightModel.getArenaModel();
         if (arena.isFfa()) {
             Map<Integer, EntityPosition> pos = arena.getFfaPositions();
             duelRequest.getSender().teleport(pos.get(1));
@@ -482,6 +498,7 @@ public class DuelFightServiceImpl implements DuelFightService {
             player.teleport(position);
             Player bukkitPlayer = BukkitAdapter.adapt(player);
             PlayerUtil.clearEffects(bukkitPlayer);
+            PlayerUtil.resetMaxHealth(bukkitPlayer);
             PlayerUtil.healPlayers(bukkitPlayer);
             player.setGameMode(GameMode.SURVIVAL);
             sendTitles(Collections.singletonList(bukkitPlayer), text, fadeIn, stay, fadeOut);
@@ -498,12 +515,15 @@ public class DuelFightServiceImpl implements DuelFightService {
         try {
             duelFightModel.getSpectates().stream()
                     .map(BukkitAdapter::getPlayer)
+                    .filter(Objects::nonNull)
                     .forEach(spectator -> spectatorService.removeSpectate(spectator, duelFightModel, false));
         } catch (ConcurrentModificationException ignored) {
             Iterator<UUID> iterator = duelFightModel.getSpectates().iterator();
             while (iterator.hasNext()) {
                 DuelPlayer spectator = BukkitAdapter.getPlayer(iterator.next());
-                spectatorService.removeSpectate(spectator, duelFightModel, false);
+                if (spectator != null) {
+                    spectatorService.removeSpectate(spectator, duelFightModel, false);
+                }
             }
         }
     }

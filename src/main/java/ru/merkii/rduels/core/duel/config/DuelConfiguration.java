@@ -17,5 +17,10 @@ public interface DuelConfiguration {
 
     TitleSettingsConfiguration titleSettings();
 
+    /** Apply a blindness effect to fighters during the match-found countdown. */
+    default boolean matchFoundBlindness() {
+        return true;
+    }
+
 }
 

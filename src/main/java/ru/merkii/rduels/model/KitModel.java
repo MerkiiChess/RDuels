@@ -2,9 +2,14 @@ package ru.merkii.rduels.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.bukkit.Color;
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.meta.LeatherArmorMeta;
 import ru.merkii.rduels.builder.ItemBuilder;
 
 import java.util.ArrayList;
@@ -23,6 +28,11 @@ public class KitModel {
     private final Map<Integer, ItemBuilder> items;
     private final boolean bindingArena;
     private final List<String> arenasName;
+    private final KitRules rules;
+
+    public KitModel(String displayName, int slot, List<String> lore, Material displayMaterial, Map<Integer, ItemBuilder> items, boolean bindingArena, List<String> arenasName) {
+        this(displayName, slot, lore, displayMaterial, items, bindingArena, arenasName, KitRules.DEFAULT);
+    }
 
     public static KitModel create(String displayName, int slot, List<String> lore, Material displayMaterial, Map<Integer, ItemBuilder> items) {
         return new KitModel(displayName, slot, lore, displayMaterial, items, false, new ArrayList<String>());
@@ -40,7 +50,39 @@ public class KitModel {
             if (!this.items.containsKey(i)) continue;
             inventory.setItem(i, this.items.get(i).build());
         }
+        applyRules(player);
         player.updateInventory();
+    }
+
+    /** Applies the kit's health and cosmetic rules when handing the kit out at fight/round start. */
+    private void applyRules(Player player) {
+        KitRules kitRules = this.rules == null ? KitRules.DEFAULT : this.rules;
+        AttributeInstance maxHealth = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+        if (maxHealth != null) {
+            maxHealth.setBaseValue(kitRules.getMaxHealth());
+        }
+        player.setHealth(kitRules.getMaxHealth());
+        player.setFoodLevel(20);
+        player.setSaturation(20.0F);
+        if (kitRules.hasArmorColor()) {
+            dyeArmor(player, kitRules.getArmorColor());
+        }
+    }
+
+    /** Dyes any leather armour pieces the kit gave the player. */
+    private void dyeArmor(Player player, Color color) {
+        ItemStack[] armor = player.getInventory().getArmorContents();
+        boolean changed = false;
+        for (ItemStack piece : armor) {
+            if (piece != null && piece.getItemMeta() instanceof LeatherArmorMeta meta) {
+                meta.setColor(color);
+                piece.setItemMeta(meta);
+                changed = true;
+            }
+        }
+        if (changed) {
+            player.getInventory().setArmorContents(armor);
+        }
     }
 
     public void giveItemPlayers(Player ... players) {

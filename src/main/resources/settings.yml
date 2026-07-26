@@ -36,6 +36,7 @@ black-commands-spectator:
 spawns: []
 debug: true
 item-open-custom-kit: true
+disabled-worlds: []
 my-sql:
   # Возможные значения: mysql, mariadb, postgres, sqlite, h2
   driver-name: sqlite

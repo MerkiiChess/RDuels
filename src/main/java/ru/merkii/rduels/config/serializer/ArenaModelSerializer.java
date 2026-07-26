@@ -46,7 +46,13 @@ public class ArenaModelSerializer implements TypeSerializer<ArenaModel> {
         String schematic = node.node("schematic").getString("NO_SCHEMATIC");
         int radiusDeleteBlocks = node.node("radius-delete-blocks").getInt(50);
 
-        return new ArenaModel(arenaName, displayName, material, onePosition, twoPosition, spectatorPosition, ffaPositions, schematicPosition, customKits, customKitsName, ffa, breaking, schematic, radiusDeleteBlocks);
+        ArenaModel arenaModel = new ArenaModel(arenaName, displayName, material, onePosition, twoPosition, spectatorPosition, ffaPositions, schematicPosition, customKits, customKitsName, ffa, breaking, schematic, radiusDeleteBlocks);
+        arenaModel.setSumo(node.node("sumo").getBoolean(false));
+        arenaModel.setBedwars(node.node("bedwars").getBoolean(false));
+        arenaModel.setSkywars(node.node("skywars").getBoolean(false));
+        arenaModel.setTntTag(node.node("tnt-tag").getBoolean(false));
+        arenaModel.setFlowerCrown(node.node("flower-crown").getBoolean(false));
+        return arenaModel;
     }
 
     @Override
@@ -89,6 +95,12 @@ public class ArenaModelSerializer implements TypeSerializer<ArenaModel> {
 
         int radiusDeleteBlock = value.getRadiusDeleteBlocks() <= 0 ? 50 : value.getRadiusDeleteBlocks();
         node.node("radius-delete-blocks").set(radiusDeleteBlock);
+
+        node.node("sumo").set(value.isSumo());
+        node.node("bedwars").set(value.isBedwars());
+        node.node("skywars").set(value.isSkywars());
+        node.node("tnt-tag").set(value.isTntTag());
+        node.node("flower-crown").set(value.isFlowerCrown());
     }
 
 }

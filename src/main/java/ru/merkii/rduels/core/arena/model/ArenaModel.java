@@ -32,6 +32,21 @@ public class ArenaModel implements Cloneable {
     private final boolean breaking;
     private final String schematic;
     private final int radiusDeleteBlocks;
+    /** Sumo mode: a fighter falling into water/void loses the round. Set from arenas.yml. */
+    @Setter
+    private boolean sumo;
+    /** Bedwars mode: a side respawns while its bed stands, and is eliminated once it's gone. */
+    @Setter
+    private boolean bedwars;
+    /** Skywars mode: arena chests are filled with random loot on start; a single life. */
+    @Setter
+    private boolean skywars;
+    /** TNT Tag mode: a lit bomb passes on hit and eliminates its holder when the fuse ends. */
+    @Setter
+    private boolean tntTag;
+    /** Flower Crown mode: steal the opponents' flowers to score. */
+    @Setter
+    private boolean flowerCrown;
 
     public static ArenaModel create(String arenaName, String displayName, Material material, EntityPosition onePosition, EntityPosition twoPosition, EntityPosition spectatorPosition, boolean ffa, boolean breaking, String schematic) {
         return new ArenaModel(arenaName, displayName, material, onePosition, twoPosition, spectatorPosition, new HashMap<Integer, EntityPosition>(), null, false, new ArrayList<String>(), ffa, breaking, schematic, 50);

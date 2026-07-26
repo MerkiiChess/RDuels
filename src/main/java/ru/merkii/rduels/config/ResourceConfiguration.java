@@ -16,7 +16,24 @@ import ru.merkii.rduels.config.settings.SettingsConfiguration;
 import ru.merkii.rduels.core.arena.config.ArenaConfiguration;
 import ru.merkii.rduels.core.customkit.config.CustomKitConfiguration;
 import ru.merkii.rduels.core.duel.config.DuelConfiguration;
+import ru.merkii.rduels.core.elo.config.EloConfiguration;
 import ru.merkii.rduels.core.party.config.PartyConfiguration;
+import ru.merkii.rduels.core.killeffect.config.KillEffectConfiguration;
+import ru.merkii.rduels.core.killstreak.config.KillStreakConfiguration;
+import ru.merkii.rduels.core.killmessage.config.KillMessageConfiguration;
+import ru.merkii.rduels.core.goldenhead.config.GoldenHeadConfiguration;
+import ru.merkii.rduels.core.boundary.config.BoundaryConfiguration;
+import ru.merkii.rduels.core.sumo.config.SumoConfiguration;
+import ru.merkii.rduels.core.economy.config.EconomyConfiguration;
+import ru.merkii.rduels.core.randomkit.config.RandomKitConfiguration;
+import ru.merkii.rduels.core.skywars.config.SkywarsConfiguration;
+import ru.merkii.rduels.core.bedwars.config.BedwarsConfiguration;
+import ru.merkii.rduels.core.tnttag.config.TntTagConfiguration;
+import ru.merkii.rduels.core.flowercrown.config.FlowerCrownConfiguration;
+import ru.merkii.rduels.core.bedwars.config.BedwarsShopConfiguration;
+import ru.merkii.rduels.core.bedwars.config.BedwarsUpgradeConfiguration;
+import ru.merkii.rduels.core.queue.config.QueueConfiguration;
+import ru.merkii.rduels.core.scoreboard.config.ScoreboardConfiguration;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,6 +60,23 @@ public class ResourceConfiguration {
         loadConfiguration("custom-kits.yml", CustomKitConfiguration.class);
         loadConfiguration("duel.yml", DuelConfiguration.class);
         loadConfiguration("party.yml", PartyConfiguration.class);
+        loadConfiguration("elo.yml", EloConfiguration.class);
+        loadConfiguration("scoreboard.yml", ScoreboardConfiguration.class);
+        loadConfiguration("queue.yml", QueueConfiguration.class);
+        loadConfiguration("kill-effects.yml", KillEffectConfiguration.class);
+        loadConfiguration("kill-streaks.yml", KillStreakConfiguration.class);
+        loadConfiguration("kill-messages.yml", KillMessageConfiguration.class);
+        loadConfiguration("golden-head.yml", GoldenHeadConfiguration.class);
+        loadConfiguration("boundary.yml", BoundaryConfiguration.class);
+        loadConfiguration("sumo.yml", SumoConfiguration.class);
+        loadConfiguration("economy.yml", EconomyConfiguration.class);
+        loadConfiguration("random-kits.yml", RandomKitConfiguration.class);
+        loadConfiguration("skywars-loot.yml", SkywarsConfiguration.class);
+        loadConfiguration("bedwars.yml", BedwarsConfiguration.class);
+        loadConfiguration("bedwars-shop.yml", BedwarsShopConfiguration.class);
+        loadConfiguration("bedwars-upgrades.yml", BedwarsUpgradeConfiguration.class);
+        loadConfiguration("tnt-tag.yml", TntTagConfiguration.class);
+        loadConfiguration("flower-crown.yml", FlowerCrownConfiguration.class);
     }
 
     private <T> void loadConfiguration(String fileName, Class<T> configClass) throws IOException {
@@ -123,6 +157,23 @@ public class ResourceConfiguration {
         loadConfiguration("custom-kits.yml", CustomKitConfiguration.class);
         loadConfiguration("duel.yml", DuelConfiguration.class);
         loadConfiguration("party.yml", PartyConfiguration.class);
+        loadConfiguration("elo.yml", EloConfiguration.class);
+        loadConfiguration("scoreboard.yml", ScoreboardConfiguration.class);
+        loadConfiguration("queue.yml", QueueConfiguration.class);
+        loadConfiguration("kill-effects.yml", KillEffectConfiguration.class);
+        loadConfiguration("kill-streaks.yml", KillStreakConfiguration.class);
+        loadConfiguration("kill-messages.yml", KillMessageConfiguration.class);
+        loadConfiguration("golden-head.yml", GoldenHeadConfiguration.class);
+        loadConfiguration("boundary.yml", BoundaryConfiguration.class);
+        loadConfiguration("sumo.yml", SumoConfiguration.class);
+        loadConfiguration("economy.yml", EconomyConfiguration.class);
+        loadConfiguration("random-kits.yml", RandomKitConfiguration.class);
+        loadConfiguration("skywars-loot.yml", SkywarsConfiguration.class);
+        loadConfiguration("bedwars.yml", BedwarsConfiguration.class);
+        loadConfiguration("bedwars-shop.yml", BedwarsShopConfiguration.class);
+        loadConfiguration("bedwars-upgrades.yml", BedwarsUpgradeConfiguration.class);
+        loadConfiguration("tnt-tag.yml", TntTagConfiguration.class);
+        loadConfiguration("flower-crown.yml", FlowerCrownConfiguration.class);
     }
 
 }

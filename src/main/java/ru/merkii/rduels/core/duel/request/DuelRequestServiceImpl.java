@@ -12,6 +12,7 @@ import ru.merkii.rduels.core.duel.bucket.DuelRequestsBucket;
 import ru.merkii.rduels.core.duel.model.DuelKitType;
 import ru.merkii.rduels.core.duel.model.DuelRequest;
 import ru.merkii.rduels.core.party.model.PartyModel;
+import ru.merkii.rduels.statistic.StatisticService;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,20 +24,29 @@ public class DuelRequestServiceImpl implements DuelRequestService {
 
     private final DuelRequestsBucket requestsBucket;
     private final MessageConfig config;
+    private final StatisticService statisticService;
 
     @Inject
-    public DuelRequestServiceImpl(DuelRequestsBucket requestsBucket, MessageConfig config) {
+    public DuelRequestServiceImpl(DuelRequestsBucket requestsBucket, MessageConfig config, StatisticService statisticService) {
         this.requestsBucket = requestsBucket;
         this.config = config;
+        this.statisticService = statisticService;
     }
 
     @Override
     public void addRequest(DuelRequest duelRequest) {
-        this.requestsBucket.addRequest(duelRequest);
         DuelPlayer sender = getOwnerOrPlayer(duelRequest.getSenderParty(), duelRequest.getSender());
         DuelPlayer receiver = getOwnerOrPlayer(duelRequest.getReceiverParty(), duelRequest.getReceiver());
 
         if (sender == null || receiver == null) return;
+
+        // The receiver disabled incoming duel requests in /settings.
+        if (!statisticService.isDuelRequestsEnabled(receiver.getUUID())) {
+            config.sendTo(sender, Placeholder.wrapped("(player)", receiver.getName()), "duel-requests-disabled");
+            return;
+        }
+
+        this.requestsBucket.addRequest(duelRequest);
 
         config.sendTo(sender, Placeholder.wrapped("(player)", receiver.getName()), "request-sender");
 

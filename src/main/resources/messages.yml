@@ -46,6 +46,47 @@ messages:
     - "Количество раундов: (numGames)"
     - "Кит: (kit)"
 
+  elo-win: "<green>+(change) рейтинга. Текущий рейтинг: (elo)"
+  elo-lose: "<red>-(change) рейтинга. Текущий рейтинг: (elo)"
+  tier-up: "<gold>Новый ранг: (tier)<gold>!"
+
+  kit-build-height: "<red>Достигнут лимит высоты строительства!"
+
+  duel-requests-disabled: "<red>Игрок (player) отключил приём запросов на дуэль"
+  auto-gg-format: "<gray>(player): <yellow>gg"
+
+  queue-joined: "<green>Вы встали в очередь: (kit) <gray>((mode))"
+  queue-left: "<yellow>Вы вышли из очереди"
+  queue-already: "<red>Вы уже находитесь в очереди"
+  queue-in-fight: "<red>Нельзя встать в очередь во время боя"
+  queue-match-found: "<green>Соперник найден: (opponent). Кит: (kit)"
+  queue-mode-ranked: "ранкед"
+  queue-mode-unranked: "обычная"
+
+  rematch-none: "<red>Нет последнего боя для реванша"
+  rematch-offline: "<red>Соперник не в сети"
+
+  economy-win-reward: "<green>Награда за победу: <white>(amount)"
+  party-not-enough-money: "<red>Недостаточно средств. Нужно: <white>(amount)"
+  world-disabled: "<red>Дуэли отключены в этом мире"
+  party-chat-on: "<green>Чат пати включён"
+  party-chat-off: "<yellow>Чат пати выключен"
+
+  bedwars-own-bed: "<red>Нельзя ломать свою кровать!"
+  bedwars-bed-destroyed: "<red>(player) <gray>разрушил кровать соперника!"
+  bedwars-respawn: "<yellow>Вы возродились. Защищайте свою кровать!"
+  bedwars-eliminated: "<dark_red>Ваша кровать разрушена — вы выбываете!"
+  bedwars-not-enough: "<red>Недостаточно ресурсов!"
+  bedwars-bought: "<green>Покупка совершена"
+  bedwars-upgrade-bought: "<green>Улучшение команды куплено!"
+  bedwars-upgrade-max: "<yellow>Максимальный уровень улучшения"
+
+  tnttag-passed: "<gold>Бомба у игрока (player)!"
+  tnttag-eliminated: "<dark_red>Бомба взорвалась — вы выбываете!"
+
+  flowercrown-own: "<red>Нельзя ломать свои цветы!"
+  flowercrown-stolen: "<light_purple>(player) украл цветок! <gray>((score)/(target))"
+
   start-spectate: "Игрок (player) следит за вашим боем"
   stop-spectate: "Игрок (player) прекратил следить за вашим боем"
   spectate-leave: "Чтобы выйти с дуэли напишите /spec"

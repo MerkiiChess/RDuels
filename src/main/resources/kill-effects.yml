@@ -1,0 +1,79 @@
+# Эффекты убийства (/killeffect).
+# id должен совпадать с одним из встроенных эффектов:
+#   lightning, explosion, firework, flame, hearts, blood, soul, tornado, snowstorm,
+#   rainbow, enchant, wither, dragon_breath, portal, smoke, totem, sonic_boom, notes,
+#   angry_villager, happy_villager, critical, witch, water_splash, bubble, cloud, slime,
+#   cherry, electric_spark, inferno
+# permission — необязательное право для выбора эффекта (пусто = доступно всем).
+enabled: true
+effects:
+  - id: lightning
+    material: LIGHTNING_ROD
+    name: "<yellow>Молния"
+  - id: explosion
+    material: TNT
+    name: "<red>Взрыв"
+  - id: firework
+    material: FIREWORK_ROCKET
+    name: "<gold>Фейерверк"
+  - id: flame
+    material: BLAZE_POWDER
+    name: "<gold>Пламя"
+  - id: hearts
+    material: RED_DYE
+    name: "<light_purple>Сердечки"
+  - id: blood
+    material: REDSTONE
+    name: "<dark_red>Кровь"
+  - id: soul
+    material: SOUL_SAND
+    name: "<aqua>Душа"
+  - id: tornado
+    material: WHITE_WOOL
+    name: "<white>Торнадо"
+  - id: snowstorm
+    material: SNOWBALL
+    name: "<aqua>Метель"
+  - id: rainbow
+    material: GLOW_INK_SAC
+    name: "<rainbow>Радуга"
+  - id: enchant
+    material: ENCHANTING_TABLE
+    name: "<light_purple>Чары"
+  - id: wither
+    material: WITHER_SKELETON_SKULL
+    name: "<dark_gray>Иссушитель"
+  - id: dragon_breath
+    material: DRAGON_BREATH
+    name: "<dark_purple>Дыхание дракона"
+  - id: portal
+    material: OBSIDIAN
+    name: "<dark_purple>Портал"
+  - id: smoke
+    material: CAMPFIRE
+    name: "<gray>Дым"
+  - id: totem
+    material: TOTEM_OF_UNDYING
+    name: "<gold>Тотем"
+  - id: sonic_boom
+    material: ECHO_SHARD
+    name: "<dark_aqua>Соник-бум"
+  - id: notes
+    material: NOTE_BLOCK
+    name: "<green>Ноты"
+  - id: critical
+    material: IRON_SWORD
+    name: "<white>Крит"
+  - id: witch
+    material: BREWING_STAND
+    name: "<dark_green>Магия ведьмы"
+  - id: cherry
+    material: CHERRY_SAPLING
+    name: "<light_purple>Сакура"
+  - id: electric_spark
+    material: LIGHTNING_ROD
+    name: "<yellow>Искра"
+  - id: inferno
+    material: FIRE_CHARGE
+    name: "<red>Инферно"
+    permission: "duel.killeffect.inferno"

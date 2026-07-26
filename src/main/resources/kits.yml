@@ -1,1 +1,24 @@
+# Серверные киты.
+# Каждый кит может иметь секцию rules с правилами боя:
+#
+# kits:
+#   uhc:
+#     display-name: "<gold>UHC"
+#     slot: 0
+#     display-material: GOLDEN_APPLE
+#     items:
+#       0:
+#         material: DIAMOND_SWORD
+#         amount: 1
+#     rules:
+#       max-hearts: 10             # количество сердец (по умолчанию 10)
+#       damage-multiplier: 1.0     # множитель исходящего урона
+#       no-hunger: true            # UHC-режим: голод не расходуется
+#       disable-crafting: false    # зарезервировано: сейчас крафт в бою запрещён глобально
+#       build-height: -1           # лимит высоты строительства над ареной (-1 = без лимита)
+#       block-decay-seconds: 0     # поставленные блоки исчезают через N секунд (0 = выкл)
+#       item-cooldowns:            # кулдауны предметов в секундах
+#         GOLDEN_APPLE: 30
+#         ENDER_PEARL: 15
+#       armor-color: "255,0,0"     # окрас кожаной брони кита (R,G,B); пусто = без окраса
 kits: {}

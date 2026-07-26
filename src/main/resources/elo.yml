@@ -1,0 +1,36 @@
+# Рейтинговая система (Elo)
+enabled: true
+
+# true — рейтинг меняют только бои из ранкед-очереди;
+# false — любой бой 1 на 1 влияет на рейтинг
+only-ranked: false
+
+# Максимальное изменение рейтинга за один бой (K-фактор формулы Elo)
+k-factor: 32
+
+# Рейтинг не опускается ниже этого значения
+min-elo: 0
+
+# Тиры наград. Порядок — по возрастанию elo.
+# Награды выдаются один раз при первом достижении тира.
+# Команды: префикс "[console]" или "[player]", поддерживаются PAPI-плейсхолдеры (%player_name%)
+tiers:
+  - name: "<gray>Бронза"
+    elo: 0
+    commands: []
+  - name: "<white>Серебро"
+    elo: 1100
+    commands:
+      - "[console] give %player_name% iron_ingot 8"
+  - name: "<yellow>Золото"
+    elo: 1300
+    commands:
+      - "[console] give %player_name% gold_ingot 8"
+  - name: "<aqua>Алмаз"
+    elo: 1600
+    commands:
+      - "[console] give %player_name% diamond 4"
+  - name: "<light_purple>Легенда"
+    elo: 2000
+    commands:
+      - "[console] give %player_name% netherite_ingot 1"

@@ -9,29 +9,40 @@ import ru.merkii.rduels.RDuels;
 import ru.merkii.rduels.adapter.bukkit.BukkitAdapter;
 import ru.merkii.rduels.core.Core;
 import ru.merkii.rduels.core.party.api.PartyAPI;
-import ru.merkii.rduels.core.party.api.provider.PartyAPIProvider;
+import ru.merkii.rduels.core.party.command.PartyChatCommand;
 import ru.merkii.rduels.core.party.command.PartyCommand;
-import ru.merkii.rduels.core.party.listener.PartyListener;
+import ru.merkii.rduels.core.party.config.PartyConfiguration;
+import ru.merkii.rduels.core.party.scheduler.PartyBroadcastScheduler;
 
 @Getter
 @Singleton
 public class PartyCore implements Core {
 
     private final Lamp<BukkitCommandActor> lamp;
+    private final PartyConfiguration config;
+    private PartyBroadcastScheduler broadcastScheduler;
 
     @Inject
-    public PartyCore(Lamp<BukkitCommandActor> lamp) {
+    public PartyCore(Lamp<BukkitCommandActor> lamp, PartyConfiguration config) {
         this.lamp = lamp;
+        this.config = config;
     }
 
     @Override
     public void enable(RDuels plugin) {
         lamp.register(RDuels.beanScope().get(PartyCommand.class));
-        plugin.registerListeners(PartyListener.class);
+        lamp.register(RDuels.beanScope().get(PartyChatCommand.class));
+        if (config.broadcastEnabled()) {
+            this.broadcastScheduler = PartyBroadcastScheduler.start(
+                    plugin, RDuels.beanScope().get(PartyAPI.class), config);
+        }
     }
 
     @Override
     public void disable(RDuels plugin) {
+        if (this.broadcastScheduler != null) {
+            this.broadcastScheduler.cancel();
+        }
         PartyAPI partyAPI = RDuels.beanScope().get(PartyAPI.class);
         plugin.getServer().getOnlinePlayers()
                 .stream()

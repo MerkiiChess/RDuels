@@ -10,8 +10,13 @@ import ru.merkii.rduels.core.customkit.storage.CustomKitStorage;
 import ru.merkii.rduels.core.duel.api.DuelAPI;
 import ru.merkii.rduels.core.duel.config.DuelConfiguration;
 import ru.merkii.rduels.core.party.api.PartyAPI;
+import ru.merkii.rduels.core.queue.api.QueueAPI;
+import ru.merkii.rduels.core.killeffect.config.KillEffectConfiguration;
+import ru.merkii.rduels.core.randomkit.RandomKitService;
+import ru.merkii.rduels.config.settings.KitConfiguration;
 import ru.merkii.rduels.gui.click.*;
 import ru.merkii.rduels.gui.extractor.*;
+import ru.merkii.rduels.statistic.StatisticService;
 import ru.merkii.rduels.gui.internal.InventoryGUIFactory;
 import ru.merkii.rduels.gui.internal.click.ClickHandlerRegistry;
 import ru.merkii.rduels.gui.internal.extractor.ValueExtractorRegistry;
@@ -95,6 +100,11 @@ public class GUIFactory {
     }
 
     @Bean
+    public ToggleSettingClickHandler toggleSettingClickHandler(StatisticService statisticService, MenuConfiguration config) {
+        return new ToggleSettingClickHandler(statisticService, config);
+    }
+
+    @Bean
     public DuelRequestArenaClickHandler duelRequestArenaClickHandler(InventoryGUIFactory inventoryGUIFactory) {
         return new DuelRequestArenaClickHandler(inventoryGUIFactory);
     }
@@ -110,8 +120,8 @@ public class GUIFactory {
     }
 
     @Bean
-    public RequestFightClickHandler requestFightClickHandler(CustomKitAPI customKitAPI, DuelAPI duelAPI, ArenaAPI arenaAPI) {
-        return new RequestFightClickHandler(customKitAPI, duelAPI, arenaAPI);
+    public RequestFightClickHandler requestFightClickHandler(CustomKitAPI customKitAPI, DuelAPI duelAPI, ArenaAPI arenaAPI, RandomKitService randomKitService) {
+        return new RequestFightClickHandler(customKitAPI, duelAPI, arenaAPI, randomKitService);
     }
 
     @Bean
@@ -128,6 +138,11 @@ public class GUIFactory {
                                                      ExitMenuClickHandler exitMenuClickHandler,
                                                      SelectCategoryClickHandler selectCategoryClickHandler,
                                                      ChoiceItemClickHandler choiceItemClickHandler,
+                                                     ToggleSettingClickHandler toggleSettingClickHandler,
+                                                     QueueAPI queueAPI,
+                                                     StatisticService statisticService,
+                                                     MenuConfiguration menuConfiguration,
+                                                     RandomKitService randomKitService,
                                                      DuelRequestKitClickHandler duelRequestKitClickHandler,
                                                      DuelRequestNumGamesClickHandler duelRequestNumGamesClickHandler,
                                                      DuelRequestArenaClickHandler duelRequestArenaClickHandler,
@@ -153,13 +168,22 @@ public class GUIFactory {
         clickHandlerRegistry.register(ExitMenuClickHandler.NAME, exitMenuClickHandler);
         clickHandlerRegistry.register(SelectCategoryClickHandler.NAME, selectCategoryClickHandler);
         clickHandlerRegistry.register(ChoiceItemClickHandler.NAME, choiceItemClickHandler);
+        clickHandlerRegistry.register(ToggleSettingClickHandler.NAME, toggleSettingClickHandler);
+        clickHandlerRegistry.register(JoinQueueClickHandler.NAME_UNRANKED, new JoinQueueClickHandler(queueAPI, false));
+        clickHandlerRegistry.register(JoinQueueClickHandler.NAME_RANKED, new JoinQueueClickHandler(queueAPI, true));
+        clickHandlerRegistry.register(SelectKillEffectClickHandler.NAME, new SelectKillEffectClickHandler(statisticService, menuConfiguration));
+        clickHandlerRegistry.register(SelectRandomKitClickHandler.NAME, new SelectRandomKitClickHandler(randomKitService, menuConfiguration));
+        clickHandlerRegistry.register(PreviewKitClickHandler.NAME, new PreviewKitClickHandler());
 
         return clickHandlerRegistry;
     }
 
     @Bean
-    public PageResolverRegistry pageResolverRegistry(PartyAPI partyAPI, DuelConfiguration duelConfiguration, CustomKitConfiguration customKitConfiguration, MenuConfiguration config, CustomKitStorage customKitStorage) {
+    public PageResolverRegistry pageResolverRegistry(PartyAPI partyAPI, DuelConfiguration duelConfiguration, CustomKitConfiguration customKitConfiguration, MenuConfiguration config, CustomKitStorage customKitStorage, KitConfiguration kitConfiguration, KillEffectConfiguration killEffectConfiguration) {
         PageResolverRegistry pageResolverRegistry = new PageResolverRegistry();
+
+        pageResolverRegistry.register("SERVER_KITS", new ServerKitsPageResolver(kitConfiguration));
+        pageResolverRegistry.register("KILL_EFFECTS", new KillEffectPageResolver(killEffectConfiguration));
 
         pageResolverRegistry.register("CATEGORIES", new CategoriesPageResolver(config.settings().createSettings()));
         pageResolverRegistry.register("KIT_LIST", new KitListPageResolver(config.settings().createSettings()));
@@ -174,7 +198,7 @@ public class GUIFactory {
     }
 
     @Bean
-    public ValueExtractorRegistry valueExtractorRegistry(CustomKitAPI customKitAPI, MenuConfiguration config, PartyAPI partyAPI) {
+    public ValueExtractorRegistry valueExtractorRegistry(CustomKitAPI customKitAPI, MenuConfiguration config, PartyAPI partyAPI, StatisticService statisticService) {
         ValueExtractorRegistry valueExtractorRegistry = new ValueExtractorRegistry();
 
         valueExtractorRegistry.register(new DuelOptionValueExtractor());
@@ -183,6 +207,9 @@ public class GUIFactory {
         valueExtractorRegistry.register(new SlotValueExtractor());
         valueExtractorRegistry.register(new PartyValueExtractor(config, partyAPI));
         valueExtractorRegistry.register(new CategoryValueExtractor());
+        valueExtractorRegistry.register(new PlayerSettingValueExtractor(statisticService, config));
+        valueExtractorRegistry.register(new ServerKitValueExtractor());
+        valueExtractorRegistry.register(new KillEffectValueExtractor(statisticService, config));
 
         return valueExtractorRegistry;
     }

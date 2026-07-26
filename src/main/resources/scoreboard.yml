@@ -1,0 +1,29 @@
+# Скорборд (сайдбар). Строки поддерживают MiniMessage,
+# плейсхолдеры плагина и PlaceholderAPI (%...%).
+#
+# Плейсхолдеры (везде): (player) (elo) (tier) (kills) (deaths) (wins) (losses)
+#                       (win_rounds) (all_rounds) (online)
+# Только в бою:         (opponent) (kit) (time) (round) (rounds)
+enabled: true
+update-interval-ticks: 20
+title: "<gold><bold>RDuels"
+lobby-lines:
+  - "<gray>Игрок: <white>(player)"
+  - "<gray>Ранг: (tier)"
+  - "<gray>Рейтинг: <yellow>(elo)"
+  - ""
+  - "<gray>Победы: <green>(wins)"
+  - "<gray>Поражения: <red>(losses)"
+  - "<gray>Убийства: <white>(kills)"
+  - ""
+  - "<gray>Онлайн: <white>(online)"
+fight-lines:
+  - "<gray>Противник: <white>(opponent)"
+  - "<gray>Кит: <white>(kit)"
+  - "<gray>Раунд: <white>(round)<gray>/<white>(rounds)"
+  - "<gray>Осталось: <white>(time)"
+  - ""
+  - "<gray>Рейтинг: <yellow>(elo)"
+spectator-lines:
+  - "<gray>Вы наблюдаете за боем"
+  - "<gray>Выход: <white>/spec"
